@@ -26,14 +26,14 @@ provide these enhanced capabilities:
 * catch clauses within try+ can catch any java object thrown by throw+
   Clojure's throw, or Java's throw.
 
-  the selector can be a class name (e.g., Integer,
+  the selector can be a class name (e.g., Integer, my.clojure.record,
   IllegalArgumentException), a keyword representing a clojure type (as
   used by isa?, derive, etc.), or an arbitrary predicate applied to
   the thrown object. The first clause whose type or predicate matches
   is executed.
 
 * the binding to the caught exception in a catch clause is no longer
-  rquired to be a simple symbol. It is now subject to destructuring so
+  required to be a simple symbol. It is now subject to destructuring so
   the body of the catch clause can use the contents of a thrown
   collection (record, set, map, vector) easily.
 
