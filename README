@@ -20,8 +20,8 @@ provide these enhanced capabilities:
   derived from java.lang.Throwable.
 
   Clojure records become an easy, natural way to represent custom
-exceptions without requiring gen-class. Clojure hash-maps with :type
-metadata also work well.
+  exceptions without requiring gen-class. Clojure hash-maps with :type
+  metadata also work well.
 
 * catch clauses within try+ can catch any java object thrown by throw+
   Clojure's throw, or Java's throw.
@@ -29,17 +29,21 @@ metadata also work well.
   the selector can be a class name (e.g., Integer,
   IllegalArgumentException), a keyword representing a clojure type (as
   used by isa?, derive, etc.), or an arbitrary predicate applied to
-  the throw ojbect. The first clause whose type or predicate matches
+  the thrown object. The first clause whose type or predicate matches
   is executed.
 
 * the binding to the caught exception in a catch clause is no longer
-rquired to be a simple symbol. It is now subject to destructuring so
-the body of the catch clause can use the contents of a thrown
-collection (record, set, map, vector) easily.
+  rquired to be a simple symbol. It is now subject to destructuring so
+  the body of the catch clause can use the contents of a thrown
+  collection (record, set, map, vector) easily.
 
 * in a catch clause, the context at the throw site is accessible via
-the hidden argument &throw-context.  The context includes the stack
-trace and the environment: bound locals and their values.
+  the hidden argument &throw-context. The context includes the stack
+  trace and the environment: bound locals and their values.
+
+## Usage
+
+* See the tests for examples
 
 ## Credits
 
