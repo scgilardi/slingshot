@@ -1,0 +1,54 @@
+# slingshot
+
+# Enhanced throw and catch for Clojure
+
+Provides try+ and throw+. Each is 100% compatible with Clojure and
+Java's native try and throw both in source code and at runtime. Each
+also provides new capabilities intended to improve ease of use by
+leveraging Clojure's other capabilities like record types and
+destructuring.
+
+Clojure's try and throw behave much like those of Java: throw
+can accept objects derived from java.lang.Throwable and try selects
+from among catch clauses based on the class of the thrown object.
+
+In addition to fully supporting those uses (whether they originate
+from Clojure code or from Java code via interop), try+ and throw+
+provide these enhanced capabilities:
+
+* throw+ can throw any java object, not just those whose class is
+  derived from java.lang.Throwable.
+
+  Clojure records become an easy, natural way to represent custom
+exceptions without requiring gen-class. Clojure hash-maps with :type
+metadata also work well.
+
+* catch clauses within try+ can catch any java object thrown by throw+
+  Clojure's throw, or Java's throw.
+
+  the selector can be a class name (e.g., Integer,
+  IllegalArgumentException), a keyword representing a clojure type (as
+  used by isa?, derive, etc.), or an arbitrary predicate applied to
+  the throw ojbect. The first clause whose type or predicate matches
+  is executed.
+
+* the binding to the caught exception in a catch clause is no longer
+rquired to be a simple symbol. It is now subject to destructuring so
+the body of the catch clause can use the contents of a thrown
+collection (record, set, map, vector) easily.
+
+* in a catch clause, the context at the throw site is accessible via
+the hidden argument &throw-context.  The context includes the stack
+trace and the environment: bound locals and their values.
+
+## Credits
+
+* Based on clojure.contrib.condition, data-conveying-exception,
+  discussions on the clojure mailing list and wiki and discussions and
+  implementations by Steve Gilardi, Phil Hagelberg, and Kevin Downey.
+
+## License
+
+Copyright (C) 2011 Stephen Gilardi, Kevin Downey, and Phil Hagelberg
+
+Distributed under the Eclipse Public License, the same as Clojure.
