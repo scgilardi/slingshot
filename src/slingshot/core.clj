@@ -13,6 +13,16 @@
   (or (keyword? x)
       (and (symbol? x) (class? (resolve x)))))
 
+(defn throw-context [throwable]
+  (when (instance? slingshot.Exception throwable)
+    (assoc (.state throwable)
+      :stack (->> throwable .getStackTrace (drop 3) into-array))))
+
+(defn thrown [throwable]
+  (if (instance? slingshot.Exception throwable)
+    (-> throwable .state :obj)
+    throwable))
+
 (defmacro throw+
   [obj & [cause-context]]
   `(throw (slingshot.Exception.
@@ -34,14 +44,8 @@
        ~@try-body
        ~@(when catch-clauses
            `[(catch Throwable throwable#
-               (let [~thrown (if (instance? slingshot.Exception throwable#)
-                               (-> throwable# .state :obj)
-                               throwable#)
-                     ~'&throw-context
-                     (when (instance? slingshot.Exception throwable#)
-                       (assoc (.state throwable#) :stack
-                              (->> throwable# .getStackTrace (drop 3)
-                                   into-array)))]
+               (let [~thrown (thrown throwable#)
+                     ~'&throw-context (throw-context throwable#)]
                  (cond
                   ~@(mapcat
                      (fn [[_ type-or-pred local-name & catch-body]]
