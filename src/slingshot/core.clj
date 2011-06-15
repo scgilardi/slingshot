@@ -4,7 +4,10 @@
 (defrecord context [obj env next])
 
 (defn- clause? [x]
-  (and (seq? x) (#{'catch 'finally} (first x))))
+  (when (seq? x) (#{'catch 'finally} (first x))))
+
+(defn- finally? [x]
+  (when (seq? x) (#{'finally} (first x))))
 
 (defn- type-name? [x]
   (or (keyword? x)
