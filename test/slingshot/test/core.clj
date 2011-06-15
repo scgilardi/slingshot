@@ -71,4 +71,21 @@
   (is (= ["x isn't 3... really??"
           {'mult-func mult-func 'x 4 'y 7 'a 7 'b 11}] (test-func 4 7))))
 
-;; TODO: tests for cause chain
+(deftest test-clauses
+  (let [bumps (atom 0)
+        bump (fn [] (swap! bumps inc))]
+    (is (nil? (try+)))
+    (is (nil? (try+ (catch Integer i 4))))
+    (is (nil? (try+ (finally (bump)))))
+    (is (nil? (try+ (catch Integer i 4) (finally (bump)))))
+    (is (= 3 (try+ 3)))
+    (is (= 3 (try+ 3 (catch Integer i 4))))
+    (is (= 3 (try+ 3 (finally (bump)))))
+    (is (= 3 (try+ 3 (catch Integer i 4) (finally (bump)))))
+    (is (= 4 (try+ (throw+ 3) (catch Integer i (inc i)) (finally (bump)))))
+    (is (= 4 (try+ 3 4)))
+    (is (= 4 (try+ 3 4 (catch Integer i 4))))
+    (is (= 4 (try+ 3 4 (finally (bump)))))
+    (is (= 4 (try+ 3 4 (catch Integer i 4) (finally (bump)))))
+    (is (= 5 (try+ (throw+ 4) 4 (catch Integer i (inc i)) (finally (bump)))))
+    (is (= 8 @bumps))))
