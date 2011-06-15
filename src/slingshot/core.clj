@@ -1,6 +1,8 @@
 (ns slingshot.core
   (:use [slingshot.Exception]))
 
+(defrecord context [obj env next])
+
 (defn- catch-form? [x]
   (and (seq? x) (= 'catch (first x))))
 
@@ -8,8 +10,15 @@
   (or (keyword? x)
       (and (symbol? x) (class? (resolve x)))))
 
-(defmacro throw+ [obj]
-  `(throw (slingshot.Exception. ~obj (zipmap '~(keys &env) [~@(keys &env)]))))
+(defmacro throw+
+  ([obj]
+     `(throw (slingshot.Exception.
+              (context. ~obj (zipmap '~(keys &env) [~@(keys &env)])
+                        nil))))
+  ([obj cause-context]
+     `(throw (slingshot.Exception.
+              (context. ~obj (zipmap '~(keys &env) [~@(keys &env)])
+                        cause-context)))))
 
 (defmacro try+
   [& body]
@@ -24,9 +33,8 @@
                          throwable#)
                ~'&throw-context
                (when (instance? slingshot.Exception throwable#)
-                 (hash-map
-                  :env (-> throwable# .state :env)
-                  :stack (into-array (drop 3 (.getStackTrace throwable#)))))]
+                 (assoc (-> throwable# .state)
+                   :stack (into-array (drop 3 (.getStackTrace throwable#)))))]
            (cond
             ~@(mapcat
                (fn [[_ type-or-pred local-name & catch-body]]
