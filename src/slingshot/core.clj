@@ -34,7 +34,6 @@
                 [c f])
         [try-body catch-clauses finally-clause] [b c f]
         thrown (gensym)]
-    (prn [b c f])
     `(try
        ~@try-body
        ~@(when catch-clauses
