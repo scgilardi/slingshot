@@ -70,3 +70,5 @@
   (is (= 1155 (test-func 3 5)))
   (is (= ["x isn't 3... really??"
           {'mult-func mult-func 'x 4 'y 7 'a 7 'b 11}] (test-func 4 7))))
+
+;; TODO: tests for cause chain
