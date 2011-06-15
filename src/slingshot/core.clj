@@ -1,5 +1,5 @@
 (ns slingshot.core
-  (:use [slingshot.Exception]))
+  (:require [slingshot.Exception]))
 
 (defrecord context [obj env next])
 
