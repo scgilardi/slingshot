@@ -3,8 +3,8 @@
 
 (defrecord context [obj env next])
 
-(defn- catch-form? [x]
-  (and (seq? x) (= 'catch (first x))))
+(defn- clause? [x]
+  (and (seq? x) (#{'catch 'finally} (first x))))
 
 (defn- type-name? [x]
   (or (keyword? x)
@@ -22,8 +22,7 @@
 
 (defmacro try+
   [& body]
-  (let [catch-clauses (filter catch-form? body)
-        try-body (remove catch-form? body)
+  (let [[try-body catch-clauses finally-clause] (partition-by clause? body)
         thrown (gensym)]
     `(try
        ~@try-body
@@ -45,4 +44,5 @@
                      ~@catch-body)])
                catch-clauses)
             :else
-            (throw throwable#)))))))
+            (throw throwable#))))
+       ~@finally-clause)))
