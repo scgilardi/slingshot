@@ -14,14 +14,10 @@
       (and (symbol? x) (class? (resolve x)))))
 
 (defmacro throw+
-  ([obj]
-     `(throw (slingshot.Exception.
-              (context. ~obj (zipmap '~(keys &env) [~@(keys &env)])
-                        nil))))
-  ([obj cause-context]
-     `(throw (slingshot.Exception.
-              (context. ~obj (zipmap '~(keys &env) [~@(keys &env)])
-                        cause-context)))))
+  [obj & [cause-context]]
+  `(throw (slingshot.Exception.
+           (stone. ~obj (zipmap '~(keys &env) [~@(keys &env)])
+                   ~cause-context))))
 
 (defmacro try+
   [& body]
