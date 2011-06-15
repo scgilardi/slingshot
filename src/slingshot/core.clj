@@ -25,27 +25,36 @@
 
 (defmacro try+
   [& body]
-  (let [[try-body catch-clauses finally-clause] (partition-by clause? body)
+  (let [[b c f] (partition-by clause? body)
+        [b c f] (if (clause? (first b))
+                  [nil b c]
+                  [b c f])
+        [c f] (if (finally? (first c))
+                [nil c]
+                [c f])
+        [try-body catch-clauses finally-clause] [b c f]
         thrown (gensym)]
+    (prn [b c f])
     `(try
        ~@try-body
-       (catch Throwable throwable#
-         (let [~thrown (if (instance? slingshot.Exception throwable#)
-                         (-> throwable# .state :obj)
-                         throwable#)
-               ~'&throw-context
-               (when (instance? slingshot.Exception throwable#)
-                 (assoc (-> throwable# .state)
-                   :stack (into-array (drop 3 (.getStackTrace throwable#)))))]
-           (cond
-            ~@(mapcat
-               (fn [[_ type-or-pred local-name & catch-body]]
-                 [(if (type-name? type-or-pred)
-                    `(isa? (type ~thrown) ~type-or-pred)
-                    `(~type-or-pred ~thrown))
-                  `(let [~local-name ~thrown]
-                     ~@catch-body)])
-               catch-clauses)
-            :else
-            (throw throwable#))))
+       ~@(when catch-clauses
+           `[(catch Throwable throwable#
+               (let [~thrown (if (instance? slingshot.Exception throwable#)
+                               (-> throwable# .state :obj)
+                               throwable#)
+                     ~'&throw-context
+                     (when (instance? slingshot.Exception throwable#)
+                       (assoc (-> throwable# .state)
+                         :stack (into-array (drop 3 (.getStackTrace throwable#)))))]
+                 (cond
+                  ~@(mapcat
+                     (fn [[_ type-or-pred local-name & catch-body]]
+                       [(if (type-name? type-or-pred)
+                          `(isa? (type ~thrown) ~type-or-pred)
+                          `(~type-or-pred ~thrown))
+                        `(let [~local-name ~thrown]
+                           ~@catch-body)])
+                     catch-clauses)
+                  :else
+                  (throw throwable#))))])
        ~@finally-clause)))
