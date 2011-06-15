@@ -43,8 +43,9 @@
                                throwable#)
                      ~'&throw-context
                      (when (instance? slingshot.Exception throwable#)
-                       (assoc (-> throwable# .state)
-                         :stack (into-array (drop 3 (.getStackTrace throwable#)))))]
+                       (assoc (.state throwable#) :stack
+                              (->> throwable# .getStackTrace (drop 3)
+                                   into-array)))]
                  (cond
                   ~@(mapcat
                      (fn [[_ type-or-pred local-name & catch-body]]
