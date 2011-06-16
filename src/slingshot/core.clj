@@ -25,6 +25,19 @@
     (-> throwable .state :obj)
     throwable))
 
+(defn cond-clause [selector local-name thrown catch-body]
+  [(cond (class-name? selector)
+         `(instance? ~selector ~thrown)
+         (type-spec? selector)
+         (let [[hierarchy parent] (first (seq selector))]
+           (if (nil? hierarchy)
+             `(isa? (type ~thrown) ~parent)
+             `(isa? ~hierarchy (type ~thrown) ~parent)))
+         :else
+         `(~selector ~thrown))
+   `(let [~local-name ~thrown]
+      ~@catch-body)])
+
 (defmacro throw+
   [obj & [cause-context]]
   `(throw (slingshot.Exception.
@@ -51,17 +64,7 @@
                  (cond
                   ~@(mapcat
                      (fn [[_ selector local-name & catch-body]]
-                       [(cond (class-name? selector)
-                              `(instance? ~selector ~thrown)
-                              (type-spec? selector)
-                              (let [[hierarchy parent] (first (seq selector))]
-                                (if (nil? hierarchy)
-                                  `(isa? (type ~thrown) ~parent)
-                                  `(isa? ~hierarchy (type ~thrown) ~parent)))
-                              :else
-                              `(~selector ~thrown))
-                        `(let [~local-name ~thrown]
-                           ~@catch-body)])
+                       (cond-clause selector local-name thrown catch-body))
                      catch-clauses)
                   :else
                   (throw throwable#))))])
