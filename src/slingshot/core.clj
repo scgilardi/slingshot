@@ -38,6 +38,12 @@
    `(let [~local-name ~thrown]
       ~@catch-body)])
 
+(defn partition-body [body]
+  (let [[b c f] (partition-by clause? body)
+        [b c f] (if (clause? (first b)) [nil b c] [b c f])
+        [c f] (if (finally? (first c)) [nil c] [c f])]
+    [b c f]))
+
 (defmacro throw+
   [obj & [cause-context]]
   `(throw (slingshot.Exception.
@@ -46,19 +52,12 @@
 
 (defmacro try+
   [& body]
-  (let [[b c f] (partition-by clause? body)
-        [b c f] (if (clause? (first b))
-                  [nil b c]
-                  [b c f])
-        [c f] (if (finally? (first c))
-                [nil c]
-                [c f])
-        [try-body catch-clauses finally-clause] [b c f]
+  (let [[try-body catch-clauses finally-clause] (partition-body body)
         thrown (gensym)]
     `(try
        ~@try-body
        ~@(when catch-clauses
-           `[(catch Throwable throwable#
+           `((catch Throwable throwable#
                (let [~thrown (thrown throwable#)
                      ~'&throw-context (throw-context throwable#)]
                  (cond
@@ -67,5 +66,5 @@
                        (cond-clause selector local-name thrown catch-body))
                      catch-clauses)
                   :else
-                  (throw throwable#))))])
+                  (throw throwable#))))))
        ~@finally-clause)))
