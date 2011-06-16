@@ -15,15 +15,21 @@
 (defn- type-spec? [x]
   (and (map? x) (= 1 (count x))))
 
-(defn throw-context [throwable]
-  (when (instance? slingshot.Exception throwable)
-    (assoc (.state throwable)
-      :stack (->> throwable .getStackTrace (drop 3) into-array))))
+(defn partition-body [body]
+  (let [[b c f] (partition-by clause? body)
+        [b c f] (if (clause? (first b)) [nil b c] [b c f])
+        [c f] (if (finally? (first c)) [nil c] [c f])]
+    [b c f]))
 
 (defn thrown [throwable]
   (if (instance? slingshot.Exception throwable)
     (-> throwable .state :obj)
     throwable))
+
+(defn throw-context [throwable]
+  (when (instance? slingshot.Exception throwable)
+    (assoc (.state throwable)
+      :stack (->> throwable .getStackTrace (drop 3) into-array))))
 
 (defn cond-clause [selector local-name thrown catch-body]
   [(cond (class-name? selector)
@@ -37,12 +43,6 @@
          `(~selector ~thrown))
    `(let [~local-name ~thrown]
       ~@catch-body)])
-
-(defn partition-body [body]
-  (let [[b c f] (partition-by clause? body)
-        [b c f] (if (clause? (first b)) [nil b c] [b c f])
-        [c f] (if (finally? (first c)) [nil c] [c f])]
-    [b c f]))
 
 (defmacro throw+
   [obj & [cause-context]]
