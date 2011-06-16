@@ -5,8 +5,7 @@
 Provides try+ and throw+. Each is 100% compatible with Clojure and
 Java's native try and throw both in source code and at runtime. Each
 also provides new capabilities intended to improve ease of use by
-leveraging Clojure's other capabilities like record types and
-destructuring.
+leveraging Clojure's capabilities like record types and destructuring.
 
 Clojure's try and throw behave much like those of Java: throw
 can accept objects derived from java.lang.Throwable and try selects
@@ -16,30 +15,42 @@ In addition to fully supporting those uses (whether they originate
 from Clojure code or from Java code via interop), try+ and throw+
 provide these enhanced capabilities:
 
-* throw+ can throw any java object, not just those whose class is
+* throw+ can throw any Java object, not just those whose class is
   derived from java.lang.Throwable.
 
   Clojure records become an easy, natural way to represent custom
-  exceptions without requiring gen-class. Clojure hash-maps with :type
+  exceptions without requiring gen-class. Clojure maps with :type
   metadata also work well.
 
-* catch clauses within try+ can catch any java object thrown by throw+
-  Clojure's throw, or Java's throw.
+* catch clauses within try+ can catch any Java object thrown by
+  throw+, Clojure's throw, or Java's throw. The first catch clause
+  whose selector matches the thrown object will execute.
 
-  the selector can be a class name (e.g., Integer, my.clojure.record,
-  IllegalArgumentException), a keyword representing a clojure type (as
-  used by isa?, derive, etc.), or an arbitrary predicate applied to
-  the thrown object. The first clause whose type or predicate matches
-  is executed.
+  a catch selector can be:
+
+  - a class name (e.g., Integer, my.clojure.record, RuntimeException),
+    matches any instance of that class, or
+
+  - an predicate (function of one argument) matches any Object for
+    which the predicate returns a truthy value (e.g., map?, a keyword,
+    a symbol), or
+
+  - a type specifier representing a Clojure type in a hierarchy (cf.,
+    clojure.core's type, derive, make-hierarchy, isa?). The specifier
+    is a map with one entry where the key is a clojure type hierarchy
+    (or nil for the global hierarchy) and the value is a type
+    specifier: a keyword or symbol.
 
 * the binding to the caught exception in a catch clause is no longer
-  required to be a simple symbol. It is now subject to destructuring so
-  the body of the catch clause can use the contents of a thrown
+  required to be a simple symbol. It is now subject to destructuring
+  so the body of the catch clause can use the contents of a thrown
   collection (record, set, map, vector) easily.
 
 * in a catch clause, the context at the throw site is accessible via
-  the hidden argument &throw-context. The context includes the stack
-  trace and the environment: bound locals and their values.
+  the hidden argument &throw-context. The context includes the thrown
+  object, the stack trace, the environment (bound locals and their
+  values), and a reference the context of the exception that caused
+  the current throw. (similar to Exception's .getCause chain)
 
 ## Usage
 

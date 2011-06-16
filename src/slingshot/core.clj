@@ -9,9 +9,11 @@
 (defn- finally? [x]
   (when (seq? x) (#{'finally} (first x))))
 
-(defn- type-name? [x]
-  (or (keyword? x)
-      (and (symbol? x) (class? (resolve x)))))
+(defn- class-name? [x]
+  (and (symbol? x) (class? (resolve x))))
+
+(defn- type-spec? [x]
+  (and (map? x) (= 1 (count x))))
 
 (defn throw-context [throwable]
   (when (instance? slingshot.Exception throwable)
@@ -48,10 +50,16 @@
                      ~'&throw-context (throw-context throwable#)]
                  (cond
                   ~@(mapcat
-                     (fn [[_ type-or-pred local-name & catch-body]]
-                       [(if (type-name? type-or-pred)
-                          `(isa? (type ~thrown) ~type-or-pred)
-                          `(~type-or-pred ~thrown))
+                     (fn [[_ selector local-name & catch-body]]
+                       [(cond (class-name? selector)
+                              `(instance? ~selector ~thrown)
+                              (type-spec? selector)
+                              (let [[hierarchy parent] (first (seq selector))]
+                                (if (nil? hierarchy)
+                                  `(isa? (type ~thrown) ~parent)
+                                  `(isa? ~hierarchy (type ~thrown) ~parent)))
+                              :else
+                              `(~selector ~thrown))
                         `(let [~local-name ~thrown]
                            ~@catch-body)])
                      catch-clauses)

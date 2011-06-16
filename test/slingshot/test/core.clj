@@ -31,7 +31,7 @@
       [:keyword e#])
     (catch symbol? e#
       [:symbol e#])
-    (catch :oit-exception e#
+    (catch {nil :oit-exception} e#
       [:oit-exception-map e#])
     (catch oit-exception e#
       [:oit-exception-record e#])
