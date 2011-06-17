@@ -60,7 +60,7 @@
   global hierarchy), and the value is the type tag. &throw-context
   provides values for keys: :obj (the caught object), :env (a map of
   bound symbols to their values), :stack (the stack trace), :next (the
-  next context in the cause chain, or nil for a root cause.
+  next context in the cause chain, or nil for a root cause).
   See also throw+"
   [& body]
   (let [[try-body catch-clauses finally-clause] (partition-body body)]
