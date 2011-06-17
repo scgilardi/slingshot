@@ -1,7 +1,6 @@
-(ns slingshot.core
-  (:require [slingshot.Exception]))
 
 (defrecord stone [obj env next])
+(ns slingshot.core)
 
 (defn- clause? [x]
   (when (seq? x) (#{'catch 'finally} (first x))))
