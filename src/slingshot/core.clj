@@ -18,17 +18,17 @@
         [c f] (if (finally? (first c)) [nil c] [c f])]
     [b c f]))
 
-(defn- cond-clause [selector local-name thrown catch-body]
+(defn- cond-clause [[ _ selector local-name & catch-body]]
   [(cond (class-name? selector)
-         `(instance? ~selector ~thrown)
+         `(instance? ~selector (:obj ~'&throw-context))
          (type-spec? selector)
          (let [[hierarchy parent] (first (seq selector))]
            (if (nil? hierarchy)
-             `(isa? (type ~thrown) ~parent)
-             `(isa? ~hierarchy (type ~thrown) ~parent)))
+             `(isa? (type (:obj ~'&throw-context)) ~parent)
+             `(isa? ~hierarchy (:obj ~'&throw-context) ~parent)))
          :else
-         `(~selector ~thrown))
-   `(let [~local-name ~thrown]
+         `(~selector (:obj ~'&throw-context)))
+   `(let [~local-name (:obj ~'&throw-context)]
       ~@catch-body)])
 
 (defn throw-context [throwable]
@@ -47,7 +47,7 @@
   `(let [env# (zipmap '~(keys &env) [~@(keys &env)])]
      (throw (slingshot.Exception.
              {:obj ~obj
-              :env (dissoc env# '~'&throw-context '~'&throwable)
+              :env (dissoc env# '~'&throw-context)
               :next (env# '~'&throw-context)}))))
 
 (defmacro try+
@@ -66,14 +66,10 @@
     `(try
        ~@try-body
        ~@(when catch-clauses
-           `((catch Throwable ~'&throwable
-               (let [~'&throw-context (throw-context ~'&throwable)]
+           `((catch Throwable ~'&throw-context
+               (let [~'&throw-context (throw-context ~'&throw-context)]
                  (cond
-                  ~@(mapcat
-                     (fn [[_ selector local-name & catch-body]]
-                       (cond-clause
-                        selector local-name `(thrown ~'&throwable) catch-body))
-                     catch-clauses)
+                  ~@(mapcat cond-clause catch-clauses)
                   :else
-                  (throw ~'&throwable))))))
+                  (throw (:throwable (meta ~'&throw-context))))))))
        ~@finally-clause)))
