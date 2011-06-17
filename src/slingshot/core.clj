@@ -1,5 +1,3 @@
-
-(defrecord stone [obj env next])
 (ns slingshot.core)
 
 (defn- clause? [x]
