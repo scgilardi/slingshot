@@ -42,10 +42,8 @@
       :stack (->> throwable .getStackTrace (drop 5) into-array))))
 
 (defmacro throw+
-  "Like the throw special form, but can throw any object. If throwing
-  from within a catch clause, provide &thrown-context as the
-  cause-context argument to add the current context to thrown object's
-  cause chain. See also try+"
+  "Like the throw special form, but can throw any object.
+  See also try+"
   [obj]
   (let [env (gensym)]
     `(let [~env (zipmap '~(keys &env) [~@(keys &env)])]
