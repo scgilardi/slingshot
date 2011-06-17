@@ -42,14 +42,17 @@
       :stack (->> throwable .getStackTrace (drop 5) into-array))))
 
 (defmacro throw+
-  [obj & [cause-context]]
-  `(throw (slingshot.Exception.
-           (stone. ~obj (zipmap '~(keys &env) [~@(keys &env)])
-                   ~cause-context))))
   "Like the throw special form, but can throw any object. If throwing
   from within a catch clause, provide &thrown-context as the
   cause-context argument to add the current context to thrown object's
   cause chain. See also try+"
+  [obj]
+  (let [env (gensym)]
+    `(let [~env (zipmap '~(keys &env) [~@(keys &env)])]
+       (throw (slingshot.Exception.
+               {:obj ~obj
+                :env (dissoc ~env '~'&throw-context '~'&throwable)
+                :next (~env '~'&throw-context)})))))
 
 (defmacro try+
   "Like the try special form, but supports enhanced catch clauses:
