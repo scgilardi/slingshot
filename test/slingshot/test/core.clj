@@ -97,3 +97,34 @@
     (is (= 4 (try+ 3 4 (catch Integer i 4) (finally (bump)))))
     (is (= 5 (try+ (throw+ 4) 4 (catch Integer i (inc i)) (finally (bump)))))
     (is (= 11 @bumps))))
+
+(defn a []
+  (throw+ 1))
+
+(defn b []
+  (try+
+   (a)
+   (catch Integer p
+     (throw+ 2))))
+
+(defn c []
+  (try+
+   (b)
+   (catch Integer q
+     (throw+ 3))))
+
+(defn d []
+  (try+
+   (c)
+   (catch Integer r
+     &throw-context)))
+
+(deftest test-throw-context
+  (let [context (d)]
+    (is (= #{:stack :env :obj :next}
+           (set (keys context))
+           (set (keys (-> context :next)))
+           (set (keys (-> context :next :next)))))
+    (is (= 3 (-> context :obj)))
+    (is (= 2 (-> context :next :obj)))
+    (is (= 1 (-> context :next :next :obj)))))
