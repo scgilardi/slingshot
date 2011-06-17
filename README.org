@@ -63,6 +63,6 @@
 
 ** License
 
-  Copyright (C) 2011 Stephen Gilardi, Kevin Downey, and Phil Hagelberg
+  Copyright (C) 2011 Stephen C. Gilardi, Kevin Downey, and Phil Hagelberg
 
   Distributed under the Eclipse Public License, the same as Clojure.
