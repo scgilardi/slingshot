@@ -18,7 +18,7 @@
         [c f] (if (finally? (first c)) [nil c] [c f])]
     [b c f]))
 
-(defn- cond-clause [[ _ selector local-name & catch-body]]
+(defn- cond-clause [[_ selector local-name & catch-body]]
   [(cond (class-name? selector)
          `(instance? ~selector (:obj ~'&throw-context))
          (type-spec? selector)
