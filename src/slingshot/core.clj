@@ -66,19 +66,18 @@
   next context in the cause chain, or nil for a cause. See also
   throw+"
   [& body]
-  (let [[try-body catch-clauses finally-clause] (partition-body body)
-        thrown (gensym)]
+  (let [[try-body catch-clauses finally-clause] (partition-body body)]
     `(try
        ~@try-body
        ~@(when catch-clauses
-           `((catch Throwable throwable#
-               (let [~thrown (thrown throwable#)
-                     ~'&throw-context (throw-context throwable#)]
+           `((catch Throwable ~'&throwable
+               (let [~'&throw-context (throw-context ~'&throwable)]
                  (cond
                   ~@(mapcat
                      (fn [[_ selector local-name & catch-body]]
-                       (cond-clause selector local-name thrown catch-body))
+                       (cond-clause selector local-name
+                                    `(thrown ~'&throwable) catch-body))
                      catch-clauses)
                   :else
-                  (throw throwable#))))))
+                  (throw ~'&throwable))))))
        ~@finally-clause)))
