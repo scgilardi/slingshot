@@ -46,8 +46,22 @@
   `(throw (slingshot.Exception.
            (stone. ~obj (zipmap '~(keys &env) [~@(keys &env)])
                    ~cause-context))))
+  "Like the throw special form, but can throw any object. If throwing
+  from within a catch clause, provide &thrown-context as the
+  cause-context argument to add the current context to thrown object's
+  cause chain. See also try+"
 
 (defmacro try+
+  "Like the try special form, but supports enhanced catch clauses:
+  select thrown object by class, predicate, or type specifier;
+  destructure the caught object; retrieve the dynamic context at the
+  throw site via the &throw-context hidden argument. A type-specifier
+  is a map with one entry: the key is the hierarchy (or nil for the
+  global hierarchy), and the value is the type tag. &throw-context
+  provides values for keys: :obj (the caught object), :env (a map of
+  bound symbols to their values), :stack (the stack trace), :next (the
+  next context in the cause chain, or nil for a cause. See also
+  throw+"
   [& body]
   (let [[try-body catch-clauses finally-clause] (partition-body body)
         thrown (gensym)]
