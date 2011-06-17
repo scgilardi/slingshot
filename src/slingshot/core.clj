@@ -31,15 +31,14 @@
    `(let [~local-name ~thrown]
       ~@catch-body)])
 
-(defn thrown [throwable]
-  (if (instance? slingshot.Exception throwable)
-    (-> throwable .state :obj)
-    throwable))
-
 (defn throw-context [throwable]
-  (when (instance? slingshot.Exception throwable)
-    (assoc (.state throwable)
-      :stack (->> throwable .getStackTrace (drop 5) into-array))))
+  (with-meta
+    (assoc
+        (if (instance? slingshot.Exception throwable)
+          (.state throwable)
+          {:obj throwable})
+      :stack (.getStackTrace throwable))
+    {:throwable throwable}))
 
 (defmacro throw+
   "Like the throw special form, but can throw any object.
