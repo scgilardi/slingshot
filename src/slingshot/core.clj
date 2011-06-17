@@ -45,12 +45,11 @@
   "Like the throw special form, but can throw any object.
   See also try+"
   [obj]
-  (let [env (gensym)]
-    `(let [~env (zipmap '~(keys &env) [~@(keys &env)])]
-       (throw (slingshot.Exception.
-               {:obj ~obj
-                :env (dissoc ~env '~'&throw-context '~'&throwable)
-                :next (~env '~'&throw-context)})))))
+  `(let [env# (zipmap '~(keys &env) [~@(keys &env)])]
+     (throw (slingshot.Exception.
+             {:obj ~obj
+              :env (dissoc env# '~'&throw-context '~'&throwable)
+              :next (env# '~'&throw-context)}))))
 
 (defmacro try+
   "Like the try special form, but supports enhanced catch clauses:
@@ -61,8 +60,8 @@
   global hierarchy), and the value is the type tag. &throw-context
   provides values for keys: :obj (the caught object), :env (a map of
   bound symbols to their values), :stack (the stack trace), :next (the
-  next context in the cause chain, or nil for a root cause. See also
-  throw+"
+  next context in the cause chain, or nil for a root cause.
+  See also throw+"
   [& body]
   (let [[try-body catch-clauses finally-clause] (partition-body body)]
     `(try
@@ -73,8 +72,8 @@
                  (cond
                   ~@(mapcat
                      (fn [[_ selector local-name & catch-body]]
-                       (cond-clause selector local-name
-                                    `(thrown ~'&throwable) catch-body))
+                       (cond-clause
+                        selector local-name `(thrown ~'&throwable) catch-body))
                      catch-clauses)
                   :else
                   (throw ~'&throwable))))))
