@@ -128,3 +128,11 @@
     (is (= 3 (-> context :obj)))
     (is (= 2 (-> context :next :obj)))
     (is (= 1 (-> context :next :next :obj)))))
+
+(defn e []
+  (try+
+   (throw (Exception. "uncaught"))
+   (catch Integer i i)))
+
+(deftest test-uncaught
+  (is (thrown-with-msg? Exception #"^uncaught$" (e))))
