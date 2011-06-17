@@ -39,7 +39,7 @@
 (defn throw-context [throwable]
   (when (instance? slingshot.Exception throwable)
     (assoc (.state throwable)
-      :stack (->> throwable .getStackTrace (drop 3) into-array))))
+      :stack (->> throwable .getStackTrace (drop 5) into-array))))
 
 (defmacro throw+
   [obj & [cause-context]]
