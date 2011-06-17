@@ -31,15 +31,6 @@
    `(let [~local-name (:obj ~'&throw-context)]
       ~@catch-body)])
 
-(defn throw-context [throwable]
-  (with-meta
-    (assoc
-        (if (instance? slingshot.Exception throwable)
-          (.state throwable)
-          {:obj throwable})
-      :stack (.getStackTrace throwable))
-    {:throwable throwable}))
-
 (defmacro throw+
   "Like the throw special form, but can throw any object.
   See also try+"
@@ -67,7 +58,14 @@
        ~@try-body
        ~@(when catch-clauses
            `((catch Throwable ~'&throw-context
-               (let [~'&throw-context (throw-context ~'&throw-context)]
+               (let [~'&throw-context
+                     (with-meta
+                       (assoc
+                           (if (instance? slingshot.Exception ~'&throw-context)
+                             (.state ~'&throw-context)
+                             {:obj ~'&throw-context})
+                         :stack (.getStackTrace ~'&throw-context))
+                       {:throwable ~'&throw-context})]
                  (cond
                   ~@(mapcat cond-clause catch-clauses)
                   :else
