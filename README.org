@@ -40,10 +40,10 @@
       type hierarchy (or nil for the global hierarchy) and the value
       is a type tag: a keyword or symbol.
 
-  - the binding to the caught exception in a catch clause is no longer
-    required to be a simple symbol. It is now subject to destructuring
-    so the body of the catch clause can use the contents of a thrown
-    collection (e.g., map, record, set, vector) easily.
+  - the binding to the caught exception in a catch clause is not
+    required to be a simple symbol. It is subject to destructuring so
+    the body of the catch clause can use the contents of a thrown
+    collection easily.
 
   - in a catch clause, the context at the throw site is accessible via
     the hidden argument &throw-context. The context includes the
