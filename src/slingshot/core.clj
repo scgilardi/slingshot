@@ -22,7 +22,7 @@
   [(cond (class-name? selector)
          `(instance? ~selector (:obj ~'&throw-context))
          (type-spec? selector)
-         (let [[hierarchy parent] (first (seq selector))]
+         (let [[hierarchy parent] (first selector)]
            (if (nil? hierarchy)
              `(isa? (type (:obj ~'&throw-context)) ~parent)
              `(isa? ~hierarchy (:obj ~'&throw-context) ~parent)))
