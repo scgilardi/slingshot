@@ -36,7 +36,7 @@
   See also try+"
   [obj]
   `(let [env# (zipmap '~(keys &env) [~@(keys &env)])]
-     (throw (slingshot.Exception.
+     (throw (slingshot.Stone.
              {:obj ~obj
               :env (dissoc env# '~'&throw-context)
               :next (env# '~'&throw-context)}))))
@@ -61,8 +61,8 @@
                (let [~'&throw-context
                      (with-meta
                        (assoc
-                           (if (instance? slingshot.Exception ~'&throw-context)
-                             (.state ~'&throw-context)
+                           (if (instance? slingshot.Stone ~'&throw-context)
+                             (.map ~'&throw-context)
                              {:obj ~'&throw-context})
                          :stack (.getStackTrace ~'&throw-context))
                        {:throwable ~'&throw-context})]
