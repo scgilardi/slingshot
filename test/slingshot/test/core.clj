@@ -5,6 +5,9 @@
 (defrecord oit-exception [error-code duration-ms message])
 (defrecord x-failure [message])
 
+(def h1 (derive (make-hierarchy) ::square ::shape))
+(def a-square ^{:type ::square} {:size 4})
+
 (def exception-1 (Exception. "exceptional"))
 (def oit-exception-1 (oit-exception. 6 1000 "pdf failure"))
 
@@ -33,6 +36,8 @@
       [:symbol e#])
     (catch {nil :oit-exception} e#
       [:oit-exception-map e#])
+    (catch {h1 ::shape} e#
+      [:shape (type e#) e#])
     (catch oit-exception e#
       [:oit-exception-record e#])
     (catch map? e#
@@ -52,6 +57,8 @@
     (is (= [:exception exception-1] (mega-try (throw+ exception-1)))))
   (testing "unwrapped exception (interop with normal throw)"
     (is (= [:exception exception-1] (mega-try (throw exception-1)))))
+  (testing "catching an object by type in an ad-hoc hierarchy"
+    (is (= [:shape ::square a-square] (mega-try (throw+ a-square)))))
   (testing "catching a map by predicate"
     (is (= [:map {:error-code 4} nil] (mega-try (throw+ {:error-code 4})))))
   (testing "catching a map with metadata by predicate"

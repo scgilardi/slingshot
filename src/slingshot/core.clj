@@ -27,7 +27,7 @@
          (let [[hierarchy parent] (first selector)]
            (if (nil? hierarchy)
              `(isa? (type (:obj ~'&throw-context)) ~parent)
-             `(isa? ~hierarchy (:obj ~'&throw-context) ~parent)))
+             `(isa? ~hierarchy (type (:obj ~'&throw-context)) ~parent)))
          :else
          `(~selector (:obj ~'&throw-context)))
    `(let [~local-name (:obj ~'&throw-context)]
