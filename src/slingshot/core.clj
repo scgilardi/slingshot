@@ -4,12 +4,6 @@
 (defn- clause-type [x]
   (when (seq? x) (#{'catch 'finally} (first x))))
 
-(defn- class-name? [x]
-  (and (symbol? x) (class? (resolve x))))
-
-(defn- type-spec? [x]
-  (and (map? x) (= 1 (count x))))
-
 (defn- partition-body [body]
   (let [[b c f s] (partition-by clause-type body)
         [b c f s] (if (-> (first b) clause-type nil?) [b c f s] [nil b c f])
@@ -19,6 +13,12 @@
       (throw (Exception. (str "try+ form must match: "
                               "(try+ expr* catch-clause* finally-clause?)"))))
     [b c f]))
+
+(defn- class-name? [x]
+  (and (symbol? x) (class? (resolve x))))
+
+(defn- type-spec? [x]
+  (and (map? x) (= 1 (count x))))
 
 (defn- cond-clause [[_ selector local-name & catch-body]]
   [(cond (class-name? selector)
