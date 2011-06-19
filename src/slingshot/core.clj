@@ -5,14 +5,14 @@
   (when (seq? x) (#{'catch 'finally} (first x))))
 
 (defn- partition-body [body]
-  (let [[b c f s] (partition-by clause-type body)
-        [b c f s] (if (-> (first b) clause-type nil?) [b c f s] [nil b c f])
+  (let [[e c f s] (partition-by clause-type body)
+        [e c f s] (if (-> (first e) clause-type nil?) [e c f s] [nil e c f])
         [c f s] (if (-> (first c) clause-type (= 'catch)) [c f s] [nil c f])
         [f s] (if (-> (first f) clause-type (= 'finally)) [f s] [nil f])]
     (when (or s (> (count f) 1))
       (throw (Exception. (str "try+ form must match: "
                               "(try+ expr* catch-clause* finally-clause?)"))))
-    [b c f]))
+    [e c f]))
 
 (defn- class-name? [x]
   (and (symbol? x) (class? (resolve x))))
@@ -62,9 +62,9 @@
 
   See also throw+"
   [& body]
-  (let [[try-body catch-clauses finally-clause] (partition-body body)]
+  (let [[exprs catch-clauses finally-clause] (partition-body body)]
     `(try
-       ~@try-body
+       ~@exprs
        ~@(when catch-clauses
            `((catch Throwable ~'&throw-context
                (let [~'&throw-context
