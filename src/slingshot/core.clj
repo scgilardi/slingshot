@@ -43,15 +43,22 @@
               :next (env# '~'&throw-context)}))))
 
 (defmacro try+
-  "Like the try special form, but supports enhanced catch clauses:
-  select thrown object by class, predicate, or type specifier;
-  destructure the caught object; retrieve the dynamic context at the
-  throw site via the &throw-context hidden argument. A type-specifier
-  is a map with one entry: the key is the hierarchy (or nil for the
-  global hierarchy), and the value is the type tag. &throw-context
-  provides values for keys: :obj (the caught object), :env (a map of
-  bound symbols to their values), :stack (the stack trace), :next (the
-  next context in the cause chain, or nil for a root cause).
+  "Like the try special form, but with enhanced catch clauses:
+    - specify objects to catch by class, predicate, or type specifier;
+    - destructure the caught object;
+    - access the dynamic context at the throw site via the
+      &throw-context hidden argument.
+
+  A type-specifier is a map with one entry:
+    - the key is the hierarchy (or nil for the global hierarchy);
+    - the value is the type tag: a keyword or symbol.
+
+  &throw-context is a map with keys:
+    :obj the thrown object;
+    :env a map of bound symbols to their values;
+    :stack the stack trace;
+    :next the next throw context in the cause chain.
+
   See also throw+"
   [& body]
   (let [[try-body catch-clauses finally-clause] (partition-body body)]
