@@ -1,6 +1,4 @@
-(ns slingshot.core
-  (:require [slingshot.stone :as stone])
-  (:import (slingshot.stone Stone)))
+(ns slingshot.core)
 
 (defn- clause? [x]
   (when (seq? x) (#{'catch 'finally} (first x))))
@@ -38,7 +36,7 @@
   See also try+"
   [obj]
   `(let [env# (zipmap '~(keys &env) [~@(keys &env)])]
-     (throw (stone/create
+     (throw (slingshot.Stone.
              {:obj ~obj
               :env (dissoc env# '~'&throw-context)
               :next (env# '~'&throw-context)}))))
@@ -63,8 +61,8 @@
                (let [~'&throw-context
                      (with-meta
                        (assoc
-                           (if (instance? Stone ~'&throw-context)
-                             (.data ~'&throw-context)
+                           (if (instance? slingshot.Stone ~'&throw-context)
+                             (.map ~'&throw-context)
                              {:obj ~'&throw-context})
                          :stack (.getStackTrace ~'&throw-context))
                        {:throwable ~'&throw-context})]
