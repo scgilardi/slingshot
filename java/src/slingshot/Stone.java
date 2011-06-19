@@ -2,14 +2,14 @@ package slingshot;
 
 public class Stone extends RuntimeException {
 
-    private final Object _map;
+    private final Object _data;
 
-    public Stone(Object map) {
+    public Stone(Object data) {
         super();
-        _map = map;
+        _data = data;
     }
 
-    public Object map() {
-        return _map;
+    public Object data() {
+        return _data;
     }
 }

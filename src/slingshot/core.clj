@@ -62,7 +62,7 @@
                      (with-meta
                        (assoc
                            (if (instance? slingshot.Stone ~'&throw-context)
-                             (.map ~'&throw-context)
+                             (.data ~'&throw-context)
                              {:obj ~'&throw-context})
                          :stack (.getStackTrace ~'&throw-context))
                        {:throwable ~'&throw-context})]
