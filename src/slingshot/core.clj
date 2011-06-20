@@ -14,16 +14,16 @@
                               "(try+ expr* catch-clause* finally-clause?)"))))
     [e c f]))
 
-(defn- class-name? [x]
+(defn- classname? [x]
   (and (symbol? x) (class? (resolve x))))
 
-(defn- type-spec? [x]
+(defn- typespec? [x]
   (and (map? x) (= 1 (count x))))
 
-(defn- cond-clause [[_ selector binding-form & catch-body]]
-  [(cond (class-name? selector)
+(defn- catch->cond [[_ selector binding-form & exprs]]
+  [(cond (classname? selector)
          `(instance? ~selector (:obj ~'&throw-context))
-         (type-spec? selector)
+         (typespec? selector)
          (let [[hierarchy parent] (first selector)]
            (if (nil? hierarchy)
              `(isa? (type (:obj ~'&throw-context)) ~parent)
@@ -31,7 +31,7 @@
          :else
          `(~selector (:obj ~'&throw-context)))
    `(let [~binding-form (:obj ~'&throw-context)]
-      ~@catch-body)])
+      ~@exprs)])
 
 (defmacro throw+
   "Like the throw special form, but can throw any object.
@@ -45,16 +45,16 @@
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
-    - specify objects to catch by class, predicate, or type specifier;
+    - specify objects to catch by classname, predicate, or typespec;
     - destructure the caught object;
     - access the dynamic context at the throw site via the
       &throw-context hidden argument.
 
-  A type-specifier is a map with one entry:
+  A typespec is a map with one entry:
     - the key is the hierarchy (or nil for the global hierarchy);
     - the value is the type tag: a keyword or symbol.
 
-  &throw-context is a map with keys:
+  &throw-context is a map containing:
     :obj the thrown object;
     :env a map of bound symbols to their values;
     :stack the stack trace;
@@ -76,7 +76,7 @@
                          :stack (.getStackTrace ~'&throw-context))
                        {:throwable ~'&throw-context})]
                  (cond
-                  ~@(mapcat cond-clause catch-clauses)
+                  ~@(mapcat catch->cond catch-clauses)
                   :else
                   (throw (:throwable (meta ~'&throw-context))))))))
        ~@finally-clause)))
