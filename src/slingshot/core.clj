@@ -68,15 +68,13 @@
        ~@(when catch-clauses
            `((catch Throwable ~'&throw-context
                (let [~'&throw-context
-                     (with-meta
-                       (assoc
-                           (if (instance? Stone ~'&throw-context)
-                             (.data ~'&throw-context)
-                             {:obj ~'&throw-context})
-                         :stack (.getStackTrace ~'&throw-context))
-                       {:throwable ~'&throw-context})]
+                     (-> (if (instance? Stone ~'&throw-context)
+                           (.data ~'&throw-context)
+                           {:obj ~'&throw-context})
+                         (assoc :stack (.getStackTrace ~'&throw-context))
+                         (with-meta {:throwable ~'&throw-context}))]
                  (cond
                   ~@(mapcat catch->cond catch-clauses)
                   :else
-                  (throw (:throwable (meta ~'&throw-context))))))))
+                  (throw (-> ~'&throw-context meta :throwable)))))))
        ~@finally-clause)))
