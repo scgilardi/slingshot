@@ -20,7 +20,7 @@
 (defn- type-spec? [x]
   (and (map? x) (= 1 (count x))))
 
-(defn- cond-clause [[_ selector local-name & catch-body]]
+(defn- cond-clause [[_ selector binding-form & catch-body]]
   [(cond (class-name? selector)
          `(instance? ~selector (:obj ~'&throw-context))
          (type-spec? selector)
@@ -30,7 +30,7 @@
              `(isa? ~hierarchy (type (:obj ~'&throw-context)) ~parent)))
          :else
          `(~selector (:obj ~'&throw-context)))
-   `(let [~local-name (:obj ~'&throw-context)]
+   `(let [~binding-form (:obj ~'&throw-context)]
       ~@catch-body)])
 
 (defmacro throw+
