@@ -59,9 +59,11 @@
 
   &throw-context is a map containing:
     :obj the thrown object;
-    :env a map of bound symbols to their values;
     :stack the stack trace;
-    :next the next throw context in the cause chain.
+  for all caught objects, and
+    :env a map of bound symbols to their values;
+    :next the next throw context in the cause chain
+  for objects that are not instances of Throwable.
 
   See also throw+"
   [& body]
