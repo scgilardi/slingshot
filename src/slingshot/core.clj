@@ -37,11 +37,14 @@
   "Like the throw special form, but can throw any object.
   See also try+"
   [obj]
-  `(let [env# (zipmap '~(keys &env) [~@(keys &env)])]
-     (throw (Stone.
-             {:obj ~obj
-              :env (dissoc env# '~'&throw-context)
-              :next (env# '~'&throw-context)}))))
+  `(throw
+    (if (instance? Throwable ~obj)
+      ~obj
+      (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
+        (Stone.
+         {:obj ~obj
+          :env (dissoc env# '~'&throw-context)
+          :next (env# '~'&throw-context)})))))
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
