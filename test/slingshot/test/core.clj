@@ -53,10 +53,12 @@
     (is (= [:integer 4] (mega-try (throw+ 4))))
     (is (= [:keyword :awesome] (mega-try (throw+ :awesome))))
     (is (= [:symbol 'yuletide] (mega-try (throw+ 'yuletide)))))
-  (testing "wrapped exception"
-    (is (= [:exception exception-1] (mega-try (throw+ exception-1)))))
-  (testing "unwrapped exception (interop with normal throw)"
-    (is (= [:exception exception-1] (mega-try (throw exception-1)))))
+  (testing "treat throwables exactly as throw does"
+    (is (= [:exception exception-1]
+           (mega-try (throw+ exception-1))
+           (mega-try (throw exception-1))
+           (try (throw+ exception-1) (catch Exception e [:exception e]))
+           (try (throw exception-1) (catch Exception e [:exception e])))))
   (testing "catching an object by type in an ad-hoc hierarchy"
     (is (= [:shape ::square a-square] (mega-try (throw+ a-square)))))
   (testing "catching a map by predicate"
