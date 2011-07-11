@@ -1,5 +1,5 @@
 (ns slingshot.core
-  (import (slingshot Stone)))
+  (:import (slingshot Stone)))
 
 (defn- clause-type [x]
   (when (seq? x) (#{'catch 'finally} (first x))))
