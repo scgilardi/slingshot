@@ -143,5 +143,11 @@
    (throw (Exception. "uncaught"))
    (catch Integer i i)))
 
+(defn f []
+  (try+
+   (throw+ 3.2)
+   (catch Integer i i)))
+
 (deftest test-uncaught
-  (is (thrown-with-msg? Exception #"^uncaught$" (e))))
+  (is (thrown-with-msg? Exception #"^uncaught$" (e)))
+  (is (thrown-with-msg? slingshot.Stone #"^Object.*not caught" (f))))
