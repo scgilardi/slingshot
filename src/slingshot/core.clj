@@ -42,6 +42,8 @@
       ~obj
       (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
         (Stone.
+         "Object thrown by throw+ not caught in any try+:"
+         ~obj
          {:obj ~obj
           :env (dissoc env# '~'&throw-context)
           :next (env# '~'&throw-context)})))))
@@ -74,7 +76,7 @@
            `((catch Throwable ~'&throw-context
                (let [~'&throw-context
                      (-> (if (instance? Stone ~'&throw-context)
-                           (.data ~'&throw-context)
+                           (.context ~'&throw-context)
                            {:obj ~'&throw-context})
                          (assoc :stack (.getStackTrace ~'&throw-context))
                          (with-meta {:throwable ~'&throw-context}))]
