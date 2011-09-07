@@ -44,7 +44,8 @@
      context)))
 
 (defn default-throw-hook
-  "Default implementation of *throw-hook*"
+  "Default implementation of *throw-hook*. Makes a throwable from a
+  context and throws it."
   [context]
   (throw (make-throwable context)))
 
@@ -91,6 +92,10 @@
        ~@exprs
        ~@(when catch-clauses
            `((catch Throwable ~'&throw-context
+               ;; written carefully to introduce only one symbol into
+               ;; into the environment that's visible from within
+               ;; throw+ forms in catch clauses (see the special
+               ;; handling of &throw-context in throw+)
                (let [~'&throw-context
                      (-> (if (instance? Stone ~'&throw-context)
                            (.context ~'&throw-context)
