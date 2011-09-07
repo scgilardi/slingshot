@@ -33,20 +33,33 @@
    `(let [~binding-form (:obj ~'&throw-context)]
       ~@exprs)])
 
+(defn default-throw-hook
+  "Default implementation of *throw-hook*. See throw+ for keys present
+  in context."
+  [{:keys [obj] :as context}]
+  (throw
+   (if (instance? Throwable obj)
+     obj
+     (Stone.
+      "Object thrown by throw+ not caught in any try+:"
+      obj
+      context))))
+
+(def ^{:dynamic true
+       :doc "Hook to allow overriding the behavior of throw+. Must be
+  bound to a function of one argument, a context map. defaults to
+  default-throw-hook"}
+  *throw-hook* default-throw-hook)
+
 (defmacro throw+
   "Like the throw special form, but can throw any object.
   See also try+"
   [obj]
-  `(throw
-    (if (instance? Throwable ~obj)
-      ~obj
-      (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
-        (Stone.
-         "Object thrown by throw+ not caught in any try+:"
-         ~obj
-         {:obj ~obj
-          :env (dissoc env# '~'&throw-context)
-          :next (env# '~'&throw-context)})))))
+  `(*throw-hook*
+    (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
+      {:obj ~obj
+       :env (dissoc env# '~'&throw-context)
+       :next (env# '~'&throw-context)})))
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
