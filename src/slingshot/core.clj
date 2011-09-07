@@ -111,10 +111,10 @@
        (and *try-hook* (*try-hook* :enter (make-stack-trace)))
        ~@exprs
        (catch Throwable ~'&throw-context
-         ;; written carefully to introduce only one symbol into
-         ;; into the environment that's visible from within
-         ;; throw+ forms in catch clauses (see the special
-         ;; handling of &throw-context in throw+)
+         ;; written carefully to introduce only one symbol into the
+         ;; environment that's visible from within throw+ forms in
+         ;; catch clauses (see the special handling of &throw-context
+         ;; in throw+)
          (let [~'&throw-context
                (-> (if (instance? Stone ~'&throw-context)
                      (.context ~'&throw-context)
