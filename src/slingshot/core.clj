@@ -33,6 +33,11 @@
    `(let [~binding-form (:obj ~'&throw-context)]
       ~@exprs)])
 
+(defn make-stack-trace
+  "Returns the current stack trace beginning at the caller's frame"
+  []
+  (drop 2 (.getStackTrace (Thread/currentThread))))
+
 (defn make-throwable
   "Given a context from throw+, returns a Throwable to be thrown"
   [{:keys [obj] :as context}]
@@ -69,7 +74,7 @@
   `(*throw-hook*
     (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
       {:obj ~obj
-       :stack (.getStackTrace (Throwable.))
+       :stack (make-stack-trace)
        :env (dissoc env# '~'&throw-context)
        :next (env# '~'&throw-context)})))
 
