@@ -33,17 +33,20 @@
    `(let [~binding-form (:obj ~'&throw-context)]
       ~@exprs)])
 
-(defn default-throw-hook
-  "Default implementation of *throw-hook*. See throw+ for keys present
-  in context."
+(defn make-thrown
+  "Given a context from throw+, returns a Throwable to be thrown"
   [{:keys [obj] :as context}]
-  (throw
-   (if (instance? Throwable obj)
+  (if (instance? Throwable obj)
+    obj
+    (Stone.
+     "Object thrown by throw+ not caught in any try+:"
      obj
-     (Stone.
-      "Object thrown by throw+ not caught in any try+:"
-      obj
-      context))))
+     context)))
+
+(defn default-throw-hook
+  "Default implementation of *throw-hook*"
+  [context]
+  (throw (make-thrown context)))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
