@@ -61,6 +61,7 @@
   `(*throw-hook*
     (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
       {:obj ~obj
+       :stack (.getStackTrace (Throwable.))
        :env (dissoc env# '~'&throw-context)
        :next (env# '~'&throw-context)})))
 
@@ -93,8 +94,8 @@
                (let [~'&throw-context
                      (-> (if (instance? Stone ~'&throw-context)
                            (.context ~'&throw-context)
-                           {:obj ~'&throw-context})
-                         (assoc :stack (.getStackTrace ~'&throw-context))
+                           {:obj ~'&throw-context
+                            :stack (.getStackTrace ~'&throw-context)})
                          (with-meta {:throwable ~'&throw-context}))]
                  (cond
                   ~@(mapcat catch->cond catch-clauses)
