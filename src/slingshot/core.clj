@@ -55,6 +55,13 @@
   default-throw-hook"}
   *throw-hook* default-throw-hook)
 
+(def ^{:dynamic true
+       :doc "Hook to allow overriding the behavior of catch. Must be
+  bound to a function of one argument, a context map. returns a
+  (possibly modified) context map to be considered by catch clauses or
+  nil to disable further catch processing. defaults to identity"}
+  *catch-hook* identity)
+
 (defmacro throw+
   "Like the throw special form, but can throw any object.
   See also try+"
@@ -101,9 +108,11 @@
                            (.context ~'&throw-context)
                            {:obj ~'&throw-context
                             :stack (.getStackTrace ~'&throw-context)})
-                         (with-meta {:throwable ~'&throw-context}))]
-                 (cond
-                  ~@(mapcat catch->cond catch-clauses)
-                  :else
-                  (throw (-> ~'&throw-context meta :throwable)))))))
+                         (with-meta {:throwable ~'&throw-context})
+                         (*catch-hook*))]
+                 (when ~'&throw-context
+                   (cond
+                    ~@(mapcat catch->cond catch-clauses)
+                    :else
+                    (throw (-> ~'&throw-context meta :throwable))))))))
        ~@finally-clause)))
