@@ -102,22 +102,21 @@
   (let [[exprs catch-clauses finally-clause] (partition-body body)]
     `(try
        ~@exprs
-       ~@(when catch-clauses
-           `((catch Throwable ~'&throw-context
-               ;; written carefully to introduce only one symbol into
-               ;; into the environment that's visible from within
-               ;; throw+ forms in catch clauses (see the special
-               ;; handling of &throw-context in throw+)
-               (let [~'&throw-context
-                     (-> (if (instance? Stone ~'&throw-context)
-                           (.context ~'&throw-context)
-                           {:obj ~'&throw-context
-                            :stack (.getStackTrace ~'&throw-context)})
-                         (with-meta {:throwable ~'&throw-context})
-                         (*catch-hook*))]
-                 (when ~'&throw-context
-                   (cond
-                    ~@(mapcat catch->cond catch-clauses)
-                    :else
-                    (throw (-> ~'&throw-context meta :throwable))))))))
        ~@finally-clause)))
+       (catch Throwable ~'&throw-context
+         ;; written carefully to introduce only one symbol into
+         ;; into the environment that's visible from within
+         ;; throw+ forms in catch clauses (see the special
+         ;; handling of &throw-context in throw+)
+         (let [~'&throw-context
+               (-> (if (instance? Stone ~'&throw-context)
+                     (.context ~'&throw-context)
+                     {:obj ~'&throw-context
+                      :stack (.getStackTrace ~'&throw-context)})
+                   (with-meta {:throwable ~'&throw-context})
+                   (*catch-hook*))]
+           (when ~'&throw-context
+             (cond
+              ~@(mapcat catch->cond catch-clauses)
+              :else
+              (throw (-> ~'&throw-context meta :throwable))))))
