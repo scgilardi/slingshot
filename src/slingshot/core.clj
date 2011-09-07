@@ -61,6 +61,13 @@
   *throw-hook* default-throw-hook)
 
 (def ^{:dynamic true
+       :doc "Hook to allow tracking the dynamic entry and exit of
+  nested try+ blocks. Must be bound to nil or a function function of
+  two arguments: a keyword: :enter or :exit, and a stack trace
+  starting with the function containing the try. default is nil"}
+  *try-hook* nil)
+
+(def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
   bound to a function of one argument, a context map. returns a
   (possibly modified) context map to be considered by catch clauses or
@@ -101,8 +108,8 @@
   [& body]
   (let [[exprs catch-clauses finally-clause] (partition-body body)]
     `(try
+       (and *try-hook* (*try-hook* :enter (make-stack-trace)))
        ~@exprs
-       ~@finally-clause)))
        (catch Throwable ~'&throw-context
          ;; written carefully to introduce only one symbol into
          ;; into the environment that's visible from within
@@ -120,3 +127,6 @@
               ~@(mapcat catch->cond catch-clauses)
               :else
               (throw (-> ~'&throw-context meta :throwable))))))
+       (finally
+        ~@(drop 1 (first finally-clause))
+        (and *try-hook* (*try-hook* :exit (make-stack-trace)))))))
