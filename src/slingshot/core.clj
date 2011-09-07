@@ -33,7 +33,7 @@
    `(let [~binding-form (:obj ~'&throw-context)]
       ~@exprs)])
 
-(defn make-thrown
+(defn make-throwable
   "Given a context from throw+, returns a Throwable to be thrown"
   [{:keys [obj] :as context}]
   (if (instance? Throwable obj)
@@ -46,7 +46,7 @@
 (defn default-throw-hook
   "Default implementation of *throw-hook*"
   [context]
-  (throw (make-thrown context)))
+  (throw (make-throwable context)))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
