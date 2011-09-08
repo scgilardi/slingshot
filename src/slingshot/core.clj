@@ -61,12 +61,6 @@
   *throw-hook* default-throw-hook)
 
 (def ^{:dynamic true
-       :doc "Hook to allow tracking the entry and exit of nested try+
-  blocks. Must be bound to nil or a function of one argument, a
-  context map containing keys :event and :stack. defaults to nil"}
-  *try-hook* nil)
-
-(def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
   bound to a function of one argument, a context map. returns a
   (possibly modified) context map to be considered by catch clauses or
@@ -106,15 +100,12 @@
   See also throw+"
   [& body]
   (let [[exprs catch-clauses finally-clause] (partition-body body)]
+    ;; the code below uses only one local to minimize clutter in the
+    ;; &env captured by throw+ forms within catch clauses (see the
+    ;; special handling of &throw-context in throw+)
     `(try
-       (when *try-hook*
-         (*try-hook* {:event :enter :stack (make-stack-trace)}))
        ~@exprs
        (catch Throwable ~'&throw-context
-         ;; written carefully to introduce only one symbol into the
-         ;; environment that's visible from within throw+ forms in
-         ;; catch clauses (see the special handling of &throw-context
-         ;; in throw+)
          (let [~'&throw-context
                (-> (if (instance? Stone ~'&throw-context)
                      (.context ~'&throw-context)
@@ -127,7 +118,4 @@
               ~@(mapcat catch->cond catch-clauses)
               :else
               (throw (-> ~'&throw-context meta :throwable))))))
-       (finally
-        ~@(drop 1 (first finally-clause))
-        (when *try-hook*
-          (*try-hook* {:event :exit :stack (make-stack-trace)}))))))
+       ~@finally-clause)))
