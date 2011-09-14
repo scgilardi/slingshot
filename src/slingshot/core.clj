@@ -29,7 +29,7 @@
          (case (first selector)
            :key (let [[_ key val & sentinel] selector]
                   (when (or (nil? key) (not (nil? sentinel)))
-                    (selector-format-error "(:key key [val])"
+                    (selector-format-error "(:key key [value])"
                                            selector))
                   (if (nil? val)
                     `(contains? (:obj ~'&throw-context) ~key)
