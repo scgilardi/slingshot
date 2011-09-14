@@ -51,7 +51,7 @@
 
     ;; by clojure type, with optional hierarchy
     (catch (:type ::sphere) e#
-      [:type-shape (type e#) e#])
+      [:type-sphere (type e#) e#])
     (catch (:type ::shape h1) e#
       [:type-shape-in-h1 (type e#) e#])
 
@@ -91,7 +91,7 @@
     (is (= [:key-yields-value {:a-key 4}] (mega-try (throw+ {:a-key 4})))))
 
   (testing "catch by clojure type with optional hierarchy"
-    (is (= [:type-shape ::sphere a-sphere] (mega-try (throw+ a-sphere))))
+    (is (= [:type-sphere ::sphere a-sphere] (mega-try (throw+ a-sphere))))
     (is (= [:type-shape-in-h1 ::square a-square] (mega-try (throw+ a-square)))))
 
   (testing "catch by predicate"
