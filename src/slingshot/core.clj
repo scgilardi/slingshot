@@ -17,17 +17,10 @@
 (defn- classname? [x]
   (and (symbol? x) (class? (resolve x))))
 
-(defn- typespec? [x]
-  (and (map? x) (= 1 (count x))))
 
 (defn- catch->cond [[_ selector binding-form & exprs]]
   [(cond (classname? selector)
          `(instance? ~selector (:obj ~'&throw-context))
-         (typespec? selector)
-         (let [[hierarchy parent] (first selector)]
-           (if (nil? hierarchy)
-             `(isa? (type (:obj ~'&throw-context)) ~parent)
-             `(isa? ~hierarchy (type (:obj ~'&throw-context)) ~parent)))
          :else
          `(~selector (:obj ~'&throw-context)))
    `(let [~binding-form (:obj ~'&throw-context)]
