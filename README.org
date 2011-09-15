@@ -27,14 +27,13 @@
 
     a selector can be:
 
-    - a class name (e.g., Integer, my.clojure.record, RuntimeException),
-      matches any instance of that class, or
+    - a class name (e.g., RuntimeException, my.clojure.record), matches
+      any instance of that class, or
 
-    - a predicate (function of one argument like map?, a keyword, or a
-      symbol), matches any Object for which the predicate returns a
-      truthy value, or
+    - a predicate (function of one argument like map?, set?), matches
+      any Object for which the predicate returns a truthy value, or
 
-    - a selector form (a list beginning with a keyword):
+    - a selector form (a list beginning with :key or :type):
 
       - a (:key key [value]) selector
         - with no value, matches if the thrown object contains? key
