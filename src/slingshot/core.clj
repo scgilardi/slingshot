@@ -28,15 +28,15 @@
          (seq? selector)
          (case (first selector)
            :key (let [[_ key val & sentinel] selector]
-                  (when (or (nil? key) (not (nil? sentinel)))
                     (selector-format-error "(:key key [value])"
                                            selector))
+                  (when (or (nil? key) (seq sentinel))
                   (if (nil? val)
                     `(contains? (:obj ~'&throw-context) ~key)
                     `(= (get (:obj ~'&throw-context) ~key) ~val)))
            :type (let [[_ parent hierarchy & sentinel] selector]
-                   (when (or (nil? parent) (not (nil? sentinel)))
                      (selector-format-error "(:type parent [hierarchy])"
+                   (when (or (nil? parent) (seq sentinel))
                                             selector))
                    (if (nil? hierarchy)
                      `(isa? (type (:obj ~'&throw-context)) ~parent)
