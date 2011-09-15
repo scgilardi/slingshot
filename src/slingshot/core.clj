@@ -63,14 +63,19 @@
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
-    - specify objects to catch by classname, predicate, or typespec;
+    - specify objects to catch by classname, predicate, or
+      selector form;
     - destructure the caught object;
     - access the dynamic context at the throw site via the
       &throw-context hidden argument.
 
-  A typespec is a map with one entry:
-    - the key is the hierarchy (or nil for the global hierarchy);
-    - the value is the type tag: a keyword or symbol.
+  A selector form is a list beginning with a keyword:
+    - (:key key [value])
+      - with no value, matches if: (contains? thrown key)
+      - with a value, matches if: (= (get thrown key) value)
+    - (:type parent [hierarchy])
+      - with no hierarchy, matches if: (isa? (type thrown) parent)
+      - with a hierarchy, matches if: (isa? hierarchy (type thrown) parent)
 
   &throw-context is a map containing:
     :obj the thrown object;
