@@ -28,21 +28,19 @@
          (seq? selector)
          (case (first selector)
            :key (let [[_ key val & sentinel] selector]
-                    (selector-format-error "(:key key [value])"
-                                           selector))
                   (when (or (nil? key) (seq sentinel))
+                    (selector-format-error "(:key <key> [<value>])" selector))
                   (if (nil? val)
                     `(contains? (:obj ~'&throw-context) ~key)
                     `(= (get (:obj ~'&throw-context) ~key) ~val)))
            :type (let [[_ parent hierarchy & sentinel] selector]
-                     (selector-format-error "(:type parent [hierarchy])"
                    (when (or (nil? parent) (seq sentinel))
+                     (selector-format-error "(:type <parent> [<hierarchy>])"
                                             selector))
                    (if (nil? hierarchy)
                      `(isa? (type (:obj ~'&throw-context)) ~parent)
                      `(isa? ~hierarchy (type (:obj ~'&throw-context)) ~parent)))
-           (selector-format-error "(<:key|:type> <args>])"
-                                  selector))
+           (selector-format-error "(<:key|:type> <args>])" selector))
          :else ;; predicate
          `(~selector (:obj ~'&throw-context)))
    `(let [~binding-form (:obj ~'&throw-context)]
