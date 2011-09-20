@@ -44,7 +44,7 @@
         (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
           (Stone.
            "Object thrown by throw+ not caught in any try+:"
-           ~obj
+           obj#
            {:obj obj#
             :env (dissoc env# '~'&throw-context)
             :next (env# '~'&throw-context)}))))))
