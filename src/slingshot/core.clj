@@ -17,10 +17,9 @@
 (defn- classname? [x]
   (and (symbol? x) (class? (resolve x))))
 
-(defn- selector-format-error [form selector]
-  (throw (Exception.
-          (format "selector clause format: required: \"%s\", actual: \"%s\""
-                  form (pr-str selector)))))
+(defn- throw-format [required actual]
+  (throw (Exception. (format "selector form: \"%s\" does not match \"%s\""
+                             required (pr-str actual)))))
 
 (defn- catch->cond [[_ selector binding-form & exprs]]
   [(cond (classname? selector)
@@ -28,19 +27,18 @@
          (seq? selector)
          (case (first selector)
            :key (let [[_ key val & sentinel] selector]
-                  (when (or (nil? key) (seq sentinel))
-                    (selector-format-error "(:key <key> [<value>])" selector))
+                  (when (or (nil? key) sentinel)
+                    (throw-format "(:key <key> [<value>])" selector))
                   (if (nil? val)
                     `(contains? (:obj ~'&throw-context) ~key)
                     `(= (get (:obj ~'&throw-context) ~key) ~val)))
            :type (let [[_ parent hierarchy & sentinel] selector]
-                   (when (or (nil? parent) (seq sentinel))
-                     (selector-format-error "(:type <parent> [<hierarchy>])"
-                                            selector))
+                   (when (or (nil? parent) sentinel)
+                     (throw-format "(:type <parent> [<hierarchy>])" selector))
                    (if (nil? hierarchy)
                      `(isa? (type (:obj ~'&throw-context)) ~parent)
                      `(isa? ~hierarchy (type (:obj ~'&throw-context)) ~parent)))
-           (selector-format-error "(<:key|:type> <args>])" selector))
+           (throw-format "(<:key|:type> <args>])" selector))
          :else ;; predicate
          `(~selector (:obj ~'&throw-context)))
    `(let [~binding-form (:obj ~'&throw-context)]
