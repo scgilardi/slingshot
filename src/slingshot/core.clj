@@ -48,7 +48,8 @@
               {:obj obj#
                :env (dissoc env# '~'&throw-context)
                :next (env# '~'&throw-context)}))))))
-  ([obj] `(throw+ ~obj "Object thrown by throw+:")))
+  ([obj] `(throw+ ~obj "Object thrown by throw+:"))
+  ([] `(throw (-> ~'&throw-context meta :throwable))))
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
@@ -85,5 +86,5 @@
                  (cond
                   ~@(mapcat catch->cond catch-clauses)
                   :else
-                  (throw (-> ~'&throw-context meta :throwable)))))))
+                  (throw+))))))
        ~@finally-clause)))
