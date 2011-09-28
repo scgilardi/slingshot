@@ -34,7 +34,12 @@
       ~@exprs)])
 
 (defmacro throw+
-  "Like the throw special form, but can throw any object.
+  "Like the throw special form, but can throw any object. Identical to
+  throw for Throwable objects. For other objects, an optional second
+  argument specifies a message displayed along with the object's value
+  if it is caught outside a try+ form. Within a try+ catch clause,
+  throw+ with no arguments rethrows the caught object.
+
   See also try+"
   ([obj msg]
      `(let [obj# ~obj]
