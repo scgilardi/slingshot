@@ -2,18 +2,18 @@
 
 ** Enhanced throw and catch for Clojure
 
-  Provides try+ and throw+. Each is 100% compatible with Clojure and
-  Java's native try and throw both in source code and at runtime. Each
-  also provides new capabilities intended to improve ease of use by
-  leveraging Clojure's capabilities like records and destructuring.
+   Provides try+ and throw+. Each is 100% compatible with Clojure and
+   Java's native try and throw both in source code and at runtime. Each
+   also provides new capabilities intended to improve ease of use by
+   leveraging Clojure's capabilities like records and destructuring.
 
-  Clojure's native try and throw behave much like those of Java: throw
-  can accept objects derived from java.lang.Throwable and try selects
-  from among catch clauses based on the class of the thrown object.
+   Clojure's native try and throw behave much like those of Java: throw
+   can accept objects derived from java.lang.Throwable and try selects
+   from among catch clauses based on the class of the thrown object.
 
-  In addition to fully supporting those uses (whether they originate
-  from Clojure code or from Java code via interop), try+ and throw+
-  provide these enhanced capabilities:
+   In addition to fully supporting those uses (whether they originate
+   from Clojure code or from Java code via interop), try+ and throw+
+   provide these enhanced capabilities:
 
   - throw+ can throw any Java object, not just those whose class is
     derived from java.lang.Throwable.
@@ -27,18 +27,22 @@
 
     a selector can be:
 
-    - a class name (e.g., Integer, my.clojure.record, RuntimeException),
+    - a class name (e.g., RuntimeException, my.clojure.record),
       matches any instance of that class, or
 
-    - a predicate (function of one argument like map?, a keyword, a
-      symbol), matches any Object for which the predicate returns a
-      truthy value, or
+    - a predicate (function of one argument like map?, set?), matches
+      any Object for which the predicate returns a truthy value, or
 
-    - a type specifier representing a Clojure type in a hierarchy
-      (cf., clojure.core's type, derive, make-hierarchy, isa?). The
-      specifier is a map with one entry where the key is a Clojure
-      type hierarchy (or nil for the global hierarchy) and the value
-      is a type tag: a keyword or symbol.
+    - a selector form: a form containing one or more instances of % to
+      be replaced by the thrown object, matches any object for which
+      the form evaluates to truthy.
+
+    - class name and predicate selectors are shorthand for these
+      selector forms:
+
+      - <classname> => (instance? <classname> %)
+
+      - <predicate> => (<predicate> %)
 
   - the binding to the caught exception in a catch clause is not
     required to be a simple symbol. It is subject to destructuring so
@@ -53,16 +57,16 @@
 
 ** Usage
 
-  See the tests for examples
+   See the tests for examples
 
 ** Credits
 
-  Based on clojure.contrib.condition, data-conveying-exception,
-  discussions on the clojure mailing list and wiki and discussions and
-  implementations by Steve Gilardi, Phil Hagelberg, and Kevin Downey.
+   Based on clojure.contrib.condition, data-conveying-exception,
+   discussions on the clojure mailing list and wiki and discussions and
+   implementations by Steve Gilardi, Phil Hagelberg, and Kevin Downey.
 
 ** License
 
-  Copyright (C) 2011 Stephen C. Gilardi, Kevin Downey, and Phil Hagelberg
+   Copyright (C) 2011 Stephen C. Gilardi, Kevin Downey, and Phil Hagelberg
 
-  Distributed under the Eclipse Public License, the same as Clojure.
+   Distributed under the Eclipse Public License, the same as Clojure.
