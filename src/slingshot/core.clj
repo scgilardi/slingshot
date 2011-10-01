@@ -51,7 +51,7 @@
   (drop 2 (.getStackTrace (Thread/currentThread))))
 
 (defn make-throwable
-  "Given a context from throw+, returns a Throwable to be thrown"
+  "Returns a Throwable Given a throw+ message and context"
   [msg {:keys [obj] :as context}]
   (if (instance? Throwable obj)
     obj
@@ -59,7 +59,7 @@
 
 (defn default-throw-hook
   "Default implementation of *throw-hook*. Makes a throwable from a
-  context and throws it."
+  message and context and throws it."
   [{:keys [msg context]}]
   (throw (make-throwable msg context)))
 
@@ -73,16 +73,16 @@
        :doc "Hook to allow overriding the behavior of catch. Must be
   bound to a function of one argument, a context map with
   metadata. Returns a (possibly modified) context map to be considered
-  by catch clauses. Existing metadata on the argument map must be
-  preserved (or modified intentionally) in the returned context map.
+  by catch clauses. Existing metadata on the context map must be
+  preserved (or intentionally modified) in the returned context map.
 
-  Normal catch processing can be overridden by adding special keys to
-  the returned metadata:
+  Normal processing by catch clauses can be preempted by adding
+  special keys to the metadata on the returned context map:
 
-    - if the metadata includes the key :catch-hook-return, try+ will
+    - if the metadata contains the key :catch-hook-return, try+ will
       return the corresponding value; else
 
-    - if the metadata includes the key :catch-hook-throw, try+ will throw
+    - if the metadata contains the key :catch-hook-throw, try+ will throw
       the corresponding value
 
   defaults to identity"}
@@ -91,7 +91,8 @@
 (defn context
   "Returns the context map for Throwable t."
   [t]
-  ;; unwrapping RuntimeException cause chains works around CLJ-292.
+  ;; unwrapping RuntimeException cause chains works around CLJ-292
+  ;; which was fixed in Clojure 1.3.0
   (-> (loop [c t]
         (cond (instance? Stone c)
               (.context c)
