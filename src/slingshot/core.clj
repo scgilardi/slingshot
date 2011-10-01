@@ -17,29 +17,13 @@
 (defn- classname? [x]
   (and (symbol? x) (class? (resolve x))))
 
-(defn- throw-format [required actual]
-  (throw (Exception. (format "selector form: \"%s\" does not match \"%s\""
-                             required (pr-str actual)))))
-
 (defn- catch->cond [[_ selector binding-form & exprs]]
   [(cond (classname? selector)
          `(instance? ~selector (:obj ~'&throw-context))
          (seq? selector)
-         (case (first selector)
-           :key (let [[_ key val & sentinel] selector]
-                  (when (or (nil? key) sentinel)
-                    (throw-format "(:key <key> [<value>])" selector))
-                  (if (nil? val)
-                    `(contains? (:obj ~'&throw-context) ~key)
-                    `(= (get (:obj ~'&throw-context) ~key) ~val)))
-           :type (let [[_ parent hierarchy & sentinel] selector]
-                   (when (or (nil? parent) sentinel)
-                     (throw-format "(:type <parent> [<hierarchy>])" selector))
-                   (if (nil? hierarchy)
-                     `(isa? (type (:obj ~'&throw-context)) ~parent)
-                     `(isa? ~hierarchy (type (:obj ~'&throw-context)) ~parent)))
-           (throw-format "(<:key|:type> <args>])" selector))
-         :else ;; predicate
+         (clojure.walk/prewalk-replace {(symbol (name (ns-name *ns*)) "%")
+                                        '(:obj &throw-context)} selector)
+         :else
          `(~selector (:obj ~'&throw-context)))
    `(let [~binding-form (:obj ~'&throw-context)]
       ~@exprs)])
@@ -86,13 +70,15 @@
     - access the dynamic context at the throw site via the
       &throw-context hidden argument.
 
-  A selector form is a list beginning with a keyword:
-    - (:key key [value])
-      - with no value, matches if: (contains? thrown key)
-      - with a value, matches if: (= (get thrown key) value)
-    - (:type parent [hierarchy])
-      - with no hierarchy, matches if: (isa? (type thrown) parent)
-      - with a hierarchy, matches if: (isa? hierarchy (type thrown) parent)
+  A selector form is a form containing one or more instances of % to
+  be replaced by the thrown object. If it evaluates to truthy, the
+  object is caught.
+
+  Classname and predicate selectors are shorthand for these selector
+  forms:
+
+    <classname> => (instance? <classname> %)
+    <predicate> => (<predicate> %)
 
   &throw-context is a map containing:
     :obj the thrown object;
