@@ -33,6 +33,17 @@
    `(let [~binding-form (:obj ~'&throw-context)]
       ~@exprs)])
 
+(defn context
+  "Returns the context map associated with t. Works around CLJ-292."
+  [t]
+  (loop [c t]
+    (cond (instance? Stone c)
+          (.context c)
+          (and (= RuntimeException (class c)) (.getCause c))
+          (recur (.getCause c))
+          :else
+          {:obj t})))
+
 (defmacro throw+
   "Like the throw special form, but can throw any object. Identical to
   throw for Throwable objects. For other objects, an optional second
@@ -83,9 +94,7 @@
        ~@(when catch-clauses
            `((catch Throwable ~'&throw-context
                (let [~'&throw-context
-                     (-> (if (instance? Stone ~'&throw-context)
-                           (.context ~'&throw-context)
-                           {:obj ~'&throw-context})
+                     (-> (context ~'&throw-context)
                          (assoc :stack (.getStackTrace ~'&throw-context))
                          (with-meta {:throwable ~'&throw-context}))]
                  (cond
