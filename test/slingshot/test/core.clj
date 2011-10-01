@@ -44,15 +44,15 @@
       [:class-exception-record e#])
 
     ;; by key, with optional value
-    (catch (:key :a-key 4) e#
+    (catch (= (:a-key %) 4) e#
       [:key-yields-value e#])
-    (catch (:key :a-key) e#
+    (catch (contains? % :a-key) e#
       [:key-is-present e#])
 
     ;; by clojure type, with optional hierarchy
-    (catch (:type ::sphere) e#
+    (catch (isa? (type %) ::sphere) e#
       [:type-sphere (type e#) e#])
-    (catch (:type ::shape h1) e#
+    (catch (isa? h1 (type %) ::shape) e#
       [:type-shape-in-h1 (type e#) e#])
 
     ;; by predicate
@@ -192,9 +192,9 @@
    (try+
     (throw+ 0)
     (catch zero? e
-        (throw+)))
+      (throw+)))
    (catch zero? e
-       :zero)))
+     :zero)))
 
 (deftest test-rethrow
   (is (= :zero (h))))
