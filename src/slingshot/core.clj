@@ -33,6 +33,15 @@
    `(let [~binding-form (:obj ~'&throw-context)]
       ~@exprs)])
 
+(defn- transform
+  "Transform try+ catch-clauses and default into a try-compatible catch"
+  [catch-clauses default]
+  `(catch Throwable ~'&throw-context
+     (let [~'&throw-context (context ~'&throw-context)]
+       (cond
+        ~@(mapcat catch->cond catch-clauses)
+        :else ~default))))
+
 (defn context
   "Returns the context map for Throwable t. Works around CLJ-292."
   [t]
@@ -97,10 +106,5 @@
     `(try
        ~@exprs
        ~@(when catch-clauses
-           `((catch Throwable ~'&throw-context
-               (let [~'&throw-context (context ~'&throw-context)]
-                 (cond
-                  ~@(mapcat catch->cond catch-clauses)
-                  :else
-                  (throw+))))))
+           [(transform catch-clauses '(throw+))])
        ~@finally-clause)))
