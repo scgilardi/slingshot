@@ -39,7 +39,7 @@
   (loop [c t]
     (cond (instance? Stone c)
           (.context c)
-          (and (= RuntimeException (class c)) (.getCause c))
+          (= RuntimeException (class c))
           (recur (.getCause c))
           :else
           {:obj t})))
