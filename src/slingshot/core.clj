@@ -34,15 +34,17 @@
       ~@exprs)])
 
 (defn context
-  "Returns the context map associated with t. Works around CLJ-292."
+  "Returns the context map for Throwable t. Works around CLJ-292."
   [t]
-  (loop [c t]
-    (cond (instance? Stone c)
-          (.context c)
-          (= RuntimeException (class c))
-          (recur (.getCause c))
-          :else
-          {:obj t})))
+  (-> (loop [c t]
+        (cond (instance? Stone c)
+              (.context c)
+              (= RuntimeException (class c))
+              (recur (.getCause c))
+              :else
+              {:obj t}))
+      (assoc :stack (.getStackTrace t))
+      (with-meta {:throwable t})))
 
 (defmacro throw+
   "Like the throw special form, but can throw any object. Identical to
@@ -96,10 +98,7 @@
        ~@exprs
        ~@(when catch-clauses
            `((catch Throwable ~'&throw-context
-               (let [~'&throw-context
-                     (-> (context ~'&throw-context)
-                         (assoc :stack (.getStackTrace ~'&throw-context))
-                         (with-meta {:throwable ~'&throw-context}))]
+               (let [~'&throw-context (context ~'&throw-context)]
                  (cond
                   ~@(mapcat catch->cond catch-clauses)
                   :else
