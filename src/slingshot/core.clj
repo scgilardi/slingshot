@@ -44,20 +44,39 @@
    `(let [~binding-form (:obj ~'&throw-context)]
       ~@exprs)])
 
+(defn context
+  "Returns the context map associated with t. Works around CLJ-292."
+  [t]
+  (loop [c t]
+    (cond (instance? Stone c)
+          (.context c)
+          (= RuntimeException (class c))
+          (recur (.getCause c))
+          :else
+          {:obj t})))
+
 (defmacro throw+
-  "Like the throw special form, but can throw any object.
+  "Like the throw special form, but can throw any object. Identical to
+  throw for Throwable objects. For other objects, an optional second
+  argument specifies a message displayed along with the object's value
+  if it is caught outside a try+ form. Within a try+ catch clause,
+  throw+ with no arguments rethrows the caught object.
+
   See also try+"
-  [obj]
-  `(throw
-    (if (instance? Throwable ~obj)
-      ~obj
-      (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
-        (Stone.
-         "Object thrown by throw+ not caught in any try+:"
-         ~obj
-         {:obj ~obj
-          :env (dissoc env# '~'&throw-context)
-          :next (env# '~'&throw-context)})))))
+  ([obj msg]
+     `(let [obj# ~obj]
+        (throw
+         (if (instance? Throwable obj#)
+           obj#
+           (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
+             (Stone.
+              ~msg
+              obj#
+              {:obj obj#
+               :env (dissoc env# '~'&throw-context)
+               :next (env# '~'&throw-context)}))))))
+  ([obj] `(throw+ ~obj "Object thrown by throw+:"))
+  ([] `(throw (-> ~'&throw-context meta :throwable))))
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
@@ -86,18 +105,19 @@
   See also throw+"
   [& body]
   (let [[exprs catch-clauses finally-clause] (partition-body body)]
+    ;; the code below uses only one local to minimize clutter in the
+    ;; &env captured by throw+ forms within catch clauses (see the
+    ;; special handling of &throw-context in throw+)
     `(try
        ~@exprs
        ~@(when catch-clauses
            `((catch Throwable ~'&throw-context
                (let [~'&throw-context
-                     (-> (if (instance? Stone ~'&throw-context)
-                           (.context ~'&throw-context)
-                           {:obj ~'&throw-context})
+                     (-> (context ~'&throw-context)
                          (assoc :stack (.getStackTrace ~'&throw-context))
                          (with-meta {:throwable ~'&throw-context}))]
                  (cond
                   ~@(mapcat catch->cond catch-clauses)
                   :else
-                  (throw (-> ~'&throw-context meta :throwable)))))))
+                  (throw+))))))
        ~@finally-clause)))
