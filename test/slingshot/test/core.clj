@@ -154,6 +154,11 @@
    (throw+ 3.2 "wasn't caught")
    (catch Integer i i)))
 
+(deftest test-uncaught
+  (is (thrown-with-msg? Exception #"^uncaught$" (e)))
+  (is (thrown-with-msg? slingshot.Stone #"^Object thrown by throw+.*" (f)))
+  (is (thrown-with-msg? slingshot.Stone #"wasn't caught" (g))))
+
 (defn h []
   (try+
    (try+
@@ -163,10 +168,16 @@
    (catch zero? e
        :zero)))
 
-(deftest test-uncaught
-  (is (thrown-with-msg? Exception #"^uncaught$" (e)))
-  (is (thrown-with-msg? slingshot.Stone #"^Object thrown by throw+.*" (f)))
-  (is (thrown-with-msg? slingshot.Stone #"wasn't caught" (g))))
-
 (deftest test-rethrow
   (is (= :zero (h))))
+
+(defn i []
+  (try
+    (try+
+     (doall (map (fn [x] (throw+ (str x))) [1]))
+     (catch string? x
+       x))
+    (catch Throwable x)))
+
+(deftest test-issue-5
+  (is (= "1" (i))))
