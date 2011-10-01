@@ -138,9 +138,6 @@
   See also throw+"
   [& body]
   (let [[exprs catch-clauses finally-clause] (partition-body body)]
-    ;; the code below uses only one local to minimize clutter in the
-    ;; &env captured by throw+ forms within catch clauses (see the
-    ;; special handling of &throw-context in throw+)
     `(try
        ~@exprs
        ~@(when catch-clauses
