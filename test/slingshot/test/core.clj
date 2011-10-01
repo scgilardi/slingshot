@@ -2,14 +2,16 @@
   (:use [clojure.test]
         [slingshot.core :only [try+ throw+]]))
 
-(defrecord oit-exception [error-code duration-ms message])
+(defrecord exception-record [error-code duration-ms message])
 (defrecord x-failure [message])
+
+(def a-sphere ^{:type ::sphere} {:radius 3})
 
 (def h1 (derive (make-hierarchy) ::square ::shape))
 (def a-square ^{:type ::square} {:size 4})
 
 (def exception-1 (Exception. "exceptional"))
-(def oit-exception-1 (oit-exception. 6 1000 "pdf failure"))
+(def exception-record-1 (exception-record. 6 1000 "pdf failure"))
 
 (defn mult-func [x y]
   (let [a 7 b 11]
@@ -26,54 +28,80 @@
 (defmacro mega-try [body]
   `(try+
     ~body
-    (catch nil? e#
-      [:nil e#])
-    (catch Integer e#
-      [:integer e#])
-    (catch keyword? e#
-      [:keyword e#])
-    (catch symbol? e#
-      [:symbol e#])
-    (catch {nil :oit-exception} e#
-      [:oit-exception-map e#])
-    (catch {h1 ::shape} e#
-      [:shape (type e#) e#])
-    (catch oit-exception e#
-      [:oit-exception-record e#])
-    (catch map? e#
-      [:map e# (meta e#)])
+
+    ;; by class derived from Throwable
     (catch IllegalArgumentException e#
-      [:iae e#])
+      [:class-iae e#])
     (catch Exception e#
-      [:exception e#])))
+      [:class-exception e#])
+
+    ;; by java class generically
+    (catch Integer e#
+      [:class-integer e#])
+
+    ;; by clojure record type
+    (catch exception-record e#
+      [:class-exception-record e#])
+
+    ;; by key, with optional value
+    (catch (= (:a-key %) 4) e#
+      [:key-yields-value e#])
+    (catch (contains? % :a-key) e#
+      [:key-is-present e#])
+
+    ;; by clojure type, with optional hierarchy
+    (catch (isa? (type %) ::sphere) e#
+      [:type-sphere (type e#) e#])
+    (catch (isa? h1 (type %) ::shape) e#
+      [:type-shape-in-h1 (type e#) e#])
+
+    ;; by predicate
+    (catch nil? e#
+      [:pred-nil e#])
+    (catch keyword? e#
+      [:pred-keyword e#])
+    (catch symbol? e#
+      [:pred-symbol e#])
+    (catch map? e#
+      [:pred-map e# (meta e#)])))
 
 (deftest test-try+
-  (testing "throwing scalar types (to demonstrate genericity)"
-    (is (= [:nil nil] (mega-try (throw+ nil))))
-    (is (= [:integer 4] (mega-try (throw+ 4))))
-    (is (= [:keyword :awesome] (mega-try (throw+ :awesome))))
-    (is (= [:symbol 'yuletide] (mega-try (throw+ 'yuletide)))))
-  (testing "treat throwables exactly as throw does"
-    (is (= [:exception exception-1]
-           (mega-try (throw+ exception-1))
-           (mega-try (throw exception-1))
-           (try (throw+ exception-1) (catch Exception e [:exception e]))
-           (try (throw exception-1) (catch Exception e [:exception e])))))
-  (testing "catching an object by type in an ad-hoc hierarchy"
-    (is (= [:shape ::square a-square] (mega-try (throw+ a-square)))))
-  (testing "catching a map by predicate"
-    (is (= [:map {:error-code 4} nil] (mega-try (throw+ {:error-code 4})))))
-  (testing "catching a map with metadata by predicate"
-    (is (= [:map {:error-code 4} {:severity 4}]
-           (mega-try (throw+ ^{:severity 4} {:error-code 4})))))
-  (testing "catching a map with :type metadata by type"
-    (is (= [:oit-exception-map {:error-code 5}]
-           (mega-try (throw+ ^{:type :oit-exception} {:error-code 5})))))
-  (testing "catching a record acting as a custom exception type"
-    (is (= [:oit-exception-record oit-exception-1]
-           (mega-try (throw+ (oit-exception. 6 1000 "pdf failure"))))))
-  (testing "catching an organic IllegalArgumentException"
-    (is (= :iae (first (mega-try (first 1)))))))
+
+  (testing "catch by class derived from Throwable"
+    (testing "treat throwables exactly as throw does, interop with try/throw"
+      (is (= [:class-exception exception-1]
+             (mega-try (throw+ exception-1))
+             (mega-try (throw exception-1))
+             (try (throw+ exception-1)
+                  (catch Exception e [:class-exception e]))
+             (try (throw exception-1)
+                  (catch Exception e [:class-exception e])))))
+    (testing "IllegalArgumentException thrown by clojure/core"
+      (is (= :class-iae (first (mega-try (first 1)))))))
+
+  (testing "catch by java class generically"
+    (is (= [:class-integer 4] (mega-try (throw+ 4)))))
+
+  (testing "catch by clojure record type"
+    (is (= [:class-exception-record exception-record-1]
+           (mega-try (throw+ exception-record-1)))))
+
+  (testing "catch by key, with optional value"
+    (is (= [:key-is-present #{:a-key}] (mega-try (throw+ #{:a-key}))))
+    (is (= [:key-yields-value {:a-key 4}] (mega-try (throw+ {:a-key 4})))))
+
+  (testing "catch by clojure type with optional hierarchy"
+    (is (= [:type-sphere ::sphere a-sphere] (mega-try (throw+ a-sphere))))
+    (is (= [:type-shape-in-h1 ::square a-square] (mega-try (throw+ a-square)))))
+
+  (testing "catch by predicate"
+    (is (= [:pred-nil nil] (mega-try (throw+ nil))))
+    (is (= [:pred-keyword :awesome] (mega-try (throw+ :awesome))))
+    (is (= [:pred-symbol 'yuletide] (mega-try (throw+ 'yuletide))))
+    (is (= [:pred-map {:error-code 4} nil] (mega-try (throw+ {:error-code 4}))))
+    (testing "preservation of metadata"
+      (is (= [:pred-map {:error-code 4} {:severity 4}]
+             (mega-try (throw+ ^{:severity 4} {:error-code 4})))))))
 
 (deftest test-locals-and-destructuring
   (is (= 1155 (test-func 3 5)))
@@ -164,9 +192,9 @@
    (try+
     (throw+ 0)
     (catch zero? e
-        (throw+)))
+      (throw+)))
    (catch zero? e
-       :zero)))
+     :zero)))
 
 (deftest test-rethrow
   (is (= :zero (h))))

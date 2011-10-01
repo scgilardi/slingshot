@@ -17,17 +17,13 @@
 (defn- classname? [x]
   (and (symbol? x) (class? (resolve x))))
 
-(defn- typespec? [x]
-  (and (map? x) (= 1 (count x))))
-
 (defn- catch->cond [[_ selector binding-form & exprs]]
   [(cond (classname? selector)
          `(instance? ~selector (:obj ~'&throw-context))
-         (typespec? selector)
-         (let [[hierarchy parent] (first selector)]
-           (if (nil? hierarchy)
-             `(isa? (type (:obj ~'&throw-context)) ~parent)
-             `(isa? ~hierarchy (type (:obj ~'&throw-context)) ~parent)))
+         (seq? selector)
+         (clojure.walk/prewalk-replace
+          {(-> *ns* ns-name name (symbol "%")) '(:obj &throw-context)}
+          selector)
          :else
          `(~selector (:obj ~'&throw-context)))
    `(let [~binding-form (:obj ~'&throw-context)]
@@ -115,14 +111,21 @@
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
-    - specify objects to catch by classname, predicate, or typespec;
+    - specify objects to catch by classname, predicate, or
+      selector form;
     - destructure the caught object;
     - access the dynamic context at the throw site via the
       &throw-context hidden argument.
 
-  A typespec is a map with one entry:
-    - the key is the hierarchy (or nil for the global hierarchy);
-    - the value is the type tag: a keyword or symbol.
+  A selector form is a form containing one or more instances of % to
+  be replaced by the thrown object. If it evaluates to truthy, the
+  object is caught.
+
+  Classname and predicate selectors are shorthand for these selector
+  forms:
+
+    <classname> => (instance? <classname> %)
+    <predicate> => (<predicate> %)
 
   &throw-context is a map containing:
     :obj the thrown object;
