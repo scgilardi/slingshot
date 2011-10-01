@@ -21,8 +21,9 @@
   [(cond (classname? selector)
          `(instance? ~selector (:obj ~'&throw-context))
          (seq? selector)
-         (clojure.walk/prewalk-replace {(symbol (name (ns-name *ns*)) "%")
-                                        '(:obj &throw-context)} selector)
+         (clojure.walk/prewalk-replace
+          {(-> *ns* ns-name name (symbol "%")) '(:obj &throw-context)}
+          selector)
          :else
          `(~selector (:obj ~'&throw-context)))
    `(let [~binding-form (:obj ~'&throw-context)]
