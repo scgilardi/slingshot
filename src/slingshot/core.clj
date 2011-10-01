@@ -33,6 +33,22 @@
    `(let [~binding-form (:obj ~'&throw-context)]
       ~@exprs)])
 
+(defn- transform
+  "Transform try+ catch-clauses and default into a try-compatible catch"
+  [catch-clauses default]
+  ;; the code below uses only one local to minimize clutter in the
+  ;; &env captured by throw+ forms within catch clauses (see the
+  ;; special handling of &throw-context in throw+)
+  `(catch Throwable ~'&throw-context
+     (let [~'&throw-context (*catch-hook* (context ~'&throw-context))]
+       (cond
+        (:catch-hook-return (meta ~'&throw-context))
+        (:catch-hook-value (meta ~'&throw-context))
+        (:catch-hook-throw (meta ~'&throw-context))
+        (throw (:catch-hook-value (meta ~'&throw-context)))
+        ~@(mapcat catch->cond catch-clauses)
+        :else ~default))))
+
 (defn make-stack-trace
   "Returns the current stack trace beginning at the caller's frame"
   []
@@ -40,19 +56,16 @@
 
 (defn make-throwable
   "Given a context from throw+, returns a Throwable to be thrown"
-  [{:keys [obj] :as context}]
+  [msg {:keys [obj] :as context}]
   (if (instance? Throwable obj)
     obj
-    (Stone.
-     "Object thrown by throw+ not caught in any try+:"
-     obj
-     context)))
+    (Stone. msg obj context)))
 
 (defn default-throw-hook
   "Default implementation of *throw-hook*. Makes a throwable from a
   context and throws it."
-  [context]
-  (throw (make-throwable context)))
+  [{:keys [msg context]}]
+  (throw (make-throwable msg context)))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
@@ -62,21 +75,43 @@
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
-  bound to a function of one argument, a context map. returns a
-  (possibly modified) context map to be considered by catch clauses or
-  nil to disable further catch processing. defaults to identity"}
+  bound to a function of one argument, a context map with
+  metadata. returns a (possibly modified) context map to be considered
+  by catch clauses or . defaults to identity"}
   *catch-hook* identity)
 
+(defn context
+  "Returns the context map for Throwable t."
+  [t]
+  ;; unwrapping RuntimeException cause chains works around CLJ-292.
+  (-> (loop [c t]
+        (cond (instance? Stone c)
+              (.context c)
+              (= RuntimeException (class c))
+              (recur (.getCause c))
+              :else
+              {:obj t}))
+      (assoc :stack (.getStackTrace t))
+      (with-meta {:throwable t})))
+
 (defmacro throw+
-  "Like the throw special form, but can throw any object.
+  "Like the throw special form, but can throw any object. Identical to
+  throw for Throwable objects. For other objects, an optional second
+  argument specifies a message displayed along with the object's value
+  if it is caught outside a try+ form. Within a try+ catch clause,
+  throw+ with no arguments rethrows the caught object.
+
   See also try+"
-  [obj]
-  `(*throw-hook*
-    (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
-      {:obj ~obj
-       :stack (make-stack-trace)
-       :env (dissoc env# '~'&throw-context)
-       :next (env# '~'&throw-context)})))
+  ([obj msg]
+     `(*throw-hook*
+       (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
+         {:msg ~msg
+          :context {:obj ~obj
+                    :stack (make-stack-trace)
+                    :env (dissoc env# '~'&throw-context)
+                    :next (env# '~'&throw-context)}})))
+  ([obj] `(throw+ ~obj "Object thrown by throw+:"))
+  ([] `(throw (-> ~'&throw-context meta :throwable))))
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
@@ -105,17 +140,6 @@
     ;; special handling of &throw-context in throw+)
     `(try
        ~@exprs
-       (catch Throwable ~'&throw-context
-         (let [~'&throw-context
-               (-> (if (instance? Stone ~'&throw-context)
-                     (.context ~'&throw-context)
-                     {:obj ~'&throw-context
-                      :stack (.getStackTrace ~'&throw-context)})
-                   (with-meta {:throwable ~'&throw-context})
-                   (*catch-hook*))]
-           (when ~'&throw-context
-             (cond
-              ~@(mapcat catch->cond catch-clauses)
-              :else
-              (throw (-> ~'&throw-context meta :throwable))))))
+       ~@(when catch-clauses
+           [(transform catch-clauses '(throw+))])
        ~@finally-clause)))
