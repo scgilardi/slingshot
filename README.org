@@ -27,22 +27,22 @@
 
     a selector can be:
 
-    - a class name (e.g., RuntimeException, my.clojure.record), matches
-      any instance of that class, or
+    - a class name (e.g., RuntimeException, my.clojure.record),
+      matches any instance of that class, or
 
     - a predicate (function of one argument like map?, set?), matches
       any Object for which the predicate returns a truthy value, or
 
-    - a selector form (a list beginning with :key or :type):
+    - a selector form: a form containing one or more instances of % to
+      be replaced by the thrown object, matches any object for which
+      the form evaluates to truthy.
 
-      - a (:key key [value]) selector
-        - with no value, matches if the thrown object contains? key
-        - with a value, matches if get returns value when passed key
+    - class name and predicate selectors are shorthand for these
+      selector forms:
 
-      - a (:type parent [hierarchy]) selector
-        - with no hierarchy, matches if (isa? (type thrown) parent)
-        - with a hierarchy, matches if (isa? hierarchy (type thrown)
-          parent)
+      - <classname> => (instance? <classname> %)
+
+      - <predicate> => (<predicate> %)
 
   - the binding to the caught exception in a catch clause is not
     required to be a simple symbol. It is subject to destructuring so
