@@ -32,6 +32,9 @@
 (defn- transform
   "Transform try+ catch-clauses and default into a try-compatible catch"
   [catch-clauses default]
+  ;; the code below uses only one local to minimize clutter in the
+  ;; &env captured by throw+ forms within catch clauses (see the
+  ;; special handling of &throw-context in throw+)
   `(catch Throwable ~'&throw-context
      (let [~'&throw-context (context ~'&throw-context)]
        (cond
@@ -104,9 +107,6 @@
   See also throw+"
   [& body]
   (let [[exprs catch-clauses finally-clause] (partition-body body)]
-    ;; the code below uses only one local to minimize clutter in the
-    ;; &env captured by throw+ forms within catch clauses (see the
-    ;; special handling of &throw-context in throw+)
     `(try
        ~@exprs
        ~@(when catch-clauses
