@@ -43,7 +43,8 @@
         :else ~default))))
 
 (defn context
-  "Returns the context map for Throwable t. Works around CLJ-292."
+  "Returns the context map for Throwable t. Unwrapping of
+  RuntimeException cause chains works around CLJ-292."
   [t]
   (-> (loop [c t]
         (cond (instance? Stone c)
