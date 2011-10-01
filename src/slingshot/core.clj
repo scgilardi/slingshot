@@ -38,10 +38,10 @@
   `(catch Throwable ~'&throw-context
      (let [~'&throw-context (*catch-hook* (context ~'&throw-context))]
        (cond
+        (contains? (meta ~'&throw-context) :catch-hook-return)
         (:catch-hook-return (meta ~'&throw-context))
-        (:catch-hook-value (meta ~'&throw-context))
-        (:catch-hook-throw (meta ~'&throw-context))
-        (throw (:catch-hook-value (meta ~'&throw-context)))
+        (contains? (meta ~'&throw-context) :catch-hook-throw)
+        (throw (:catch-hook-throw (meta ~'&throw-context)))
         ~@(mapcat catch->cond catch-clauses)
         :else ~default))))
 
@@ -65,15 +65,27 @@
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
-  bound to a function of one argument, a context map. defaults to
-  default-throw-hook"}
+  bound to a function of one argument, a map with keys :msg
+  and :context. defaults to default-throw-hook"}
   *throw-hook* default-throw-hook)
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
   bound to a function of one argument, a context map with
-  metadata. returns a (possibly modified) context map to be considered
-  by catch clauses or . defaults to identity"}
+  metadata. Returns a (possibly modified) context map to be considered
+  by catch clauses. Existing metadata on the argument map must be
+  preserved (or modified intentionally) in the returned context map.
+
+  Normal catch processing can be overridden by adding special keys to
+  the returned metadata:
+
+    - if the metadata includes the key :catch-hook-return, try+ will
+      return the corresponding value; else
+
+    - if the metadata includes the key :catch-hook-throw, try+ will throw
+      the corresponding value
+
+  defaults to identity"}
   *catch-hook* identity)
 
 (defn context
