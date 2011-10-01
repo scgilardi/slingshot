@@ -170,3 +170,14 @@
 
 (deftest test-rethrow
   (is (= :zero (h))))
+
+(defn i []
+  (try
+    (try+
+     (doall (map (fn [x] (throw+ (str x))) [1]))
+     (catch string? x
+       x))
+    (catch Throwable x)))
+
+(deftest test-issue-5
+  (is (= "1" (i))))
