@@ -19,7 +19,7 @@
   (when (symbol? x)
     (or (resolve x)
         (throw (IllegalArgumentException.
-                (str "can't resolve \"" x "\" to a Class or var"))))))
+                (str "Unable to resolve symbol: " x " in this context"))))))
 
 (defn- catch->cond [[_ selector binding-form & exprs]]
   [(cond (class? (resolved selector))
