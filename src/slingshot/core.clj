@@ -63,8 +63,8 @@
 (defn default-throw-hook
   "Default implementation of *throw-hook*. Makes a throwable from a
   message and context and throws it."
-  [{:keys [msg context]}]
   (throw (make-throwable msg (:obj context) context)))
+  [{:keys [obj] :as context}]
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
@@ -117,12 +117,11 @@
   ([obj msg]
      `(*throw-hook*
        (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
-         {:msg ~msg
-          :context {:obj ~obj
-                    :stack (make-stack-trace)
-                    :env (dissoc env# '~'&throw-context)
-                    :next (env# '~'&throw-context)}})))
-  ([obj] `(throw+ ~obj "Object thrown by throw+:"))
+         {:obj ~obj
+          :msg ~msg
+          :stack (make-stack-trace)
+          :env (dissoc env# '~'&throw-context)
+          :next (env# '~'&throw-context)})))
   ([] `(throw (-> ~'&throw-context meta :throwable))))
 
 (defmacro try+
