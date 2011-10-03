@@ -15,11 +15,14 @@
                    "(try+ expr* catch-clause* finally-clause?)"))))
     [e c f]))
 
-(defn- classname? [x]
-  (and (symbol? x) (class? (resolve x))))
+(defn- resolved [x]
+  (when (symbol? x)
+    (or (resolve x)
+        (throw (IllegalArgumentException.
+                (str "can't resolve \"" x "\" to a Class or var"))))))
 
 (defn- catch->cond [[_ selector binding-form & exprs]]
-  [(cond (classname? selector)
+  [(cond (class? (resolved selector))
          `(instance? ~selector (:obj ~'&throw-context))
          (seq? selector)
          (clojure.walk/prewalk-replace
