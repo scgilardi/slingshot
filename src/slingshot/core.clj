@@ -10,8 +10,9 @@
         [c f s] (if (-> (first c) clause-type (= 'catch)) [c f s] [nil c f])
         [f s] (if (-> (first f) clause-type (= 'finally)) [f s] [nil f])]
     (when (or s (> (count f) 1))
-      (throw (Exception. (str "try+ form must match: "
-                              "(try+ expr* catch-clause* finally-clause?)"))))
+      (throw (IllegalArgumentException.
+              (str "try+ form must match: "
+                   "(try+ expr* catch-clause* finally-clause?)"))))
     [e c f]))
 
 (defn- classname? [x]
