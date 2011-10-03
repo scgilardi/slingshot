@@ -34,12 +34,14 @@
       ~@exprs)])
 
 (defn context
-  "Returns the context map associated with t. Works around CLJ-292."
+  "Returns the context map associated with t. If t or any throwable in
+  its cause chain is a Stone, return its context, else return a new
+  context with t as the thrown object."
   [t]
   (loop [c t]
     (cond (instance? Stone c)
           (.context c)
-          (= RuntimeException (class c))
+          (.getCause c)
           (recur (.getCause c))
           :else
           {:obj t})))
