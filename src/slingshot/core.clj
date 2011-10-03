@@ -65,6 +65,10 @@
   message and context and throws it."
   (throw (make-throwable msg (:obj context) context)))
   [{:keys [obj] :as context}]
+  (throw
+   (if (instance? Throwable obj)
+     obj
+     (make-throwable context default-formatter))))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
