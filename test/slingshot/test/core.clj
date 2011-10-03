@@ -207,5 +207,13 @@
        x))
     (catch Throwable x)))
 
+(defn j []
+  (try+
+   (let [fut (future (throw+ "whoops"))]
+     @fut)
+   (catch string? e
+     e)))
+
 (deftest test-issue-5
-  (is (= "1" (i))))
+  (is (= "1" (i)))
+  (is (= "whoops" (j))))
