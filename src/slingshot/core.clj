@@ -99,8 +99,8 @@
               (.getCause c)
               (recur (.getCause c))
               :else
-              {:obj t}))
-      (assoc :stack (.getStackTrace t))
+              {:obj t
+               :stack (.getStackTrace t)}))
       (with-meta {:throwable t})))
 
 (defmacro throw+
