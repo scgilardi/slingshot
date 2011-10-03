@@ -61,9 +61,9 @@
   (str (or msg "Object thrown by throw+") ": " (pr-str obj)))
 
 (defn default-throw-hook
-  "Default implementation of *throw-hook*. Makes a throwable from a
-  message and context and throws it."
-  (throw (make-throwable msg (:obj context) context)))
+  "Default implementation of *throw-hook*. If obj in context is a
+  Throwable, throw it, else make a Throwable to carry it and throw
+  that."
   [{:keys [obj] :as context}]
   (throw
    (if (instance? Throwable obj)
@@ -72,8 +72,8 @@
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
-  bound to a function of one argument, a map with keys :msg
-  and :context. defaults to default-throw-hook"}
+  bound to a function of one argument, a context map. Defaults to
+  default-throw-hook"}
   *throw-hook* default-throw-hook)
 
 (def ^{:dynamic true
@@ -90,9 +90,9 @@
       return the corresponding value; else
 
     - if the metadata contains the key :catch-hook-throw, try+ will throw
-      the corresponding value
+      the corresponding value.
 
-  defaults to identity"}
+  Defaults to identity."}
   *catch-hook* identity)
 
 (defn context
@@ -111,11 +111,12 @@
       (with-meta {:throwable t})))
 
 (defmacro throw+
-  "Like the throw special form, but can throw any object. Identical to
-  throw for Throwable objects. For other objects, an optional second
-  argument specifies a message displayed along with the object's value
-  if it is caught outside a try+ form. Within a try+ catch clause,
-  throw+ with no arguments rethrows the caught object.
+  "Like the throw special form, but can throw any object. Behaves the
+  same as throw for Throwable objects. For other objects, an optional
+  second argument specifies a message which by default is displayed
+  along with the object's value if it is caught outside a try+
+  form. Within a try+ catch clause, throw+ with no arguments rethrows
+  the caught object.
 
   See also try+"
   ([obj & [msg]]
@@ -147,12 +148,13 @@
     <predicate> => (<predicate> %)
 
   &throw-context is a map containing:
-    :obj the thrown object;
-    :stack the stack trace;
-  for all caught objects, and
-    :env a map of bound symbols to their values;
-    :next the next throw context in the cause chain
-  for objects that are not instances of Throwable.
+    - for all caught objects:
+      :obj    the thrown object;
+      :stack  the stack trace;
+    - for for objects that are not instances of Throwable:
+      :env    a map of bound symbols to their values;
+      :msg    optional message string specified in the throw+ call;
+      :next   the next throw context in the cause chain.
 
   See also throw+"
   [& body]
