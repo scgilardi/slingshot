@@ -158,7 +158,7 @@
 
 (deftest test-throw-context
   (let [context (d)]
-    (is (= #{:stack :env :obj :next}
+    (is (= #{:stack :env :obj :msg :next}
            (set (keys context))
            (set (keys (-> context :next)))
            (set (keys (-> context :next :next)))))
