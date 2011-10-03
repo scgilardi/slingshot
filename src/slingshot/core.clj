@@ -51,11 +51,10 @@
   (drop 2 (.getStackTrace (Thread/currentThread))))
 
 (defn make-throwable
-  "Returns a Throwable Given a throw+ message, object, and context"
-  [msg obj context]
-  (if (instance? Throwable obj)
-    obj
-    (Stone. msg obj context)))
+  "Returns a Throwable given a context and formatter"
+  [context formatter]
+  (Stone. context formatter))
+
 
 (defn default-throw-hook
   "Default implementation of *throw-hook*. Makes a throwable from a
