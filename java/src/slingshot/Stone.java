@@ -2,25 +2,22 @@ package slingshot;
 
 public class Stone extends RuntimeException {
 
-    public final String messagePrefix;
-    public final Object object;
     public final Object context;
+    public final clojure.lang.IFn format;
 
-    public Stone(String _messagePrefix, Object _object, Object _context) {
-        messagePrefix = _messagePrefix;
-        object = _object;
+    public Stone(Object _context, clojure.lang.IFn _format) {
         context = _context;
+        format = _format;
     }
 
     public String getMessage() {
-        Object messageDetails;
+        Object message;
         try {
-            clojure.lang.Var prStr = clojure.lang.RT.var("clojure.core", "pr-str");
-            messageDetails = prStr.invoke(object);
+            message = format.invoke(context);
         }
         catch (Exception e) {
-            messageDetails = object;
+            message = context;
         }
-        return messagePrefix + " " + messageDetails;
+        return message.toString();
     }
 }
