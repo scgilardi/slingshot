@@ -55,6 +55,10 @@
   [context formatter]
   (Stone. context formatter))
 
+(defn default-formatter
+  "Default funtion to returns a message string given a context"
+  [{:keys [msg obj]}]
+  (str (or msg "Object thrown by throw+") ": " (pr-str obj)))
 
 (defn default-throw-hook
   "Default implementation of *throw-hook*. Makes a throwable from a
