@@ -114,7 +114,7 @@
   throw+ with no arguments rethrows the caught object.
 
   See also try+"
-  ([obj msg]
+  ([obj & [msg]]
      `(*throw-hook*
        (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
          {:obj ~obj
