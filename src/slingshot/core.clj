@@ -89,14 +89,14 @@
   *catch-hook* identity)
 
 (defn context
-  "Returns the context map for Throwable t."
+  "Returns the context map associated with t. If t or any throwable in
+  its cause chain is a Stone, return its context, else return a new
+  context with t as the thrown object."
   [t]
-  ;; unwrapping RuntimeException cause chains works around CLJ-292
-  ;; which was fixed in Clojure 1.3.0
   (-> (loop [c t]
         (cond (instance? Stone c)
               (.context c)
-              (= RuntimeException (class c))
+              (.getCause c)
               (recur (.getCause c))
               :else
               {:obj t}))
