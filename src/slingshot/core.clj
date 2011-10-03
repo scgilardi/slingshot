@@ -51,8 +51,8 @@
   (drop 2 (.getStackTrace (Thread/currentThread))))
 
 (defn make-throwable
-  "Returns a Throwable Given a throw+ message and context"
-  [msg {:keys [obj] :as context}]
+  "Returns a Throwable Given a throw+ message, object, and context"
+  [msg obj context]
   (if (instance? Throwable obj)
     obj
     (Stone. msg obj context)))
@@ -61,7 +61,7 @@
   "Default implementation of *throw-hook*. Makes a throwable from a
   message and context and throws it."
   [{:keys [msg context]}]
-  (throw (make-throwable msg context)))
+  (throw (make-throwable msg (:obj context) context)))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
