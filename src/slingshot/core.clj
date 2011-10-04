@@ -159,12 +159,31 @@
 
   &throw-context is a map containing:
     - for all caught objects:
-      :obj    the thrown object;
-      :msg    optional message string specified in the throw+ call;
-      :cause  the cause;
-      :stack  the stack trace;
-    - for for objects that are not instances of Throwable:
-      :env    a map of bound symbols to their values;
+      :obj      the thrown object;
+      :stack    the stack trace;
+    - for Throwable caught objects
+      :msg      the message, from .getMessage;
+      :cause    the cause, from .getCause;
+    - for non-Throwable caught objects:
+      :msg      the message, from the optional argument to throw+;
+      :cause    the cause, captured by throw+, see below;
+      :wrapper  the outermost Throwable wrapper of the caught object,
+                see below;
+      :env      a map of bound symbols to their values.
+
+  To throw a non-Throwable object, throw+ wraps it with an object of
+  type Stone. That Stone in turn may end up being wrapped by other
+  exceptions (e.g., instances of RuntimeException or
+  java.util.concurrent.ExecutionException). try+ \"sees through\" all
+  such wrappers to find the object wrapped by the first instance of
+  Stone in the outermost wrapper's cause chain. If needed, the
+  outermost wrapper is available within a catch clause at the :wrapper
+  key in &throw-context. Any nested wrappers are accessible via its
+  .getCause chain.
+
+  When throw+ throws a non-Throwable object from within a try+ catch
+  clause, the outermost wrapper of the caught object being processed
+  is captured as the \"cause\" of the new throw.
 
   See also throw+"
   [& body]
