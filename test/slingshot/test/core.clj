@@ -135,36 +135,31 @@
     (is (= 5 (try+ (throw+ 4) 4 (catch Integer i (inc i)) (finally (bump)))))
     (is (= 11 @bumps))))
 
-(defn a []
-  (throw+ 1))
+(defn ax [] (throw+ 1))
+(defn bx [] (try+ (ax) (catch Integer p (throw+ 2))))
+(defn cx [] (try+ (bx) (catch Integer q (throw+ 3))))
+(defn dx [] (try+ (cx) (catch Integer r (throw+ 4))))
+(defn ex [] (try+ (dx) (catch Integer s (throw+ 5))))
+(defn fx [] (try+ (ex) (catch Integer t (throw+ 6))))
+(defn gx [] (try+ (fx) (catch Integer u (throw+ 7))))
+(defn hx [] (try+ (gx) (catch Integer v (throw+ 8))))
+(defn ix [] (try+ (hx) (catch Integer w &throw-context)))
 
-(defn b []
-  (try+
-   (a)
-   (catch Integer p
-     (throw+ 2))))
-
-(defn c []
-  (try+
-   (b)
-   (catch Integer q
-     (throw+ 3))))
-
-(defn d []
-  (try+
-   (c)
-   (catch Integer r
-     &throw-context)))
+(defn next-context [x]
+  (-> x :cause .context))
 
 (deftest test-throw-context
-  (let [context (d)]
-    (is (= #{:stack :env :obj :msg :next}
+  (let [context (ix)
+        context1 (next-context context)
+        context2 (next-context context1)]
+
+    (is (= #{:obj :msg :cause :stack :env}
            (set (keys context))
-           (set (keys (-> context :next)))
-           (set (keys (-> context :next :next)))))
-    (is (= 3 (-> context :obj)))
-    (is (= 2 (-> context :next :obj)))
-    (is (= 1 (-> context :next :next :obj)))))
+           (set (keys context1))
+           (set (keys context2))))
+    (is (= 8 (-> context :obj)))
+    (is (= 7 (-> context1 :obj)))
+    (is (= 6 (-> context2 :obj)))))
 
 (defn e []
   (try+

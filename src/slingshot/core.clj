@@ -134,9 +134,9 @@
        (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
          {:obj ~obj
           :msg ~msg
+          :cause (-> (env# '~'&throw-context) meta :throwable)
           :stack (make-stack-trace)
-          :env (dissoc env# '~'&throw-context)
-          :next (env# '~'&throw-context)})))
+          :env (dissoc env# '~'&throw-context)})))
   ([] `(throw (-> ~'&throw-context meta :throwable))))
 
 (defmacro try+
@@ -160,11 +160,11 @@
   &throw-context is a map containing:
     - for all caught objects:
       :obj    the thrown object;
+      :msg    optional message string specified in the throw+ call;
+      :cause  the cause;
       :stack  the stack trace;
     - for for objects that are not instances of Throwable:
       :env    a map of bound symbols to their values;
-      :msg    optional message string specified in the throw+ call;
-      :next   the next throw context in the cause chain.
 
   See also throw+"
   [& body]
