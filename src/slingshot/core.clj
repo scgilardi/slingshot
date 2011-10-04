@@ -3,7 +3,7 @@
 
 (defn- clause-type
   "Return a classifying value for any object in a try+ body:
-  catch-clause, finaly-clause, or other"
+  catch-clause, finally-clause, or other"
   [x]
   (when (seq? x) (#{'catch 'finally} (first x))))
 
@@ -157,8 +157,8 @@
   be replaced by the thrown object. If it evaluates to truthy, the
   object is caught.
 
-  Classname and predicate selectors are shorthand for these selector
-  forms:
+  The classname and predicate selectors are shorthand for these
+  selector forms:
 
     <classname> => (instance? <classname> %)
     <predicate> => (<predicate> %)
@@ -167,7 +167,7 @@
     - for all caught objects:
       :obj      the thrown object;
       :stack    the stack trace;
-    - for Throwable caught objects
+    - for Throwable caught objects:
       :msg      the message, from .getMessage;
       :cause    the cause, from .getCause;
     - for non-Throwable caught objects:
@@ -185,7 +185,7 @@
   Stone in the outermost wrapper's cause chain. If needed, the
   outermost wrapper is available within a catch clause at the :wrapper
   key in &throw-context. Any nested wrappers are accessible via its
-  .getCause chain.
+  cause chain.
 
   When throw+ throws a non-Throwable object from within a try+ catch
   clause, the outermost wrapper of the caught object being processed
