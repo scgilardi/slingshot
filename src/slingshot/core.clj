@@ -52,7 +52,8 @@
 (defn make-stack-trace
   "Returns the current stack trace beginning at the caller's frame"
   []
-  (drop 2 (.getStackTrace (Thread/currentThread))))
+  (let [trace (.getStackTrace (Thread/currentThread))]
+    (java.util.Arrays/copyOfRange trace 2 (count trace))))
 
 (defn make-throwable
   "Returns a Throwable given a context and formatter"
