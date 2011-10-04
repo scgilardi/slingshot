@@ -40,7 +40,7 @@
   ;; &env captured by throw+ forms within catch clauses (see the
   ;; special handling of &throw-context in throw+)
   `(catch Throwable ~'&throw-context
-     (let [~'&throw-context (*catch-hook* (context ~'&throw-context))]
+     (let [~'&throw-context (-> ~'&throw-context throw-context *catch-hook*)]
        (cond
         (contains? (meta ~'&throw-context) :catch-hook-return)
         (:catch-hook-return (meta ~'&throw-context))
@@ -100,7 +100,7 @@
   Defaults to identity."}
   *catch-hook* identity)
 
-(defn context
+(defn throw-context
   "Returns the context map associated with t. If t or any throwable in
   its cause chain is a Stone, return its context, else return a new
   context with t as the thrown object."
