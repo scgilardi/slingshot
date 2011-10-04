@@ -126,7 +126,10 @@
   the caught object.
 
   See also try+"
-  ([obj & [msg]]
+  ([obj & [msg sen]]
+     (when sen
+       (throw (IllegalArgumentException.
+               "throw+ call must match: (throw+ obj? ^String msg?")))
      `(*throw-hook*
        (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
          {:obj ~obj
