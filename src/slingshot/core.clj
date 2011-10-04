@@ -56,12 +56,12 @@
     (java.util.Arrays/copyOfRange trace 2 (count trace))))
 
 (defn make-throwable
-  "Returns a Throwable given a context and formatter"
-  [context formatter]
-  (Stone. context formatter))
+  "Returns a Throwable given message, cause, and context"
+  [message cause context]
+  (Stone. message cause context))
 
-(defn default-formatter
-  "Default funtion to returns a message string given a context"
+(defn format-message
+  "Returns a message string given a context"
   [{:keys [msg obj]}]
   (str (or msg "Object thrown by throw+") ": " (pr-str obj)))
 
@@ -69,11 +69,11 @@
   "Default implementation of *throw-hook*. If obj in context is a
   Throwable, throw it, else make a Throwable to carry it and throw
   that."
-  [{:keys [obj] :as context}]
+  [{:keys [obj cause] :as context}]
   (throw
    (if (instance? Throwable obj)
      obj
-     (make-throwable context default-formatter))))
+     (make-throwable (format-message context) cause context))))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
