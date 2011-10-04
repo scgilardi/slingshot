@@ -154,7 +154,7 @@
         context2 (next-context context1)]
 
     (is (= #{:obj :msg :cause :stack :env}
-           (set (keys context))
+           (disj (set (keys context)) :wrapper)
            (set (keys context1))
            (set (keys context2))))
     (is (= 8 (-> context :obj)))
