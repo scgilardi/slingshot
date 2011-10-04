@@ -1,10 +1,15 @@
 (ns slingshot.core
   (:import (slingshot Stone)))
 
-(defn- clause-type [x]
+(defn- clause-type
+  "Return a classifying value for any object in a try+ body:
+  catch-clause, finaly-clause, or other"
+  [x]
   (when (seq? x) (#{'catch 'finally} (first x))))
 
-(defn- partition-body [body]
+(defn- partition-body
+  "Partition and syntax check a try+ body"
+  [body]
   (let [[e c f s] (partition-by clause-type body)
         [e c f s] (if (-> (first e) clause-type nil?) [e c f s] [nil e c f])
         [c f s] (if (-> (first c) clause-type (= 'catch)) [c f s] [nil c f])
@@ -15,13 +20,17 @@
                    "(try+ expr* catch-clause* finally-clause?)"))))
     [e c f]))
 
-(defn- resolved [x]
+(defn- resolved
+  "For symbols, return the resolved value or throw if not resolvable"
+  [x]
   (when (symbol? x)
     (or (resolve x)
         (throw (IllegalArgumentException.
                 (str "Unable to resolve symbol: " x " in this context"))))))
 
-(defn- catch->cond [[_ selector binding-form & exprs]]
+(defn- catch->cond
+  "Convert a try+ catch cause into the two parts of a cond clause"
+  [[_ selector binding-form & exprs]]
   [(cond (class? (resolved selector))
          `(instance? ~selector (:obj ~'&throw-context))
          (seq? selector)
@@ -56,24 +65,23 @@
     (java.util.Arrays/copyOfRange trace 2 (count trace))))
 
 (defn make-throwable
-  "Returns a Throwable given message, cause, and context"
+  "Make a message, cause, and context throwable by wrapping"
   [message cause context]
   (Stone. message cause context))
 
-(defn format-message
-  "Returns a message string given a context"
+(defn context-message
+  "Return a message string for a context"
   [{:keys [msg obj]}]
   (str (or msg "Object thrown by throw+") ": " (pr-str obj)))
 
 (defn default-throw-hook
   "Default implementation of *throw-hook*. If obj in context is a
-  Throwable, throw it, else make a Throwable to carry it and throw
-  that."
+  Throwable, throw it, else wrap it and throw the wrapper."
   [{:keys [obj cause] :as context}]
   (throw
    (if (instance? Throwable obj)
      obj
-     (make-throwable (format-message context) cause context))))
+     (make-throwable (context-message context) cause context))))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
@@ -91,11 +99,9 @@
   Normal processing by catch clauses can be preempted by adding
   special keys to the metadata on the returned context map:
 
-    - if the metadata contains the key :catch-hook-return, try+ will
-      return the corresponding value; else
-
-    - if the metadata contains the key :catch-hook-throw, try+ will throw
-      the corresponding value.
+  If the metadta contains the key:
+    - :catch-hook-return, try+ will return the corresponding value;
+    - :catch-hook-throw, try+ will throw the corresponding value.
 
   Defaults to identity."}
   *catch-hook* identity)
@@ -144,8 +150,8 @@
     - specify objects to catch by classname, predicate, or
       selector form;
     - destructure the caught object;
-    - access the dynamic context at the throw site via the
-      &throw-context hidden argument.
+    - access the context at the throw site via the &throw-context
+      hidden argument.
 
   A selector form is a form containing one or more instances of % to
   be replaced by the thrown object. If it evaluates to truthy, the
