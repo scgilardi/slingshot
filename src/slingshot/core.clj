@@ -35,7 +35,7 @@
   (-> *ns* ns-name name (symbol (name sym))))
 
 (defn- catch->cond
-  "Convert a try+ catch cause into the two parts of a cond clause"
+  "Convert a try+ catch clause into the two parts of a cond clause"
   [[_ selector binding-form & exprs]]
   [(cond (class? (resolved selector))
          `(instance? ~selector (:obj ~'&throw-context))
@@ -69,13 +69,13 @@
     (java.util.Arrays/copyOfRange trace 2 (alength trace))))
 
 (defn make-throwable
-  "Make a message, cause, and context throwable by wrapping"
   [message cause context stack]
+  "Make a message, cause, stack, and context throwable by wrapping"
   (doto (Stone. message cause context)
     (.setStackTrace stack)))
 
 (defn context-message
-  "Return a message string for a context"
+  "Return a message string given a context"
   [{:keys [msg obj]}]
   (str (or msg "Object thrown by throw+") ": " (pr-str obj)))
 
