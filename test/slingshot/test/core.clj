@@ -58,12 +58,14 @@
   (let [tmessage "test-make-throwable-1"
         tcause (Exception.)
         tcontext {:a 1 :b 2}
-        tobj (slingshot.core/make-throwable tmessage tcause tcontext)
-        {:keys [message cause context]} (bean tobj)]
+        tstack (slingshot.core/make-stack-trace)
+        tobj (slingshot.core/make-throwable tmessage tcause tcontext tstack)
+        {:keys [message cause context stackTrace]} (bean tobj)]
     (is (instance? slingshot.Stone tobj))
     (is (= message tmessage))
     (is (= cause tcause))
-    (is (= context tcontext))))
+    (is (= context tcontext))
+    (is (= (seq stackTrace) (seq tstack)))))
 
 (defrecord exception-record [error-code duration-ms message])
 (defrecord x-failure [message])

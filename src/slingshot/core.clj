@@ -66,12 +66,13 @@
   "Returns the current stack trace beginning at the caller's frame"
   []
   (let [trace (.getStackTrace (Thread/currentThread))]
-    (java.util.Arrays/copyOfRange trace 2 (count trace))))
+    (java.util.Arrays/copyOfRange trace 2 (alength trace))))
 
 (defn make-throwable
   "Make a message, cause, and context throwable by wrapping"
-  [message cause context]
-  (Stone. message cause context))
+  [message cause context stack]
+  (doto (Stone. message cause context)
+    (.setStackTrace stack)))
 
 (defn context-message
   "Return a message string for a context"
@@ -81,11 +82,11 @@
 (defn default-throw-hook
   "Default implementation of *throw-hook*. If obj in context is a
   Throwable, throw it, else wrap it and throw the wrapper."
-  [{:keys [obj cause] :as context}]
+  [{:keys [obj cause stack] :as context}]
   (throw
    (if (instance? Throwable obj)
      obj
-     (make-throwable (context-message context) cause context))))
+     (make-throwable (context-message context) cause context stack))))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
