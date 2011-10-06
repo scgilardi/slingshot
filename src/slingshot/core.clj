@@ -114,7 +114,7 @@
   [t]
   (-> (loop [c t]
         (cond (instance? Stone c)
-              (assoc (.context c) :wrapper t)
+              (assoc (.getContext c) :wrapper t)
               (.getCause c)
               (recur (.getCause c))
               :else

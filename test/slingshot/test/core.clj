@@ -146,7 +146,7 @@
 (defn ix [] (try+ (hx) (catch Integer w &throw-context)))
 
 (defn next-context [x]
-  (-> x :cause .context))
+  (-> x :cause .getContext))
 
 (deftest test-throw-context
   (let [context (ix)

@@ -2,10 +2,14 @@ package slingshot;
 
 public class Stone extends RuntimeException {
 
-    public final Object context;
+    final Object context;
 
-    public Stone(String message, Throwable cause, Object _context) {
+    public Stone(String message, Throwable cause, Object context) {
         super (message, cause);
-        context = _context;
+        this.context = context;
+    }
+
+    public Object getContext () {
+        return context;
     }
 }
