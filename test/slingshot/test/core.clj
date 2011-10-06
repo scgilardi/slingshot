@@ -1,6 +1,7 @@
 (ns slingshot.test.core
   (:use [clojure.test]
-        [slingshot.core :only [try+ throw+]]))
+        [slingshot.core :only [try+ throw+ *throw-hook* *catch-hook*]])
+  (:import (java.util.concurrent ExecutionException)))
 
 (deftest test-clause-type
   (let [f #'slingshot.core/clause-type]
@@ -275,3 +276,30 @@
 (deftest test-issue-5
   (is (= "1" (i)))
   (is (= "whoops" (j))))
+
+(def test-hooked (atom nil))
+
+(deftest test-throw-hook
+  (binding [*throw-hook* #(reset! test-hooked %)]
+    (throw+ "throw-hook-string")
+    (is (= (set (keys @test-hooked))
+           (set [:obj :msg :cause :stack :env])))
+    (is (= "throw-hook-string" (:obj @test-hooked))))
+  (binding [*throw-hook* (fn [x] 42)]
+    (is (= (throw+ "something" 42)))))
+
+(def catch-hooked (atom nil))
+
+(deftest test-catch-hook
+  (binding [*catch-hook* #(reset! catch-hooked %)]
+    (try+ (throw+ "catch-hook-string") (catch string? x x))
+    (is (= (set (keys @catch-hooked))
+           (set [:wrapper :obj :msg :cause :stack :env])))
+    (is (= "catch-hook-string" (:obj @catch-hooked))))
+  (binding [*catch-hook* (fn [x] (vary-meta x assoc :catch-hook-return 42))]
+    (is (= 42 (try+ (throw+ "boo") (catch string? x x)))))
+  (binding [*catch-hook* (fn [x] (vary-meta x assoc :catch-hook-throw
+                                           (IllegalArgumentException. "bleh")))]
+    (is (thrown-with-msg? IllegalArgumentException #"bleh"
+          (try+ (throw+ "boo") (catch string? x x))))))
+
