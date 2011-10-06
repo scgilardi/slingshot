@@ -1,4 +1,5 @@
 (ns slingshot.core
+  (:require [clojure.walk])
   (:import (slingshot Stone)))
 
 (defn- clause-type
