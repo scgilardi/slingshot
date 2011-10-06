@@ -2,6 +2,71 @@
   (:use [clojure.test]
         [slingshot.core :only [try+ throw+]]))
 
+(deftest test-clause-type
+  (let [f #'slingshot.core/clause-type]
+    (is (nil? (f 3)))
+    (is (nil? (f ())))
+    (is (nil? (f '(nil? x))))
+    (is (= 'catch (f '(catch x))))
+    (is (= 'finally (f '(finally x))))))
+
+(deftest test-partition-body
+  (let [f #'slingshot.core/partition-body]
+    (is (= [nil nil nil]) (f ()))
+    (is (= ['(1) nil nil] (f '(1))))
+    (is (= [nil '((catch 1)) nil] (f '((catch 1)))))
+    (is (= [nil nil '((finally 1))] (f '((finally 1)))))
+
+    (is (= ['(1) '((catch 1)) nil] (f '(1 (catch 1)))))
+    (is (= ['(1) nil '((finally 1))] (f '(1 (finally 1)))))
+    (is (= ['(1) '((catch 1)) '((finally 1))] (f '(1 (catch 1) (finally 1)))))
+    (is (= ['(1) '((catch 1) (catch 2)) '((finally 1))]
+           (f '(1 (catch 1) (catch 2) (finally 1)))))
+    (is (thrown? Exception (f '((catch 1) (1)))))
+    (is (thrown? Exception (f '((finally 1) (1)))))
+    (is (thrown? Exception (f '((finally 1) (catch 1)))))
+    (is (thrown? Exception (f '((finally 1) (finally 2)))))))
+
+(deftest test-resolved
+  (let [f #'slingshot.core/resolved]
+    (is (f 'Exception))
+    (is (f 'isa?))
+    (is (nil? (f 3)))
+    (is (thrown? Exception (f '_)))))
+
+(deftest test-catch->cond
+  (let [f #'slingshot.core/catch->cond]
+    (is (= (f (list '_ `Exception 'e 1))
+           [(list `instance? `Exception '(:obj &throw-context))
+            (list `let '[e (:obj &throw-context)] 1)]))
+    (is (= (f (list '_ `nil? 'e 1))
+           [(list `nil? '(:obj &throw-context))
+            (list `let '[e (:obj &throw-context)] 1)]))
+    (is (= (f (list '_ (list :yellow (#'slingshot.core/ns-qualify '%)) 'e 1))
+           [(list :yellow '(:obj &throw-context))
+            (list `let '[e (:obj &throw-context)] 1)]))))
+
+(defn stack-trace-fn []
+  (slingshot.core/make-stack-trace))
+
+(deftest test-make-stack-trace []
+  (let [{:keys [methodName className]} (-> (stack-trace-fn) first bean)]
+    (is (= methodName "invoke"))
+    (is (re-find #"stack_trace_fn" className))))
+
+(deftest test-make-throwable []
+  (let [tmessage "test-make-throwable-1"
+        tcause (Exception.)
+        tcontext {:a 1 :b 2}
+        tstack (slingshot.core/make-stack-trace)
+        tobj (slingshot.core/make-throwable tmessage tcause tstack tcontext)
+        {:keys [message cause context stackTrace]} (bean tobj)]
+    (is (instance? slingshot.Stone tobj))
+    (is (= message tmessage))
+    (is (= cause tcause))
+    (is (= context tcontext))
+    (is (= (seq stackTrace) (seq tstack)))))
+
 (defrecord exception-record [error-code duration-ms message])
 (defrecord x-failure [message])
 
@@ -23,7 +88,7 @@
   (try+
    (mult-func x y)
    (catch x-failure {msg :message}
-     [msg (:env &throw-context)])))
+     [msg (select-keys (:env &throw-context) '(a b x y))])))
 
 (defmacro mega-try [body]
   `(try+
@@ -37,6 +102,8 @@
 
     ;; by java class generically
     (catch Integer e#
+      [:class-integer e#])
+    (catch Long e#
       [:class-integer e#])
 
     ;; by clojure record type
@@ -106,81 +173,76 @@
 (deftest test-locals-and-destructuring
   (is (= 1155 (test-func 3 5)))
   (is (= ["x isn't 3... really??"
-          {'mult-func mult-func 'x 4 'y 7 'a 7 'b 11}] (test-func 4 7))))
+          {'x 4 'y 7 'a 7 'b 11}] (test-func 4 7))))
 
 (deftest test-clauses
   (let [bumps (atom 0)
         bump (fn [] (swap! bumps inc))]
     (is (nil? (try+)))
-    (is (nil? (try+ (catch Integer i (inc i)))))
+    (is (nil? (try+ (catch integer? i (inc i)))))
     (is (nil? (try+ (finally (bump)))))
-    (is (nil? (try+ (catch Integer i (inc i)) (finally (bump)))))
-    (is (nil? (try+ (catch Integer i (inc i)) (catch map? m m)
+    (is (nil? (try+ (catch integer? i (inc i)) (finally (bump)))))
+    (is (nil? (try+ (catch integer? i (inc i)) (catch map? m m)
                     (finally (bump)))))
 
     (is (= 3 (try+ 3)))
-    (is (= 3 (try+ 3 (catch Integer i 4))))
+    (is (= 3 (try+ 3 (catch integer? i 4))))
     (is (= 3 (try+ 3 (finally (bump)))))
-    (is (= 3 (try+ 3 (catch Integer i 4) (finally (bump)))))
-    (is (= 4 (try+ (throw+ 3) (catch Integer i (inc i)) (finally (bump)))))
-    (is (= 4 (try+ (throw+ 3) (catch Integer i (inc i)) (catch map? m m)
+    (is (= 3 (try+ 3 (catch integer? i 4) (finally (bump)))))
+    (is (= 4 (try+ (throw+ 3) (catch integer? i (inc i)) (finally (bump)))))
+    (is (= 4 (try+ (throw+ 3) (catch integer? i (inc i)) (catch map? m m)
                    (finally (bump)))))
-    (is (= 4 (try+ (throw+ {:sel 4}) (catch Integer i (inc i))
+    (is (= 4 (try+ (throw+ {:sel 4}) (catch integer? i (inc i))
                    (catch map? m (:sel m)) (finally (bump)))))
 
     (is (= 4 (try+ 3 4)))
-    (is (= 4 (try+ 3 4 (catch Integer i 4))))
+    (is (= 4 (try+ 3 4 (catch integer? i 4))))
     (is (= 4 (try+ 3 4 (finally (bump)))))
-    (is (= 4 (try+ 3 4 (catch Integer i 4) (finally (bump)))))
-    (is (= 5 (try+ (throw+ 4) 4 (catch Integer i (inc i)) (finally (bump)))))
+    (is (= 4 (try+ 3 4 (catch integer? i 4) (finally (bump)))))
+    (is (= 5 (try+ (throw+ 4) 4 (catch integer? i (inc i)) (finally (bump)))))
     (is (= 11 @bumps))))
 
-(defn a []
-  (throw+ 1))
+(defn ax [] (throw+ 1))
+(defn bx [] (try+ (ax) (catch integer? p (throw+ 2))))
+(defn cx [] (try+ (bx) (catch integer? q (throw+ 3))))
+(defn dx [] (try+ (cx) (catch integer? r (throw+ 4))))
+(defn ex [] (try+ (dx) (catch integer? s (throw+ 5))))
+(defn fx [] (try+ (ex) (catch integer? t (throw+ 6))))
+(defn gx [] (try+ (fx) (catch integer? u (throw+ 7))))
+(defn hx [] (try+ (gx) (catch integer? v (throw+ 8))))
+(defn ix [] (try+ (hx) (catch integer? w &throw-context)))
 
-(defn b []
-  (try+
-   (a)
-   (catch Integer p
-     (throw+ 2))))
-
-(defn c []
-  (try+
-   (b)
-   (catch Integer q
-     (throw+ 3))))
-
-(defn d []
-  (try+
-   (c)
-   (catch Integer r
-     &throw-context)))
+(defn next-context [x]
+  (-> x :cause .getContext))
 
 (deftest test-throw-context
-  (let [context (d)]
-    (is (= #{:stack :env :obj :next}
-           (set (keys context))
-           (set (keys (-> context :next)))
-           (set (keys (-> context :next :next)))))
-    (is (= 3 (-> context :obj)))
-    (is (= 2 (-> context :next :obj)))
-    (is (= 1 (-> context :next :next :obj)))))
+  (let [context (ix)
+        context1 (next-context context)
+        context2 (next-context context1)]
+
+    (is (= #{:obj :msg :cause :stack :env}
+           (disj (set (keys context)) :wrapper)
+           (set (keys context1))
+           (set (keys context2))))
+    (is (= 8 (-> context :obj)))
+    (is (= 7 (-> context1 :obj)))
+    (is (= 6 (-> context2 :obj)))))
 
 (defn e []
   (try+
    (throw (Exception. "uncaught"))
-   (catch Integer i i)))
+   (catch integer? i i)))
 
 (defn f []
   (try+
    (throw+ 3.2)
-   (catch Integer i i)))
+   (catch integer? i i)))
 
 
 (defn g []
   (try+
    (throw+ 3.2 "wasn't caught")
-   (catch Integer i i)))
+   (catch integer? i i)))
 
 (deftest test-uncaught
   (is (thrown-with-msg? Exception #"^uncaught$" (e)))
