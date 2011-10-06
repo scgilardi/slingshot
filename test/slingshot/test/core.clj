@@ -62,10 +62,8 @@
         tobj (slingshot.core/make-throwable tmessage tcause tstack tcontext)
         {:keys [message cause context stackTrace]} (bean tobj)]
     (is (instance? slingshot.Stone tobj))
-    (is (= message tmessage))
-    (is (= cause tcause))
-    (is (= context tcontext))
-    (is (= (seq stackTrace) (seq tstack)))))
+    (is (= [message cause context (seq stackTrace)]
+           [tmessage tcause tcontext (seq tstack)]))))
 
 (defrecord exception-record [error-code duration-ms message])
 (defrecord x-failure [message])
