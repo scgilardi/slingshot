@@ -2,6 +2,69 @@
   (:use [clojure.test]
         [slingshot.core :only [try+ throw+]]))
 
+(deftest test-clause-type
+  (let [f #'slingshot.core/clause-type]
+    (is (nil? (f 3)))
+    (is (nil? (f ())))
+    (is (nil? (f '(nil? x))))
+    (is (= 'catch (f '(catch x))))
+    (is (= 'finally (f '(finally x))))))
+
+(deftest test-partition-body
+  (let [f #'slingshot.core/partition-body]
+    (is (= [nil nil nil]) (f ()))
+    (is (= ['(1) nil nil] (f '(1))))
+    (is (= [nil '((catch 1)) nil] (f '((catch 1)))))
+    (is (= [nil nil '((finally 1))] (f '((finally 1)))))
+
+    (is (= ['(1) '((catch 1)) nil] (f '(1 (catch 1)))))
+    (is (= ['(1) nil '((finally 1))] (f '(1 (finally 1)))))
+    (is (= ['(1) '((catch 1)) '((finally 1))] (f '(1 (catch 1) (finally 1)))))
+    (is (= ['(1) '((catch 1) (catch 2)) '((finally 1))]
+           (f '(1 (catch 1) (catch 2) (finally 1)))))
+    (is (thrown? Exception (f '((catch 1) (1)))))
+    (is (thrown? Exception (f '((finally 1) (1)))))
+    (is (thrown? Exception (f '((finally 1) (catch 1)))))
+    (is (thrown? Exception (f '((finally 1) (finally 2)))))))
+
+(deftest test-resolved
+  (let [f #'slingshot.core/resolved]
+    (is (f 'Exception))
+    (is (f 'isa?))
+    (is (nil? (f 3)))
+    (is (thrown? Exception (f '_)))))
+
+(deftest test-catch->cond
+  (let [f #'slingshot.core/catch->cond]
+    (is (= (f (list '_ `Exception 'e 1))
+           [(list `instance? `Exception '(:obj &throw-context))
+            (list `let '[e (:obj &throw-context)] 1)]))
+    (is (= (f (list '_ `nil? 'e 1))
+           [(list `nil? '(:obj &throw-context))
+            (list `let '[e (:obj &throw-context)] 1)]))
+    (is (= (f (list '_ (list :yellow (#'slingshot.core/ns-qualify '%)) 'e 1))
+           [(list :yellow '(:obj &throw-context))
+            (list `let '[e (:obj &throw-context)] 1)]))))
+
+(defn stack-trace-fn []
+  (slingshot.core/make-stack-trace))
+
+(deftest test-make-stack-trace []
+  (let [{:keys [methodName className]} (-> (stack-trace-fn) first bean)]
+    (is (= methodName "invoke"))
+    (is (re-find #"stack_trace_fn" className))))
+
+(deftest test-make-throwable []
+  (let [tmessage "test-make-throwable-1"
+        tcause (Exception.)
+        tcontext {:a 1 :b 2}
+        tobj (slingshot.core/make-throwable tmessage tcause tcontext)
+        {:keys [message cause context]} (bean tobj)]
+    (is (instance? slingshot.Stone tobj))
+    (is (= message tmessage))
+    (is (= cause tcause))
+    (is (= context tcontext))))
+
 (defrecord exception-record [error-code duration-ms message])
 (defrecord x-failure [message])
 
