@@ -1,5 +1,5 @@
 (ns slingshot.core
-  (:require [clojure.walk])
+  (:use [clojure.walk :only [prewalk-replace]])
   (:import (slingshot Stone)))
 
 (defn- clause-type
@@ -38,8 +38,7 @@
   [(cond (class? (resolved selector))
          `(instance? ~selector (:obj ~'&throw-context))
          (seq? selector)
-         (clojure.walk/prewalk-replace {(ns-qualify '%) '(:obj &throw-context)}
-          selector)
+         (prewalk-replace {(ns-qualify '%) '(:obj &throw-context)} selector)
          :else
          `(~selector (:obj ~'&throw-context)))
    `(let [~binding-form (:obj ~'&throw-context)]
