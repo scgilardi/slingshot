@@ -69,8 +69,8 @@
     (java.util.Arrays/copyOfRange trace 2 (alength trace))))
 
 (defn make-throwable
-  [message cause context stack]
   "Make a message, cause, stack, and context throwable by wrapping"
+  [message cause stack context]
   (doto (Stone. message cause context)
     (.setStackTrace stack)))
 
@@ -86,7 +86,7 @@
   (throw
    (if (instance? Throwable obj)
      obj
-     (make-throwable (context-message context) cause context stack))))
+     (make-throwable (context-message context) cause stack context))))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be

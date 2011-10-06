@@ -59,7 +59,7 @@
         tcause (Exception.)
         tcontext {:a 1 :b 2}
         tstack (slingshot.core/make-stack-trace)
-        tobj (slingshot.core/make-throwable tmessage tcause tcontext tstack)
+        tobj (slingshot.core/make-throwable tmessage tcause tstack tcontext)
         {:keys [message cause context stackTrace]} (bean tobj)]
     (is (instance? slingshot.Stone tobj))
     (is (= message tmessage))
