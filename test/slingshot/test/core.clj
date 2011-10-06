@@ -99,10 +99,8 @@
       [:class-exception e#])
 
     ;; by java class generically
-    (catch Integer e#
-      [:class-integer e#])
-    (catch Long e#
-      [:class-integer e#])
+    (catch String e#
+      [:class-string e#])
 
     ;; by clojure record type
     (catch exception-record e#
@@ -145,7 +143,7 @@
       (is (= :class-iae (first (mega-try (first 1)))))))
 
   (testing "catch by java class generically"
-    (is (= [:class-integer 4] (mega-try (throw+ 4)))))
+    (is (= [:class-string "fail"] (mega-try (throw+ "fail")))))
 
   (testing "catch by clojure record type"
     (is (= [:class-exception-record exception-record-1]
