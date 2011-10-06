@@ -29,7 +29,9 @@
         (throw (IllegalArgumentException.
                 (str "Unable to resolve symbol: " x " in this context"))))))
 
-(defn- ns-qualify [sym]
+(defn- ns-qualify
+  "Return a symbol with the same name as sym but in the current namespace"
+  [sym]
   (-> *ns* ns-name name (symbol (name sym))))
 
 (defn- catch->cond
