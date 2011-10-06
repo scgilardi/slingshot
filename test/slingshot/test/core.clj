@@ -179,38 +179,38 @@
   (let [bumps (atom 0)
         bump (fn [] (swap! bumps inc))]
     (is (nil? (try+)))
-    (is (nil? (try+ (catch Integer i (inc i)))))
+    (is (nil? (try+ (catch integer? i (inc i)))))
     (is (nil? (try+ (finally (bump)))))
-    (is (nil? (try+ (catch Integer i (inc i)) (finally (bump)))))
-    (is (nil? (try+ (catch Integer i (inc i)) (catch map? m m)
+    (is (nil? (try+ (catch integer? i (inc i)) (finally (bump)))))
+    (is (nil? (try+ (catch integer? i (inc i)) (catch map? m m)
                     (finally (bump)))))
 
     (is (= 3 (try+ 3)))
-    (is (= 3 (try+ 3 (catch Integer i 4))))
+    (is (= 3 (try+ 3 (catch integer? i 4))))
     (is (= 3 (try+ 3 (finally (bump)))))
-    (is (= 3 (try+ 3 (catch Integer i 4) (finally (bump)))))
-    (is (= 4 (try+ (throw+ 3) (catch Integer i (inc i)) (finally (bump)))))
-    (is (= 4 (try+ (throw+ 3) (catch Integer i (inc i)) (catch map? m m)
+    (is (= 3 (try+ 3 (catch integer? i 4) (finally (bump)))))
+    (is (= 4 (try+ (throw+ 3) (catch integer? i (inc i)) (finally (bump)))))
+    (is (= 4 (try+ (throw+ 3) (catch integer? i (inc i)) (catch map? m m)
                    (finally (bump)))))
-    (is (= 4 (try+ (throw+ {:sel 4}) (catch Integer i (inc i))
+    (is (= 4 (try+ (throw+ {:sel 4}) (catch integer? i (inc i))
                    (catch map? m (:sel m)) (finally (bump)))))
 
     (is (= 4 (try+ 3 4)))
-    (is (= 4 (try+ 3 4 (catch Integer i 4))))
+    (is (= 4 (try+ 3 4 (catch integer? i 4))))
     (is (= 4 (try+ 3 4 (finally (bump)))))
-    (is (= 4 (try+ 3 4 (catch Integer i 4) (finally (bump)))))
-    (is (= 5 (try+ (throw+ 4) 4 (catch Integer i (inc i)) (finally (bump)))))
+    (is (= 4 (try+ 3 4 (catch integer? i 4) (finally (bump)))))
+    (is (= 5 (try+ (throw+ 4) 4 (catch integer? i (inc i)) (finally (bump)))))
     (is (= 11 @bumps))))
 
 (defn ax [] (throw+ 1))
-(defn bx [] (try+ (ax) (catch Integer p (throw+ 2))))
-(defn cx [] (try+ (bx) (catch Integer q (throw+ 3))))
-(defn dx [] (try+ (cx) (catch Integer r (throw+ 4))))
-(defn ex [] (try+ (dx) (catch Integer s (throw+ 5))))
-(defn fx [] (try+ (ex) (catch Integer t (throw+ 6))))
-(defn gx [] (try+ (fx) (catch Integer u (throw+ 7))))
-(defn hx [] (try+ (gx) (catch Integer v (throw+ 8))))
-(defn ix [] (try+ (hx) (catch Integer w &throw-context)))
+(defn bx [] (try+ (ax) (catch integer? p (throw+ 2))))
+(defn cx [] (try+ (bx) (catch integer? q (throw+ 3))))
+(defn dx [] (try+ (cx) (catch integer? r (throw+ 4))))
+(defn ex [] (try+ (dx) (catch integer? s (throw+ 5))))
+(defn fx [] (try+ (ex) (catch integer? t (throw+ 6))))
+(defn gx [] (try+ (fx) (catch integer? u (throw+ 7))))
+(defn hx [] (try+ (gx) (catch integer? v (throw+ 8))))
+(defn ix [] (try+ (hx) (catch integer? w &throw-context)))
 
 (defn next-context [x]
   (-> x :cause .getContext))
@@ -231,18 +231,18 @@
 (defn e []
   (try+
    (throw (Exception. "uncaught"))
-   (catch Integer i i)))
+   (catch integer? i i)))
 
 (defn f []
   (try+
    (throw+ 3.2)
-   (catch Integer i i)))
+   (catch integer? i i)))
 
 
 (defn g []
   (try+
    (throw+ 3.2 "wasn't caught")
-   (catch Integer i i)))
+   (catch integer? i i)))
 
 (deftest test-uncaught
   (is (thrown-with-msg? Exception #"^uncaught$" (e)))
