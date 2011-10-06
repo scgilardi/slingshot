@@ -303,3 +303,20 @@
     (is (thrown-with-msg? IllegalArgumentException #"bleh"
           (try+ (throw+ "boo") (catch string? x x))))))
 
+(deftest test-x-ray-vision
+  (let [[val wrapper] (try+
+                       (try
+                         (try
+                           (try
+                             (throw+ "x-ray!")
+                             (catch Throwable x
+                               (throw (RuntimeException. x))))
+                           (catch Throwable x
+                             (throw (ExecutionException. x))))
+                         (catch Throwable x
+                           (throw (RuntimeException. x))))
+                       (catch string? x
+                         [x (:wrapper &throw-context)]))]
+    (is (= "x-ray!" val))
+    (is (= "x-ray!" (:obj (-> wrapper .getCause .getCause
+                              .getCause .getContext))))))
