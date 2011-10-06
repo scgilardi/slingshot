@@ -88,7 +88,7 @@
   (try+
    (mult-func x y)
    (catch x-failure {msg :message}
-     [msg (:env &throw-context)])))
+     [msg (select-keys (:env &throw-context) '(a b x y))])))
 
 (defmacro mega-try [body]
   `(try+
@@ -171,7 +171,7 @@
 (deftest test-locals-and-destructuring
   (is (= 1155 (test-func 3 5)))
   (is (= ["x isn't 3... really??"
-          {'mult-func mult-func 'x 4 'y 7 'a 7 'b 11}] (test-func 4 7))))
+          {'x 4 'y 7 'a 7 'b 11}] (test-func 4 7))))
 
 (deftest test-clauses
   (let [bumps (atom 0)
