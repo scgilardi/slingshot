@@ -103,6 +103,8 @@
     ;; by java class generically
     (catch Integer e#
       [:class-integer e#])
+    (catch Long e#
+      [:class-integer e#])
 
     ;; by clojure record type
     (catch exception-record e#
