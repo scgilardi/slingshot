@@ -29,14 +29,16 @@
         (throw (IllegalArgumentException.
                 (str "Unable to resolve symbol: " x " in this context"))))))
 
+(defn- ns-qualify [sym]
+  (-> *ns* ns-name name (symbol (name sym))))
+
 (defn- catch->cond
   "Convert a try+ catch cause into the two parts of a cond clause"
   [[_ selector binding-form & exprs]]
   [(cond (class? (resolved selector))
          `(instance? ~selector (:obj ~'&throw-context))
          (seq? selector)
-         (clojure.walk/prewalk-replace
-          {(-> *ns* ns-name name (symbol "%")) '(:obj &throw-context)}
+         (clojure.walk/prewalk-replace {(ns-qualify '%) '(:obj &throw-context)}
           selector)
          :else
          `(~selector (:obj ~'&throw-context)))
