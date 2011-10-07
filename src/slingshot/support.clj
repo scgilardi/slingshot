@@ -26,6 +26,23 @@
             (format "try+ form must match: (try+ %s)"
                     "expr* catch-clause* finally-clause?")))))
 
+(defn throw-context
+  "Returns the context map associated with a Throwable t. If t or any
+  throwable in its cause chain is a Stone, returns its context, else
+  returns a new context with t as the thrown object."
+  [t]
+  (-> (loop [c t]
+        (cond (instance? Stone c)
+              (assoc (.getContext c) :wrapper t)
+              (.getCause c)
+              (recur (.getCause c))
+              :else
+              {:object t
+               :message (.getMessage t)
+               :cause (.getCause t)
+               :stack-trace (.getStackTrace t)}))
+      (with-meta {:throwable t})))
+
 (defn resolved
   "For symbols, returns the resolved value or throws if not resolvable"
   [x]
@@ -70,23 +87,6 @@
         (slingshot.core/throw+ (:catch-hook-throw (meta ~'&throw-context)))
         ~@(mapcat catch->cond catch-clauses)
         :else ~default))))
-
-(defn throw-context
-  "Returns the context map associated with a Throwable t. If t or any
-  throwable in its cause chain is a Stone, returns its context, else
-  returns a new context with t as the thrown object."
-  [t]
-  (-> (loop [c t]
-        (cond (instance? Stone c)
-              (assoc (.getContext c) :wrapper t)
-              (.getCause c)
-              (recur (.getCause c))
-              :else
-              {:object t
-               :message (.getMessage t)
-               :cause (.getCause t)
-               :stack-trace (.getStackTrace t)}))
-      (with-meta {:throwable t})))
 
 (defn make-throwable
   "Returns a throwable Stone that wraps the given a message, cause,
