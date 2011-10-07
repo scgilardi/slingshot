@@ -2,6 +2,19 @@
   (:use [clojure.walk :only [prewalk-replace]])
   (:import (slingshot Stone)))
 
+(defn- validate-throw+-args
+  "Throws if throw+ args are invalid"
+  [object message sentinel]
+  (when sentinel
+    (letfn [(sep-pr-str [x] (str " " (pr-str x)))]
+      (throw (IllegalArgumentException.
+              (format "throw+ call must match: (throw+ %s): (throw+ %s)"
+                      "object? message?"
+                      (apply str
+                             (pr-str object)
+                             (and message (sep-pr-str message))
+                             (and sentinel (mapcat sep-pr-str sentinel)))))))))
+
 (defn- clause-type
   "Returns a classifying value for any object in a try+ body:
   catch-clause, finally-clause, or other"
@@ -36,11 +49,6 @@
   namespace and whose name the same name as the name of sym"
   [sym]
   (-> *ns* ns-name name (symbol (name sym))))
-
-(defn- sep-pr-str
-  "Helper for the throw+ syntax error message"
-  [x]
-  (str " " (pr-str x)))
 
 (defn- catch->cond
   "Converts a try+ catch clause into a test/expr pair for cond"
@@ -148,14 +156,7 @@
 
   See also try+"
   ([object & [message & sentinel]]
-     (when (or sentinel (and message (not (string? message))))
-       (throw (IllegalArgumentException.
-               (format "throw+ call must match: (throw+ %s): (throw+ %s)"
-                       "object? ^String message?"
-                       (apply str
-                              (pr-str object)
-                              (and message (sep-pr-str message))
-                              (and sentinel (mapcat sep-pr-str sentinel)))))))
+     (validate-throw+-args object message sentinel)
      `(*throw-hook*
        (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
          {:object ~object
