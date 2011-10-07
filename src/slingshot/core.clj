@@ -2,18 +2,6 @@
   (:use [clojure.walk :only [prewalk-replace]])
   (:import (slingshot Stone)))
 
-(defn- validate-throw+-args
-  "Throws if throw+ args are invalid"
-  [object message sentinel]
-  (when sentinel
-    (letfn [(sep-pr-str [x] (str " " (pr-str x)))]
-      (throw (IllegalArgumentException.
-              (format "throw+ call must match: (throw+ %s): (throw+ %s)"
-                      "object? message?"
-                      (apply str
-                             (pr-str object)
-                             (and message (sep-pr-str message))
-                             (and sentinel (mapcat sep-pr-str sentinel)))))))))
 
 (defn- clause-type
   "Returns a classifying value for any object in a try+ body:
@@ -155,8 +143,7 @@
   caught object within its original (possibly nested) wrappers.
 
   See also try+"
-  ([object & [message & sentinel]]
-     (validate-throw+-args object message sentinel)
+  ([object message]
      `(*throw-hook*
        (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
          {:object ~object
@@ -164,6 +151,8 @@
           :cause (-> (env# '~'&throw-context) meta :throwable)
           :stack-trace (make-stack-trace)
           :environment (dissoc env# '~'&throw-context)})))
+  ([object]
+     `(throw+ ~object nil))
   ([] `(throw (-> ~'&throw-context meta :throwable))))
 
 (defmacro try+
