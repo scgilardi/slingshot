@@ -62,7 +62,7 @@
         (contains? (meta ~'&throw-context) :catch-hook-return)
         (:catch-hook-return (meta ~'&throw-context))
         (contains? (meta ~'&throw-context) :catch-hook-throw)
-        (throw (:catch-hook-throw (meta ~'&throw-context)))
+        (throw+ (:catch-hook-throw (meta ~'&throw-context)))
         ~@(mapcat catch->cond catch-clauses)
         :else ~default))))
 
