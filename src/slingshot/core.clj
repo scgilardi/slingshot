@@ -39,12 +39,12 @@
   "Convert a try+ catch clause into the two parts of a cond clause"
   [[_ selector binding-form & exprs]]
   [(cond (class? (resolved selector))
-         `(instance? ~selector (:obj ~'&throw-context))
+         `(instance? ~selector (:object ~'&throw-context))
          (seq? selector)
-         (prewalk-replace {(ns-qualify '%) '(:obj &throw-context)} selector)
+         (prewalk-replace {(ns-qualify '%) '(:object &throw-context)} selector)
          :else
-         `(~selector (:obj ~'&throw-context)))
-   `(let [~binding-form (:obj ~'&throw-context)]
+         `(~selector (:object ~'&throw-context)))
+   `(let [~binding-form (:object ~'&throw-context)]
       ~@exprs)])
 
 (defn- transform
@@ -76,13 +76,13 @@
 
 (defn context-message
   "Return a message string given a context"
-  [{:keys [msg obj]}]
-  (str (or msg "Object thrown by throw+") ": " (pr-str obj)))
+  [{:keys [message object]}]
+  (str (or message "Object thrown by throw+") ": " (pr-str object)))
 
 (defn default-throw-hook
-  "Default implementation of *throw-hook*. If obj in context is a
+  "Default implementation of *throw-hook*. If object in context is a
   Throwable, throw it, else wrap it and throw the wrapper."
-  [{:keys [obj cause stack] :as context}]
+  [{:keys [object cause stack-trace] :as context}]
   (throw
    (if (instance? Throwable object)
      object
@@ -122,10 +122,10 @@
               (.getCause c)
               (recur (.getCause c))
               :else
-              {:obj t
-               :msg (.getMessage t)
+              {:object t
+               :message (.getMessage t)
                :cause (.getCause t)
-               :stack (.getStackTrace t)}))
+               :stack-trace (.getStackTrace t)}))
       (with-meta {:throwable t})))
 
 (defmacro throw+
@@ -137,17 +137,17 @@
   the caught object.
 
   See also try+"
-  ([obj & [msg sen]]
+  ([object & [message sen]]
      (when sen
        (throw (IllegalArgumentException.
-               "throw+ call must match: (throw+ obj? ^String msg?")))
+               "throw+ call must match: (throw+ object? ^String message?")))
      `(*throw-hook*
        (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
-         {:obj ~obj
-          :msg ~msg
+         {:object ~object
+          :message ~message
           :cause (-> (env# '~'&throw-context) meta :throwable)
-          :stack (make-stack-trace)
-          :env (dissoc env# '~'&throw-context)})))
+          :stack-trace (make-stack-trace)
+          :environment (dissoc env# '~'&throw-context)})))
   ([] `(throw (-> ~'&throw-context meta :throwable))))
 
 (defmacro try+
@@ -170,17 +170,17 @@
 
   &throw-context is a map containing:
     - for all caught objects:
-      :obj      the thrown object;
-      :stack    the stack trace;
+      :object       the thrown object;
+      :stack-trace  the stack trace;
     - for Throwable caught objects:
-      :msg      the message, from .getMessage;
-      :cause    the cause, from .getCause;
+      :message      the message, from .getMessage;
+      :cause        the cause, from .getCause;
     - for non-Throwable caught objects:
-      :msg      the message, from the optional argument to throw+;
-      :cause    the cause, captured by throw+, see below;
-      :wrapper  the outermost Throwable wrapper of the caught object,
-                see below;
-      :env      a map of bound symbols to their values.
+      :message      the message, from the optional argument to throw+;
+      :cause        the cause, captured by throw+, see below;
+      :wrapper      the outermost Throwable wrapper of the caught object,
+                    see below;
+      :environment  a map of bound symbols to their values.
 
   To throw a non-Throwable object, throw+ wraps it with an object of
   type Stone. That Stone in turn may end up being wrapped by other

@@ -38,14 +38,14 @@
 (deftest test-catch->cond
   (let [f #'slingshot.core/catch->cond]
     (is (= (f (list '_ `Exception 'e 1))
-           [(list `instance? `Exception '(:obj &throw-context))
-            (list `let '[e (:obj &throw-context)] 1)]))
+           [(list `instance? `Exception '(:object &throw-context))
+            (list `let '[e (:object &throw-context)] 1)]))
     (is (= (f (list '_ `nil? 'e 1))
-           [(list `nil? '(:obj &throw-context))
-            (list `let '[e (:obj &throw-context)] 1)]))
+           [(list `nil? '(:object &throw-context))
+            (list `let '[e (:object &throw-context)] 1)]))
     (is (= (f (list '_ (list :yellow (#'slingshot.core/ns-qualify '%)) 'e 1))
-           [(list :yellow '(:obj &throw-context))
-            (list `let '[e (:obj &throw-context)] 1)]))))
+           [(list :yellow '(:object &throw-context))
+            (list `let '[e (:object &throw-context)] 1)]))))
 
 (defn stack-trace-fn []
   (slingshot.core/make-stack-trace))
@@ -59,12 +59,13 @@
   (let [tmessage "test-make-throwable-1"
         tcause (Exception.)
         tcontext {:a 1 :b 2}
-        tstack (slingshot.core/make-stack-trace)
-        tobj (slingshot.core/make-throwable tmessage tcause tstack tcontext)
-        {:keys [message cause context stackTrace]} (bean tobj)]
-    (is (instance? slingshot.Stone tobj))
+        tstack-trace (slingshot.core/make-stack-trace)
+        tobject (slingshot.core/make-throwable
+                 tmessage tcause tstack-trace tcontext)
+        {:keys [message cause context stackTrace]} (bean tobject)]
+    (is (instance? slingshot.Stone tobject))
     (is (= [message cause context (seq stackTrace)]
-           [tmessage tcause tcontext (seq tstack)]))))
+           [tmessage tcause tcontext (seq tstack-trace)]))))
 
 (defrecord exception-record [error-code duration-ms message])
 (defrecord x-failure [message])
@@ -86,8 +87,8 @@
 (defn test-func [x y]
   (try+
    (mult-func x y)
-   (catch x-failure {msg :message}
-     [msg (select-keys (:env &throw-context) '(a b x y))])))
+   (catch x-failure {message :message}
+     [message (select-keys (:environment &throw-context) '(a b x y))])))
 
 (defmacro mega-try [body]
   `(try+
@@ -217,13 +218,13 @@
         context1 (next-context context)
         context2 (next-context context1)]
 
-    (is (= #{:obj :msg :cause :stack :env}
+    (is (= #{:object :message :cause :stack-trace :environment}
            (disj (set (keys context)) :wrapper)
            (set (keys context1))
            (set (keys context2))))
-    (is (= 8 (-> context :obj)))
-    (is (= 7 (-> context1 :obj)))
-    (is (= 6 (-> context2 :obj)))))
+    (is (= 8 (-> context :object)))
+    (is (= 7 (-> context1 :object)))
+    (is (= 6 (-> context2 :object)))))
 
 (defn e []
   (try+
@@ -283,8 +284,8 @@
   (binding [*throw-hook* #(reset! test-hooked %)]
     (throw+ "throw-hook-string")
     (is (= (set (keys @test-hooked))
-           (set [:obj :msg :cause :stack :env])))
-    (is (= "throw-hook-string" (:obj @test-hooked))))
+           (set [:object :message :cause :stack-trace :environment])))
+    (is (= "throw-hook-string" (:object @test-hooked))))
   (binding [*throw-hook* (fn [x] 42)]
     (is (= (throw+ "something" 42)))))
 
@@ -294,8 +295,8 @@
   (binding [*catch-hook* #(reset! catch-hooked %)]
     (try+ (throw+ "catch-hook-string") (catch string? x x))
     (is (= (set (keys @catch-hooked))
-           (set [:wrapper :obj :msg :cause :stack :env])))
-    (is (= "catch-hook-string" (:obj @catch-hooked))))
+           (set [:wrapper :object :message :cause :stack-trace :environment])))
+    (is (= "catch-hook-string" (:object @catch-hooked))))
   (binding [*catch-hook* (fn [x] (vary-meta x assoc :catch-hook-return 42))]
     (is (= 42 (try+ (throw+ "boo") (catch string? x x)))))
   (binding [*catch-hook* (fn [x] (vary-meta x assoc :catch-hook-throw
@@ -318,5 +319,5 @@
                        (catch string? x
                          [x (:wrapper &throw-context)]))]
     (is (= "x-ray!" val))
-    (is (= "x-ray!" (:obj (-> wrapper .getCause .getCause
-                              .getCause .getContext))))))
+    (is (= "x-ray!" (:object (-> wrapper .getCause .getCause
+                                 .getCause .getContext))))))
