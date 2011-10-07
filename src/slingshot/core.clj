@@ -1,5 +1,4 @@
 (ns slingshot.core
-  (:use [slingshot.hooks :only [*throw-hook*]]
         [slingshot.support :only [make-stack-trace partition-body
                                   transform-catch validate-try+-form]]))
 
