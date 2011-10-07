@@ -74,10 +74,8 @@
 
   See also throw+"
   [& body]
-  (let [[exprs catch-clauses finally-clauses sentinel] (partition-body body)]
-    (validate-try+-form exprs catch-clauses finally-clauses sentinel)
+  (let [[exprs catch-clauses finally-clauses] (validated-body-parts body)]
     `(try
        ~@exprs
-       ~@(when catch-clauses
-           [(transform-catch catch-clauses '(throw+))])
+       ~@(transform-catch-clauses catch-clauses)
        ~@finally-clauses)))
