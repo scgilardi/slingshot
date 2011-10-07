@@ -59,7 +59,7 @@
   (-> *ns* ns-name name (symbol (name sym))))
 
 (defn catch->cond
-  "Converts a try+ catch clause into a test/expr pair for cond"
+  "Converts a try+ catch-clause into a test/expr pair for cond"
   [[_ selector binding-form & exprs]]
   [(cond (class? (resolved selector))
          `(instance? ~selector (:object ~'&throw-context))

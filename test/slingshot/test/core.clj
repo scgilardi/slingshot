@@ -1,7 +1,7 @@
 (ns slingshot.test.core
   (:use [clojure.test]
         [slingshot.core :only [try+ throw+ *throw-hook* *catch-hook*]])
-  (:import (java.util.concurrent ExecutionException)))
+  (:import java.util.concurrent.ExecutionException))
 
 (defrecord exception-record [error-code duration-ms message])
 (defrecord x-failure [message])
