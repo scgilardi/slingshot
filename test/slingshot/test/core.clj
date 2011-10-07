@@ -14,19 +14,29 @@
 (deftest test-partition-body
   (let [f #'slingshot.core/partition-body]
     (is (= [nil nil nil]) (f ()))
-    (is (= ['(1) nil nil] (f '(1))))
-    (is (= [nil '((catch 1)) nil] (f '((catch 1)))))
-    (is (= [nil nil '((finally 1))] (f '((finally 1)))))
+    (is (= ['(1) nil nil nil] (f '(1))))
+    (is (= [nil '((catch 1)) nil nil] (f '((catch 1)))))
+    (is (= [nil nil '((finally 1)) nil] (f '((finally 1)))))
 
-    (is (= ['(1) '((catch 1)) nil] (f '(1 (catch 1)))))
-    (is (= ['(1) nil '((finally 1))] (f '(1 (finally 1)))))
-    (is (= ['(1) '((catch 1)) '((finally 1))] (f '(1 (catch 1) (finally 1)))))
-    (is (= ['(1) '((catch 1) (catch 2)) '((finally 1))]
+    (is (= ['(1) '((catch 1)) nil nil] (f '(1 (catch 1)))))
+    (is (= ['(1) nil '((finally 1)) nil] (f '(1 (finally 1)))))
+    (is (= ['(1) '((catch 1)) '((finally 1)) nil]
+           (f '(1 (catch 1) (finally 1)))))
+    (is (= ['(1) '((catch 1) (catch 2)) '((finally 1)) nil]
            (f '(1 (catch 1) (catch 2) (finally 1)))))
-    (is (thrown? Exception (f '((catch 1) (1)))))
-    (is (thrown? Exception (f '((finally 1) (1)))))
-    (is (thrown? Exception (f '((finally 1) (catch 1)))))
-    (is (thrown? Exception (f '((finally 1) (finally 2)))))))
+    (is (= [nil '((catch 1)) nil '((1))] (f '((catch 1) (1)))))
+    (is (= [nil nil '((finally 1)) '((1))] (f '((finally 1) (1)))))
+    (is (= [nil nil '((finally 1)) '((catch 1))] (f '((finally 1) (catch 1)))))
+    (is (= [nil nil '((finally 1) (finally 2)) nil]
+           (f '((finally 1) (finally 2)))))))
+
+(deftest test-validate-try+-form
+  (let [f #'slingshot.core/validate-try+-form]
+    (is (nil? (f [] [] [] nil)))
+    (is (nil? (f [:expr1 :expr2] [:catch1 :catch2] [:finally] nil)))
+    (is (thrown? IllegalArgumentException (f [] [] [] [:more])))
+    (is (thrown? IllegalArgumentException
+                 (f [] [] [:finally1 :finally2] nil)))))
 
 (deftest test-resolved
   (let [f #'slingshot.core/resolved]

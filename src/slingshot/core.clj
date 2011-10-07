@@ -2,7 +2,6 @@
   (:use [clojure.walk :only [prewalk-replace]])
   (:import (slingshot Stone)))
 
-
 (defn- clause-type
   "Returns a classifying value for any object in a try+ body:
   catch-clause, finally-clause, or other"
@@ -11,18 +10,21 @@
 
 (defn- partition-body
   "Partitions a try+ body into exprs, catch-clauses, and finally
-  clause where each partition may be empty. Throws if the body doesn't
-  match (expr* catch-clause* finally-clause?)"
+  clauses where each partition may be empty."
   [body]
   (let [[e c f s] (partition-by clause-type body)
         [e c f s] (if (-> (first e) clause-type nil?) [e c f s] [nil e c f])
         [c f s] (if (-> (first c) clause-type (= 'catch)) [c f s] [nil c f])
         [f s] (if (-> (first f) clause-type (= 'finally)) [f s] [nil f])]
-    (when (or s (> (count f) 1))
-      (throw (IllegalArgumentException.
-              (str "try+ form must match: "
-                   "(try+ expr* catch-clause* finally-clause?)"))))
-    [e c f]))
+    [e c f s]))
+
+(defn- validate-try+-form
+  "Throws if paritioned try+ body is invalid"
+  [exprs catch-clauses finally-clauses sentinel]
+  (when (or sentinel (> (count finally-clauses) 1))
+    (throw (IllegalArgumentException.
+            (format "try+ form must match: (try+ %s)"
+                    "expr* catch-clause* finally-clause?")))))
 
 (defn- resolved
   "For symbols, returns the resolved value or throws if not resolvable"
@@ -204,9 +206,10 @@
 
   See also throw+"
   [& body]
-  (let [[exprs catch-clauses finally-clause] (partition-body body)]
+  (let [[exprs catch-clauses finally-clauses sentinel] (partition-body body)]
+    (validate-try+-form exprs catch-clauses finally-clauses sentinel)
     `(try
        ~@exprs
        ~@(when catch-clauses
            [(transform catch-clauses '(throw+))])
-       ~@finally-clause)))
+       ~@finally-clauses)))
