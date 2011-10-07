@@ -45,7 +45,7 @@
           :stack-trace (make-stack-trace)
           :environment (dissoc env# '~'&throw-context)})))
   ([object]
-     `(throw+ ~object nil))
+     `(throw+ ~object "Object thrown by throw+"))
   ([] `(throw (-> ~'&throw-context meta :throwable))))
 
 (defmacro try+
