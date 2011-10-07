@@ -26,7 +26,14 @@
             (format "try+ form must match: (try+ %s)"
                     "expr* catch-clause* finally-clause?")))))
 
-(defn throw-context
+(defn validated-body-parts
+  "Returns a validated set of try+ body parts"
+  [body]
+  (let [[e c f s] (partition-body body)]
+    (validate-try+-form e c f s)
+    [e c f]))
+
+(defn throwable->context
   "Returns the context map associated with a Throwable t. If t or any
   throwable in its cause chain is a Stone, returns its context, else
   returns a new context with t as the thrown object."
@@ -69,24 +76,6 @@
          `(~selector (:object ~'&throw-context)))
    `(let [~binding-form (:object ~'&throw-context)]
       ~@exprs)])
-
-(defn transform-catch
-  "Transforms a seq of try+ catch-clauses and a default into a single
-  try-compatible catch"
-  [catch-clauses default]
-  ;; the code below uses only one local to minimize clutter in the
-  ;; &env captured by throw+ forms within catch clauses (see the
-  ;; special handling of &throw-context in throw+)
-  `(catch Throwable ~'&throw-context
-     (let [~'&throw-context (-> ~'&throw-context throw-context
-                                slingshot.hooks/*catch-hook*)]
-       (cond
-        (contains? (meta ~'&throw-context) :catch-hook-return)
-        (:catch-hook-return (meta ~'&throw-context))
-        (contains? (meta ~'&throw-context) :catch-hook-throw)
-        (slingshot.core/throw+ (:catch-hook-throw (meta ~'&throw-context)))
-        ~@(mapcat catch->cond catch-clauses)
-        :else ~default))))
 
 (defn make-throwable
   "Returns a throwable Stone that wraps the given a message, cause,
@@ -137,3 +126,30 @@
   Defaults to identity."}
   *catch-hook* identity)
 
+(defn throw-context
+  "Throws a context. Allows overrides of *throw-hook* to intervene."
+  [context]
+  (*throw-hook* context))
+
+(defn try-compatible-catch
+  "Transforms a seq of try+ catch-clauses and a default into a single
+  try-compatible catch"
+  [catch-clauses default]
+  ;; the code below uses only one local to minimize clutter in the
+  ;; &env captured by throw+ forms within catch clauses (see the
+  ;; special handling of &throw-context in throw+)
+  `(catch Throwable ~'&throw-context
+     (let [~'&throw-context (-> ~'&throw-context throwable->context
+                                *catch-hook*)]
+       (cond
+        (contains? (meta ~'&throw-context) :catch-hook-return)
+        (:catch-hook-return (meta ~'&throw-context))
+        (contains? (meta ~'&throw-context) :catch-hook-throw)
+        (slingshot.core/throw+ (:catch-hook-throw (meta ~'&throw-context)))
+        ~@(mapcat catch->cond catch-clauses)
+        :else ~default))))
+
+(defn transform-catch-clauses
+  [catch-clauses]
+  (when catch-clauses
+    [(try-compatible-catch catch-clauses '(throw+))]))
