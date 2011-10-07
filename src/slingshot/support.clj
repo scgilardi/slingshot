@@ -79,7 +79,7 @@
   ;; special handling of &throw-context in throw+)
   `(catch Throwable ~'&throw-context
      (let [~'&throw-context (-> ~'&throw-context throw-context
-                                slingshot.core/*catch-hook*)]
+                                slingshot.hooks/*catch-hook*)]
        (cond
         (contains? (meta ~'&throw-context) :catch-hook-return)
         (:catch-hook-return (meta ~'&throw-context))
