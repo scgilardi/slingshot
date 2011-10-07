@@ -53,7 +53,7 @@
    `(let [~binding-form (:object ~'&throw-context)]
       ~@exprs)])
 
-(defn transform
+(defn transform-catch
   "Transforms a seq of try+ catch-clauses and a default into a single
   try-compatible catch"
   [catch-clauses default]

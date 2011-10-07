@@ -1,6 +1,6 @@
 (ns slingshot.core
   (:use [slingshot.support :only [default-throw-hook make-stack-trace
-                                  partition-body transform
+                                  partition-body transform-catch
                                   validate-try+-form]]))
 
 (def ^{:dynamic true
@@ -102,5 +102,5 @@
     `(try
        ~@exprs
        ~@(when catch-clauses
-           [(transform catch-clauses '(throw+))])
+           [(transform-catch catch-clauses '(throw+))])
        ~@finally-clauses)))
