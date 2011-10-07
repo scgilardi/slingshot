@@ -2,6 +2,52 @@
   (:use [clojure.walk :only [prewalk-replace]])
   (:import slingshot.Stone))
 
+;; throw+ support
+
+(defn make-stack-trace
+  "Returns the current stack trace beginning at the caller's frame"
+  []
+  (let [trace (.getStackTrace (Thread/currentThread))]
+    (java.util.Arrays/copyOfRange trace 2 (alength trace))))
+
+(defn make-throwable
+  "Returns a throwable Stone that wraps the given a message, cause,
+  stack-trace, and context"
+  [message cause stack-trace context]
+  (Stone. message cause stack-trace context))
+
+(defn context-message
+  "Returns the default message string for a throw context"
+  [{:keys [message object]}]
+  (str message ": " (pr-str object)))
+
+(defn context->throwable
+  "If object in context is a Throwable, returns it, else wraps it and
+   returns the wrapper."
+  [{:keys [object cause stack-trace] :as context}]
+  (if (instance? Throwable object)
+    object
+    (make-throwable (context-message context) cause stack-trace context)))
+
+(defn default-throw-hook
+  "Default implementation of *throw-hook*. If object in context is a
+  Throwable, throws it, else wraps it and throws the wrapper."
+  [context]
+  (throw (context->throwable context)))
+
+(def ^{:dynamic true
+       :doc "Hook to allow overriding the behavior of throw+. Must be
+  bound to a function of one argument, a context map. Defaults to
+  default-throw-hook."}
+  *throw-hook* default-throw-hook)
+
+(defn throw-context
+  "Throws a context. Allows overrides of *throw-hook* to intervene."
+  [context]
+  (*throw-hook* context))
+
+;; try+ support
+
 (defn clause-type
   "Returns a classifying value for any object in a try+ body:
   catch-clause, finally-clause, or other"
@@ -77,38 +123,6 @@
    `(let [~binding-form (:object ~'&throw-context)]
       ~@exprs)])
 
-(defn make-throwable
-  "Returns a throwable Stone that wraps the given a message, cause,
-  stack-trace, and context"
-  [message cause stack-trace context]
-  (Stone. message cause stack-trace context))
-
-(defn context-message
-  "Returns the default message string for a throw context"
-  [{:keys [message object]}]
-  (str message ": " (pr-str object)))
-
-(defn default-throw-hook
-  "Default implementation of *throw-hook*. If object in context is a
-  Throwable, throws it, else wraps it and throws the wrapper."
-  [{:keys [object cause stack-trace] :as context}]
-  (throw
-   (if (instance? Throwable object)
-     object
-     (make-throwable (context-message context) cause stack-trace context))))
-
-(defn make-stack-trace
-  "Returns the current stack trace beginning at the caller's frame"
-  []
-  (let [trace (.getStackTrace (Thread/currentThread))]
-    (java.util.Arrays/copyOfRange trace 2 (alength trace))))
-
-(def ^{:dynamic true
-       :doc "Hook to allow overriding the behavior of throw+. Must be
-  bound to a function of one argument, a context map. Defaults to
-  default-throw-hook."}
-  *throw-hook* default-throw-hook)
-
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
   bound to a function of one argument, a context map with
@@ -125,11 +139,6 @@
 
   Defaults to identity."}
   *catch-hook* identity)
-
-(defn throw-context
-  "Throws a context. Allows overrides of *throw-hook* to intervene."
-  [context]
-  (*throw-hook* context))
 
 (defn try-compatible-catch
   "Transforms a seq of try+ catch-clauses and a default into a single
