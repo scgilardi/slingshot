@@ -37,6 +37,11 @@
   [sym]
   (-> *ns* ns-name name (symbol (name sym))))
 
+(defn- sep-pr-str
+  "Helper for the throw+ syntax error message"
+  [x]
+  (str " " (pr-str x)))
+
 (defn- catch->cond
   "Converts a try+ catch clause into a test/expr pair for cond"
   [[_ selector binding-form & exprs]]
@@ -142,10 +147,15 @@
   caught object within its original (possibly nested) wrappers.
 
   See also try+"
-  ([object & [message sen]]
-     (when sen
+  ([object & [message & sentinel]]
+     (when (or sentinel (and message (not (string? message))))
        (throw (IllegalArgumentException.
-               "throw+ call must match: (throw+ object? ^String message?")))
+               (format "throw+ call must match: (throw+ %s): (throw+ %s)"
+                       "object? ^String message?"
+                       (apply str
+                              (pr-str object)
+                              (and message (sep-pr-str message))
+                              (and sentinel (mapcat sep-pr-str sentinel)))))))
      `(*throw-hook*
        (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
          {:object ~object

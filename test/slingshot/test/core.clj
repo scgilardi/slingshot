@@ -287,7 +287,7 @@
            (set [:object :message :cause :stack-trace :environment])))
     (is (= "throw-hook-string" (:object @test-hooked))))
   (binding [*throw-hook* (fn [x] 42)]
-    (is (= (throw+ "something" 42)))))
+    (is (= (throw+ "something") 42))))
 
 (def catch-hooked (atom nil))
 
