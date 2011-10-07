@@ -1,7 +1,7 @@
 (ns slingshot.core
-  (:use [slingshot.support :only [throw-context make-stack-trace
-                                  validated-body-parts
-                                  transform-catch-clauses]]))
+  (:use [slingshot.support :only [make-stack-trace throw-context
+                                  transform-catch-clauses
+                                  validated-body-parts]]))
 
 (defmacro throw+
   "Like the throw special form, but can throw any object. Behaves the
