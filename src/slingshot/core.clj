@@ -1,6 +1,7 @@
 (ns slingshot.core
-        [slingshot.support :only [make-stack-trace partition-body
-                                  transform-catch validate-try+-form]]))
+  (:use [slingshot.support :only [throw-context make-stack-trace
+                                  validated-body-parts
+                                  transform-catch-clauses]]))
 
 (defmacro throw+
   "Like the throw special form, but can throw any object. Behaves the
@@ -13,8 +14,8 @@
 
   See also try+"
   ([object message]
-     `(*throw-hook*
-       (let [env# (zipmap '~(keys &env) [~@(keys &env)])]
+     `(let [env# (zipmap '~(keys &env) [~@(keys &env)])]
+        (throw-context
          {:object ~object
           :message ~message
           :cause (-> (env# '~'&throw-context) meta :throwable)
