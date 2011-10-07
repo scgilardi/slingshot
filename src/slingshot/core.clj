@@ -3,13 +3,15 @@
   (:import (slingshot Stone)))
 
 (defn- clause-type
-  "Return a classifying value for any object in a try+ body:
+  "Returns a classifying value for any object in a try+ body:
   catch-clause, finally-clause, or other"
   [x]
   (when (seq? x) (#{'catch 'finally} (first x))))
 
 (defn- partition-body
-  "Partition and syntax check a try+ body"
+  "Partitions a try+ body into exprs, catch-clauses, and finally
+  clause where each partition may be empty. Throws if the body doesn't
+  match (expr* catch-clause* finally-clause?)"
   [body]
   (let [[e c f s] (partition-by clause-type body)
         [e c f s] (if (-> (first e) clause-type nil?) [e c f s] [nil e c f])
@@ -22,7 +24,7 @@
     [e c f]))
 
 (defn- resolved
-  "For symbols, return the resolved value or throw if not resolvable"
+  "For symbols, returns the resolved value or throws if not resolvable"
   [x]
   (when (symbol? x)
     (or (resolve x)
@@ -30,13 +32,13 @@
                 (str "Unable to resolve symbol: " x " in this context"))))))
 
 (defn- ns-qualify
-  "Return a fully qualified symbol with the current namespace and the
-  same name as sym"
+  "Returns a fully qualified symbol whose namespace is the current
+  namespace and whose name the same name as the name of sym"
   [sym]
   (-> *ns* ns-name name (symbol (name sym))))
 
 (defn- catch->cond
-  "Convert a try+ catch clause into the two parts of a cond clause"
+  "Converts a try+ catch clause into a test/expr pair for cond"
   [[_ selector binding-form & exprs]]
   [(cond (class? (resolved selector))
          `(instance? ~selector (:object ~'&throw-context))
@@ -48,7 +50,8 @@
       ~@exprs)])
 
 (defn- transform
-  "Transform try+ catch-clauses and default into a try-compatible catch"
+  "Transforms a seq of try+ catch-clauses and default into a single
+  try-compatible catch"
   [catch-clauses default]
   ;; the code below uses only one local to minimize clutter in the
   ;; &env captured by throw+ forms within catch clauses (see the
@@ -70,18 +73,19 @@
     (java.util.Arrays/copyOfRange trace 2 (alength trace))))
 
 (defn make-throwable
-  "Make a message, cause, stack-trace, and context throwable by wrapping"
+  "Returns a throwable Stone that wraps the given a message, cause,
+  stack-trace, and context"
   [message cause stack-trace context]
   (Stone. message cause stack-trace context))
 
 (defn context-message
-  "Return a message string given a context"
+  "Returns the default message string for a throw context"
   [{:keys [message object]}]
   (str (or message "Object thrown by throw+") ": " (pr-str object)))
 
 (defn default-throw-hook
   "Default implementation of *throw-hook*. If object in context is a
-  Throwable, throw it, else wrap it and throw the wrapper."
+  Throwable, throws it, else wraps it and throws the wrapper."
   [{:keys [object cause stack-trace] :as context}]
   (throw
    (if (instance? Throwable object)
@@ -91,7 +95,7 @@
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
   bound to a function of one argument, a context map. Defaults to
-  default-throw-hook"}
+  default-throw-hook."}
   *throw-hook* default-throw-hook)
 
 (def ^{:dynamic true
@@ -104,17 +108,17 @@
   Normal processing by catch clauses can be preempted by adding
   special keys to the metadata on the returned context map:
 
-  If the metadta contains the key:
+  If the metadata contains the key:
     - :catch-hook-return, try+ will return the corresponding value;
-    - :catch-hook-throw, try+ will throw the corresponding value.
+    - :catch-hook-throw, try+ will throw+ the corresponding value.
 
   Defaults to identity."}
   *catch-hook* identity)
 
 (defn throw-context
-  "Returns the context map associated with t. If t or any throwable in
-  its cause chain is a Stone, return its context, else return a new
-  context with t as the thrown object."
+  "Returns the context map associated with a Throwable t. If t or any
+  throwable in its cause chain is a Stone, returns its context, else
+  returns a new context with t as the thrown object."
   [t]
   (-> (loop [c t]
         (cond (instance? Stone c)
@@ -131,10 +135,11 @@
 (defmacro throw+
   "Like the throw special form, but can throw any object. Behaves the
   same as throw for Throwable objects. For other objects, an optional
-  second argument specifies a message which by default is displayed
-  along with the object's value if it is caught outside a try+
-  form. Within a try+ catch clause, throw+ with no arguments rethrows
-  the caught object.
+  second argument specifies a message that is accessible in catch
+  clauses within both try forms (via .getMessage on the throwable
+  wrapper), and try+ forms (via the :message key in &throw-context).
+  Within a try+ catch clause, throw+ with no arguments rethrows the
+  caught object within its original (possibly nested) wrappers.
 
   See also try+"
   ([object & [message sen]]
@@ -155,8 +160,8 @@
     - specify objects to catch by classname, predicate, or
       selector form;
     - destructure the caught object;
-    - access the context at the throw site via the &throw-context
-      hidden argument.
+    - access the values of the locals visible at the throw site via
+      the &throw-context hidden argument.
 
   A selector form is a form containing one or more instances of % to
   be replaced by the thrown object. If it evaluates to truthy, the
@@ -180,21 +185,22 @@
       :cause        the cause, captured by throw+, see below;
       :wrapper      the outermost Throwable wrapper of the caught object,
                     see below;
-      :environment  a map of bound symbols to their values.
+      :environment  a map of locals visible at the throw+ site: symbols
+                    mapped to their bound values.
 
-  To throw a non-Throwable object, throw+ wraps it with an object of
-  type Stone. That Stone in turn may end up being wrapped by other
-  exceptions (e.g., instances of RuntimeException or
+  To throw a non-Throwable object, throw+ wraps it with an Throwable
+  object of class Stone. That Stone may in turn end up wrapped by
+  other exceptions (e.g., instances of RuntimeException or
   java.util.concurrent.ExecutionException). try+ \"sees through\" all
   such wrappers to find the object wrapped by the first instance of
   Stone in the outermost wrapper's cause chain. If needed, the
-  outermost wrapper is available within a catch clause at the :wrapper
-  key in &throw-context. Any nested wrappers are accessible via its
-  cause chain.
+  outermost wrapper is available within a catch clause a via
+  the :wrapper key in &throw-context. Any nested wrappers are
+  accessible via its cause chain.
 
   When throw+ throws a non-Throwable object from within a try+ catch
   clause, the outermost wrapper of the caught object being processed
-  is captured as the \"cause\" of the new throw.
+  is captured as the \"cause\" of the new throw+.
 
   See also throw+"
   [& body]
