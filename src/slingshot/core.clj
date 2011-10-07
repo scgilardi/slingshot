@@ -3,28 +3,6 @@
                                   transform-catch-clauses
                                   validated-body-parts]]))
 
-(defmacro throw+
-  "Like the throw special form, but can throw any object. Behaves the
-  same as throw for Throwable objects. For other objects, an optional
-  second argument specifies a message that is accessible in catch
-  clauses within both try forms (via .getMessage on the throwable
-  wrapper), and try+ forms (via the :message key in &throw-context).
-  Within a try+ catch clause, throw+ with no arguments rethrows the
-  caught object within its original (possibly nested) wrappers.
-
-  See also try+"
-  ([object message]
-     `(let [env# (zipmap '~(keys &env) [~@(keys &env)])]
-        (throw-context
-         {:object ~object
-          :message ~message
-          :cause (-> (env# '~'&throw-context) meta :throwable)
-          :stack-trace (make-stack-trace)
-          :environment (dissoc env# '~'&throw-context)})))
-  ([object]
-     `(throw+ ~object "Object thrown by throw+"))
-  ([] `(throw (-> ~'&throw-context meta :throwable))))
-
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
     - specify objects to catch by classname, predicate, or
@@ -79,3 +57,25 @@
        ~@exprs
        ~@(transform-catch-clauses catch-clauses)
        ~@finally-clauses)))
+
+(defmacro throw+
+  "Like the throw special form, but can throw any object. Behaves the
+  same as throw for Throwable objects. For other objects, an optional
+  second argument specifies a message that is accessible in catch
+  clauses within both try forms (via .getMessage on the throwable
+  wrapper), and try+ forms (via the :message key in &throw-context).
+  Within a try+ catch clause, throw+ with no arguments rethrows the
+  caught object within its original (possibly nested) wrappers.
+
+  See also try+"
+  ([object message]
+     `(let [env# (zipmap '~(keys &env) [~@(keys &env)])]
+        (throw-context
+         {:object ~object
+          :message ~message
+          :cause (-> (env# '~'&throw-context) meta :throwable)
+          :stack-trace (make-stack-trace)
+          :environment (dissoc env# '~'&throw-context)})))
+  ([object]
+     `(throw+ ~object "Object thrown by throw+"))
+  ([] `(throw (-> ~'&throw-context meta :throwable))))
