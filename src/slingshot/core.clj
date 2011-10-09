@@ -56,7 +56,7 @@
   (let [[exprs catch-clauses finally-clauses] (validated-body-parts body)]
     `(try
        ~@exprs
-       ~@(transform-catch-clauses catch-clauses)
+       ~@(transform-catch-clauses catch-clauses `throw+)
        ~@finally-clauses)))
 
 (defmacro throw+

@@ -100,9 +100,12 @@
   *catch-hook* identity)
 
 (defn try-compatible-catch
-  "Transforms a seq of try+ catch-clauses and a default into a single
-  try-compatible catch"
-  [catch-clauses default]
+  "Transforms a seq of try+ catch-clauses into a single try-compatible
+  catch. throw-fn must name a function that can accept zero or one
+  arguments. It will be called at runtime with one argument if the
+  *catch-hook* requests :catch-hook-throw or with zero arguments if
+  none of the catch claues matches."
+  [catch-clauses throw-fn]
   ;; the code below uses only one local to minimize clutter in the
   ;; &env captured by throw+ forms within catch clauses (see the
   ;; special handling of &throw-context in throw+)
@@ -113,14 +116,15 @@
         (contains? (meta ~'&throw-context) :catch-hook-return)
         (:catch-hook-return (meta ~'&throw-context))
         (contains? (meta ~'&throw-context) :catch-hook-throw)
-        (slingshot.core/throw+ (:catch-hook-throw (meta ~'&throw-context)))
+        (~throw-fn (:catch-hook-throw (meta ~'&throw-context)))
         ~@(mapcat catch->cond catch-clauses)
-        :else ~default))))
+        :else
+        (~throw-fn)))))
 
 (defn transform-catch-clauses
-  [catch-clauses]
+  [catch-clauses throw-fn]
   (when catch-clauses
-    [(try-compatible-catch catch-clauses '(slingshot.core/throw+))]))
+    [(try-compatible-catch catch-clauses throw-fn)]))
 
 ;; throw+ support
 
