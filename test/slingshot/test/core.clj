@@ -44,9 +44,11 @@
     (catch exception-record e#
       [:class-exception-record e#])
 
-    ;; by key, with optional value
-    (catch (= (:a-key %) 4) e#
+    ;; by key-value
+    (catch [:a-key 4] e#
       [:key-yields-value e#])
+
+    ;; by key present
     (catch (contains? % :a-key) e#
       [:key-is-present e#])
 

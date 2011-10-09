@@ -55,6 +55,9 @@
   [[_ selector binding-form & exprs]]
   [(cond (class? (resolved selector))
          `(instance? ~selector (:object ~'&throw-context))
+         (vector? selector)
+         (let [[key val] selector]
+           `(= (get (:object ~'&throw-context) ~key) ~val))
          (seq? selector)
          (prewalk-replace {(ns-qualify '%) '(:object &throw-context)} selector)
          :else

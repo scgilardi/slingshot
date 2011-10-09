@@ -5,7 +5,7 @@
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
-    - specify objects to catch by classname, predicate, or
+    - specify objects to catch by classname, key-value, predicate, or
       selector form;
     - destructure the caught object;
     - access the values of the locals visible at the throw site via
@@ -15,11 +15,12 @@
   be replaced by the thrown object. If it evaluates to truthy, the
   object is caught.
 
-  The classname and predicate selectors are shorthand for these
-  selector forms:
+  The classname, key-value, and predicate selectors are shorthand for
+  these selector forms:
 
-    <classname> => (instance? <classname> %)
-    <predicate> => (<predicate> %)
+    <classname>   => (instance? <classname> %)
+    [<key> <val>] => (= (get % <key>) <val>)
+    <predicate>   => (<predicate> %)
 
   &throw-context is a map containing:
     - for all caught objects:
