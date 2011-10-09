@@ -11,8 +11,8 @@
   (when (seq? x) (#{'catch 'finally} (first x))))
 
 (defn partition-body
-  "Partitions a try+ body into exprs, catch-clauses, finally
-  clauses, and a sentinel used for validating syntax"
+  "Partitions a try+ body into exprs, catch-clauses, finally clauses,
+  and a sentinel used for validating syntax"
   [body]
   (let [[e c f s] (partition-by clause-type body)
         [e c f s] (if (-> (first e) clause-type nil?) [e c f s] [nil e c f])
