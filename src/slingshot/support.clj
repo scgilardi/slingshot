@@ -117,7 +117,7 @@
 (defn transform-catch-clauses
   [catch-clauses]
   (when catch-clauses
-    [(try-compatible-catch catch-clauses '(throw+))]))
+    [(try-compatible-catch catch-clauses '(slingshot.core/throw+))]))
 
 ;; throw+ support
 
