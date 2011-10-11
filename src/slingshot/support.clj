@@ -4,6 +4,12 @@
 
 ;; try+ support
 
+(defn throw-arg
+  "Throws an IllegalArgumentException with a message. Args are like
+  those of clojure.core/format."
+  [fmt & args]
+  (throw (IllegalArgumentException. (apply format fmt args))))
+
 (defn clause-type
   "Returns a classifying value for any object in a try+ body:
   catch-clause, finally-clause, or other"
@@ -24,9 +30,6 @@
   "Throws if a partitioned try+ body is invalid"
   [exprs catch-clauses finally-clauses sentinel]
   (when (or sentinel (> (count finally-clauses) 1))
-    (throw (IllegalArgumentException.
-            (format "try+ form must match: (try+ %s)"
-                    "expr* catch-clause* finally-clause?")))))
 
 (defn validated-body-parts
   "Returns a validated set of try+ body parts"
@@ -40,8 +43,7 @@
   [x]
   (when (symbol? x)
     (or (resolve x)
-        (throw (IllegalArgumentException.
-                (str "Unable to resolve symbol: " x " in this context"))))))
+        (throw-arg "Unable to resolve symbol: %s in this context" x))))
 
 (defn ns-qualify
   "Returns a fully qualified symbol with the same name as the
