@@ -31,13 +31,12 @@
     (is (= [nil nil '((finally 1) (finally 2)) nil]
            (f '((finally 1) (finally 2)))))))
 
-(deftest test-validate-try+-form
-  (let [f validate-try+-form]
-    (is (nil? (f [] [] [] nil)))
-    (is (nil? (f [:expr1 :expr2] [:catch1 :catch2] [:finally] nil)))
-    (is (thrown? IllegalArgumentException (f [] [] [] [:more])))
-    (is (thrown? IllegalArgumentException
-                 (f [] [] [:finally1 :finally2] nil)))))
+(deftest test-valid-try+-form
+  (let [f valid-try+-form]
+    (is (f [] [] [] nil))
+    (is (f [:expr1 :expr2] [:catch1 :catch2] [:finally] nil))
+    (is (not (f [] [] [] [:more])))
+    (is (not (f [] [] [:finally1 :finally2] nil)))))
 
 (deftest test-resolved
   (let [f resolved]
