@@ -124,10 +124,12 @@
         (contains? (meta ~'&throw-context) :catch-hook-return)
         (:catch-hook-return (meta ~'&throw-context))
         (contains? (meta ~'&throw-context) :catch-hook-throw)
-        (~throw-fn (:catch-hook-throw (meta ~'&throw-context)))
+        (~throw-sym (:catch-hook-throw (meta ~'&throw-context)))
+        (contains? (meta ~'&throw-context) :catch-hook-rethrow)
+        (~throw-sym)
         ~@(mapcat catch->cond catch-clauses)
         :else
-        (~throw-fn)))))
+        (~throw-sym)))))
 
 (defn transform-catch-clauses
   [catch-clauses throw-fn]
