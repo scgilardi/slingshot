@@ -1,7 +1,6 @@
 (ns slingshot.core
-  (:use [slingshot.support :only [make-stack-trace throw-context
-                                  transform-catch-clauses
-                                  validated-body-parts]]))
+  (:use [slingshot.support :only [env-map parse rethrow stack-trace
+                                  throw-context transform]]))
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
@@ -53,10 +52,10 @@
 
   See also throw+"
   [& body]
-  (let [[exprs catch-clauses finally-clauses] (validated-body-parts body)]
+  (let [[exprs catch-clauses finally-clauses] (parse body)]
     `(try
        ~@exprs
-       ~@(transform-catch-clauses catch-clauses `throw+)
+       ~@(transform catch-clauses `throw+)
        ~@finally-clauses)))
 
 (defmacro throw+
@@ -70,13 +69,8 @@
 
   See also try+"
   ([object message]
-     `(let [env# (zipmap '~(keys &env) [~@(keys &env)])]
-        (throw-context
-         {:object ~object
-          :message ~message
-          :cause (-> (env# '~'&throw-context) meta :throwable)
-          :stack-trace (make-stack-trace)
-          :environment (dissoc env# '~'&throw-context)})))
+     `(throw-context ~object ~message (stack-trace) (env-map)))
   ([object]
      `(throw+ ~object "Object thrown by throw+"))
-  ([] `(throw (-> ~'&throw-context meta :throwable))))
+  ([]
+     `(rethrow ~'&throw-context)))
