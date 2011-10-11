@@ -131,20 +131,13 @@
         :else
         (~throw-sym)))))
 
-(defn transform-catch-clauses
-  [catch-clauses throw-fn]
+(defn transform
   "Returns a try-compatible catch if there are any catch clauses"
   [catch-clauses throw-sym]
   (when catch-clauses
-    [(try-compatible-catch catch-clauses throw-fn)]))
+    [(try-compatible-catch catch-clauses throw-sym)]))
 
 ;; throw+ support
-
-(defn make-stack-trace
-  "Returns the current stack trace beginning at the caller's frame"
-  []
-  (let [trace (.getStackTrace (Thread/currentThread))]
-    (java.util.Arrays/copyOfRange trace 2 (alength trace))))
 
 (defn make-throwable
   "Returns a throwable Stone that wraps the given a message, cause,
@@ -166,10 +159,35 @@
     (make-throwable (context-message context) cause stack-trace context)))
 
 (defn default-throw-hook
-  "Default implementation of *throw-hook*. If object in context is a
-  Throwable, throws it, else wraps it and throws the wrapper."
+  "Default implementation of *throw-hook*"
   [context]
   (throw (context->throwable context)))
+
+(defn stack-trace
+  "Returns the current stack trace beginning at the caller's frame"
+  []
+  (let [trace (.getStackTrace (Thread/currentThread))]
+    (java.util.Arrays/copyOfRange trace 2 (alength trace))))
+
+(defmacro env-map
+  "Expands to code that generates a map of locals: names to values"
+  []
+  `(zipmap '~(keys &env) [~@(keys &env)]))
+
+(defn rethrow
+  "Rethrows the Throwable that try caught"
+  [context]
+  (throw (-> context meta :throwable)))
+
+(defn make-context
+  "Makes a throw context from arguments. Captures the cause if called
+  within a catch clause."
+  [object message stack-trace environment]
+  {:object object
+   :message message
+   :cause (-> (environment '&throw-context) meta :throwable)
+   :stack-trace stack-trace
+   :environment (dissoc environment '&throw-context)})
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
@@ -179,5 +197,5 @@
 
 (defn throw-context
   "Throws a context. Allows overrides of *throw-hook* to intervene."
-  [context]
-  (*throw-hook* context))
+  [object message stack-trace environment]
+  (*throw-hook* (make-context object message stack-trace environment)))
