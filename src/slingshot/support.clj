@@ -12,13 +12,13 @@
 
 (defn clause-type
   "Returns a classifying value for any object in a try+ body:
-  catch-clause, finally-clause, or other"
+  expr, catch-clause, or finally-clause"
   [x]
   (when (seq? x) (#{'catch 'finally} (first x))))
 
 (defn partition-body
   "Partitions a try+ body into exprs, catch-clauses, finally clauses,
-  and a sentinel used for validating syntax"
+  and a sentinel which is nil when the body is well formed."
   [body]
   (let [[e c f s] (partition-by clause-type body)
         [e c f s] (if (-> (first e) clause-type nil?) [e c f s] [nil e c f])
@@ -49,8 +49,7 @@
 
 (defn ns-qualify
   "Returns a fully qualified symbol with the same name as the
-  argument, and a namespace part that refers to the current
-  namespace."
+  argument, but \"in\" the current namespace"
   [sym]
   (-> *ns* ns-name name (symbol (name sym))))
 
@@ -67,7 +66,7 @@
              `(= (get (:object ~'&throw-context) ~key) ~val)))
          (seq? selector)
          (prewalk-replace {(ns-qualify '%) '(:object &throw-context)} selector)
-         :else
+         :else ;; predicate
          `(~selector (:object ~'&throw-context)))
    `(let [~binding-form (:object ~'&throw-context)]
       ~@exprs)])
@@ -96,26 +95,28 @@
   by catch clauses. Existing metadata on the context map must be
   preserved (or intentionally modified) in the returned context map.
 
-  Normal processing by catch clauses can be preempted by adding
-  special keys to the metadata on the returned context map:
+  Normal processing by catch clauses can be skipped by adding special
+  keys to the metadata on the returned context map:
 
   If the metadata contains the key:
     - :catch-hook-return, try+ will return the corresponding value;
-    - :catch-hook-throw, try+ will throw+ the corresponding value.
+    - :catch-hook-throw, try+ will throw+ the corresponding value;
+    - :catch-hook-rethrow, try+ will rethrow the caught object's
+      outermost wrapper.
 
   Defaults to identity."}
   *catch-hook* identity)
 
 (defn try-compatible-catch
   "Transforms a seq of try+ catch-clauses into a single try-compatible
-  catch. throw-fn must name a function that can accept zero or one
-  arguments. It will be called at runtime with one argument if the
-  *catch-hook* requests :catch-hook-throw or with zero arguments if
-  none of the catch claues matches."
-  [catch-clauses throw-fn]
+  catch. throw-sym must name a macro or function that can accept zero
+  or one arguments: one argument for :catch-hook-throw requests, and
+  zero arguments for :catch-hook-rethrow requests or when no catch
+  clause matches."
+  [catch-clauses throw-sym]
   ;; the code below uses only one local to minimize clutter in the
   ;; &env captured by throw+ forms within catch clauses (see the
-  ;; special handling of &throw-context in throw+)
+  ;; special handling of &throw-context in make-context)
   `(catch Throwable ~'&throw-context
      (let [~'&throw-context (-> ~'&throw-context throwable->context
                                 *catch-hook*)]
@@ -130,6 +131,8 @@
 
 (defn transform-catch-clauses
   [catch-clauses throw-fn]
+  "Returns a try-compatible catch if there are any catch clauses"
+  [catch-clauses throw-sym]
   (when catch-clauses
     [(try-compatible-catch catch-clauses throw-fn)]))
 
