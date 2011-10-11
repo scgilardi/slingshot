@@ -60,8 +60,11 @@
   [(cond (class? (resolved selector))
          `(instance? ~selector (:object ~'&throw-context))
          (vector? selector)
-         (let [[key val] selector]
-           `(= (get (:object ~'&throw-context) ~key) ~val))
+         (let [[key val & sentinel] selector]
+           (if sentinel
+             (throw-arg "key-value selector: %s does not match: [key val]"
+                        (pr-str selector))
+             `(= (get (:object ~'&throw-context) ~key) ~val)))
          (seq? selector)
          (prewalk-replace {(ns-qualify '%) '(:object &throw-context)} selector)
          :else
