@@ -1,10 +1,7 @@
 (ns slingshot.test.support
   (:use [clojure.test]
         [slingshot.core :only [throw+ try+]]
-        [slingshot.support :only [clause-type partition-body validate-try+-form
-                                  resolved catch->cond ns-qualify
-                                  make-stack-trace make-throwable *throw-hook*
-                                  *catch-hook*]])
+        [slingshot.support])
   (:import (java.util.concurrent ExecutionException)))
 
 (deftest test-clause-type
