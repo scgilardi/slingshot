@@ -58,9 +58,9 @@
             (list `let '[e (:object &throw-context)] 1)]))))
 
 (defn stack-trace-fn []
-  (make-stack-trace))
+  (stack-trace))
 
-(deftest test-make-stack-trace []
+(deftest test-stack-trace []
   (let [{:keys [methodName className]} (-> (stack-trace-fn) first bean)]
     (is (= methodName "invoke"))
     (is (re-find #"stack_trace_fn" className))))
@@ -69,7 +69,7 @@
   (let [tmessage "test-make-throwable-1"
         tcause (Exception.)
         tcontext {:a 1 :b 2}
-        tstack-trace (make-stack-trace)
+        tstack-trace (stack-trace)
         tobject (make-throwable
                  tmessage tcause tstack-trace tcontext)
         {:keys [message cause context stackTrace]} (bean tobject)]
