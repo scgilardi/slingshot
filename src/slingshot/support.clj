@@ -5,7 +5,7 @@
 ;; try+ support
 
 (defn throw-arg
-  "Throws an IllegalArgumentException with a message. Args are like
+  "Throws an IllegalArgumentException with a message specified by args like
   those of clojure.core/format."
   [fmt & args]
   (throw (IllegalArgumentException. (apply format fmt args))))
@@ -32,7 +32,7 @@
 
 (defn resolved
   "For a symbol, returns the var or Class to which it will be resolved
-  in the current namespace or throws if it could not be resolved"
+  in the current namespace or throws if it will not be resolved"
   [x]
   (when (symbol? x)
     (or (resolve x)
