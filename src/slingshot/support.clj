@@ -61,9 +61,10 @@
       ~@exprs)])
 
 (defn throwable->context
-  "Returns the context map associated with a Throwable t. If t or any
-  Throwable in its cause chain is a Stone, returns its context, else
-  returns a new context with t as the thrown object."
+  "Returns a context map based on Throwable t. If t or any Throwable
+  in its cause chain is a Stone, returns its context with t assoc'd as
+  the value for :wrapper, else returns a new context with t as the
+  thrown object."
   [t]
   (-> (loop [c t]
         (cond (instance? Stone c)
