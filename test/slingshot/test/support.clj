@@ -30,12 +30,12 @@
     (is (thrown? IllegalArgumentException (f '((finally 1) (catch 1)))))
     (is (thrown? IllegalArgumentException (f '((finally 1) (finally 2)))))))
 
-(deftest test-resolved
-  (let [f resolved]
+(deftest test-class-name?
+  (let [f class-name?]
     (is (f 'Exception))
-    (is (f 'isa?))
-    (is (nil? (f 3)))
-    (is (thrown? Exception (f '_)))))
+    (is (not (f 'isa?)))
+    (is (not (f 3)))
+    (is (not (f '_)))))
 
 (deftest test-catch->cond
   (let [f catch->cond]

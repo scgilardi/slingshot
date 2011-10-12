@@ -30,13 +30,11 @@
       (throw-arg "try+ form must match: %s"
                  "(try+ expr* catch-clause* finally-clause?)"))))
 
-(defn resolved
-  "For a symbol, returns the var or Class to which it will be resolved
-  in the current namespace or throws if it will not be resolved"
+(defn class-name?
+  "Returns true if the argument is a symbol that resolves to a Class
+  in the current namespace"
   [x]
-  (when (symbol? x)
-    (or (resolve x)
-        (throw-arg "Unable to resolve symbol: %s in this context" x))))
+  (and (symbol? x) (class? (resolve x))))
 
 (defn ns-qualify
   "Returns a fully qualified symbol with the same name as the
@@ -47,7 +45,7 @@
 (defn catch->cond
   "Converts a try+ catch-clause into a test/expr pair for cond"
   [[_ selector binding-form & exprs]]
-  [(cond (class? (resolved selector))
+  [(cond (class-name? selector)
          `(instance? ~selector (:object ~'&throw-context))
          (vector? selector)
          (let [[key val & sentinel] selector]
