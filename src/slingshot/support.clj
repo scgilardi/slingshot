@@ -23,22 +23,18 @@
   (let [[e c f s] (partition-by clause-type body)
         [e c f s] (if (-> (first e) clause-type nil?) [e c f s] [nil e c f])
         [c f s] (if (-> (first c) clause-type (= 'catch)) [c f s] [nil c f])
-        [f s] (if (-> (first f) clause-type (= 'finally)) [f s] [nil f])]
+        [f s] (if (-> (first f) clause-type (= 'finally)) [f s] [nil f])
+        s (or s (next f))]
     [e c f s]))
-
-(defn valid-try+-form
-  "Returns true if a partitioned try+ body is valid"
-  [_ _ finally-clauses sentinel]
-  (and (not sentinel) (< (count finally-clauses) 2)))
 
 (defn parse
   "Returns parsed body parts for valid bodies or throws on syntax error"
   [body]
-  (let [[e c f s] (partition-body body)]
-    (if (valid-try+-form e c f s)
-      [e c f]
+  (let [[exprs catch-clauses finally-clauses sentinel] (partition-body body)]
+    (if sentinel
       (throw-arg "try+ form must match: (try+ %s)"
-                 "expr* catch-clause* finally-clause?"))))
+                 "expr* catch-clause* finally-clause?")
+      [exprs catch-clauses finally-clauses])))
 
 (defn resolved
   "For symbols, returns the resolved value or throws if not resolvable"

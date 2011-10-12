@@ -28,15 +28,8 @@
     (is (= [nil '((catch 1)) nil '((1))] (f '((catch 1) (1)))))
     (is (= [nil nil '((finally 1)) '((1))] (f '((finally 1) (1)))))
     (is (= [nil nil '((finally 1)) '((catch 1))] (f '((finally 1) (catch 1)))))
-    (is (= [nil nil '((finally 1) (finally 2)) nil]
+    (is (= [nil nil '((finally 1) (finally 2)) '((finally 2))]
            (f '((finally 1) (finally 2)))))))
-
-(deftest test-valid-try+-form
-  (let [f valid-try+-form]
-    (is (f [] [] [] nil))
-    (is (f [:expr1 :expr2] [:catch1 :catch2] [:finally] nil))
-    (is (not (f [] [] [] [:more])))
-    (is (not (f [] [] [:finally1 :finally2] nil)))))
 
 (deftest test-resolved
   (let [f resolved]
