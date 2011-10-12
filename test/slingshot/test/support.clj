@@ -4,32 +4,31 @@
         [slingshot.support])
   (:import (java.util.concurrent ExecutionException)))
 
-(deftest test-clause-type
-  (let [f clause-type]
-    (is (nil? (f 3)))
-    (is (nil? (f ())))
-    (is (nil? (f '(nil? x))))
+(deftest test-part-type
+  (let [f part-type]
+    (is (= 'expr (f 3)))
+    (is (= 'expr (f ())))
+    (is (= 'expr (f '(nil? x))))
     (is (= 'catch (f '(catch x))))
     (is (= 'finally (f '(finally x))))))
 
-(deftest test-partition-body
-  (let [f partition-body]
+(deftest test-parse
+  (let [f parse]
     (is (= [nil nil nil]) (f ()))
-    (is (= ['(1) nil nil nil] (f '(1))))
-    (is (= [nil '((catch 1)) nil nil] (f '((catch 1)))))
-    (is (= [nil nil '((finally 1)) nil] (f '((finally 1)))))
+    (is (= ['(1) nil nil] (f '(1))))
+    (is (= [nil '((catch 1)) nil] (f '((catch 1)))))
+    (is (= [nil nil '((finally 1))] (f '((finally 1)))))
 
-    (is (= ['(1) '((catch 1)) nil nil] (f '(1 (catch 1)))))
-    (is (= ['(1) nil '((finally 1)) nil] (f '(1 (finally 1)))))
-    (is (= ['(1) '((catch 1)) '((finally 1)) nil]
+    (is (= ['(1) '((catch 1)) nil] (f '(1 (catch 1)))))
+    (is (= ['(1) nil '((finally 1))] (f '(1 (finally 1)))))
+    (is (= ['(1) '((catch 1)) '((finally 1))]
            (f '(1 (catch 1) (finally 1)))))
-    (is (= ['(1) '((catch 1) (catch 2)) '((finally 1)) nil]
+    (is (= ['(1) '((catch 1) (catch 2)) '((finally 1))]
            (f '(1 (catch 1) (catch 2) (finally 1)))))
-    (is (= [nil '((catch 1)) nil '((1))] (f '((catch 1) (1)))))
-    (is (= [nil nil '((finally 1)) '((1))] (f '((finally 1) (1)))))
-    (is (= [nil nil '((finally 1)) '((catch 1))] (f '((finally 1) (catch 1)))))
-    (is (= [nil nil '((finally 1) (finally 2)) '((finally 2))]
-           (f '((finally 1) (finally 2)))))))
+    (is (thrown? IllegalArgumentException (f '((catch 1) (1)))))
+    (is (thrown? IllegalArgumentException (f '((finally 1) (1)))))
+    (is (thrown? IllegalArgumentException (f '((finally 1) (catch 1)))))
+    (is (thrown? IllegalArgumentException (f '((finally 1) (finally 2)))))))
 
 (deftest test-resolved
   (let [f resolved]

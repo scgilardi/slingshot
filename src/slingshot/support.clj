@@ -10,31 +10,25 @@
   [fmt & args]
   (throw (IllegalArgumentException. (apply format fmt args))))
 
-(defn clause-type
-  "Returns a classifying value for any object in a try+ body:
-  expr, catch-clause, or finally-clause"
+(defn part-type
+  "Returns a classifying symbol for an item in a try+ body: 'expr,
+  'catch, or 'finally"
   [x]
-  (when (seq? x) (#{'catch 'finally} (first x))))
-
-(defn partition-body
-  "Partitions a try+ body into exprs, catch-clauses, finally clauses,
-  and a sentinel which is nil when the body is well formed"
-  [body]
-  (let [[e c f s] (partition-by clause-type body)
-        [e c f s] (if (-> (first e) clause-type nil?) [e c f s] [nil e c f])
-        [c f s] (if (-> (first c) clause-type (= 'catch)) [c f s] [nil c f])
-        [f s] (if (-> (first f) clause-type (= 'finally)) [f s] [nil f])
-        s (or s (next f))]
-    [e c f s]))
+  (or (and (seq? x) (-> x first #{'catch 'finally})) 'expr))
 
 (defn parse
-  "Returns parsed body parts for valid bodies or throws on syntax error"
+  "Returns a vector of seqs containing the exprs, catch clauses, and
+  finally clauses in a try+ body, or throws if the body's structure is
+  invalid"
   [body]
-  (let [[exprs catch-clauses finally-clauses sentinel] (partition-body body)]
-    (if sentinel
-      (throw-arg "try+ form must match: (try+ %s)"
-                 "expr* catch-clause* finally-clause?")
-      [exprs catch-clauses finally-clauses])))
+  (let [[p q r s] (partition-by part-type body)
+        [e q r s] (if (-> p first part-type (= 'expr)) [p q r s] [nil p q r])
+        [c r s] (if (-> q first part-type (= 'catch)) [q r s] [nil q r])
+        [f s] (if (-> r first part-type (= 'finally)) [r s] [nil r])]
+    (if (and (nil? s) (<= (count f) 1))
+      [e c f]
+      (throw-arg "try+ form must match: %s"
+                 "(try+ expr* catch-clause* finally-clause?)"))))
 
 (defn resolved
   "For a symbol, returns the var or Class to which it will be resolved
