@@ -97,35 +97,32 @@
   Defaults to identity."}
   *catch-hook* identity)
 
-(defn try-compatible-catch
-  "Transforms a seq of try+ catch-clauses into a single try-compatible
-  catch. throw-sym must name a macro or function that can accept zero
-  or one arguments: one argument for :catch-hook-throw requests, and
-  zero arguments for :catch-hook-rethrow requests or when no catch
-  clause matches."
+(defn transform
+  "Returns a seq of catch clauses for try that implements the behavior
+  specified by a seq of catch clauses for try+. throw-sym names a
+  macro or function (usually throw+) that can accept zero or one
+  arguments. It is called with one argument for :catch-hook-throw
+  requests, or zero arguments for :catch-hook-rethrow requests or when
+  no catch clause matches."
   [catch-clauses throw-sym]
   ;; the code below uses only one local to minimize clutter in the
   ;; &env captured by throw+ forms within catch clauses (see the
   ;; special handling of &throw-context in make-context)
-  `(catch Throwable ~'&throw-context
-     (let [~'&throw-context (-> ~'&throw-context throwable->context
-                                *catch-hook*)]
-       (cond
-        (contains? (meta ~'&throw-context) :catch-hook-return)
-        (:catch-hook-return (meta ~'&throw-context))
-        (contains? (meta ~'&throw-context) :catch-hook-throw)
-        (~throw-sym (:catch-hook-throw (meta ~'&throw-context)))
-        (contains? (meta ~'&throw-context) :catch-hook-rethrow)
-        (~throw-sym)
-        ~@(mapcat catch->cond catch-clauses)
-        :else
-        (~throw-sym)))))
-
-(defn transform
-  "Returns a try-compatible catch if there are any catch clauses"
-  [catch-clauses throw-sym]
   (when catch-clauses
-    [(try-compatible-catch catch-clauses throw-sym)]))
+    (list
+     `(catch Throwable ~'&throw-context
+        (let [~'&throw-context (-> ~'&throw-context throwable->context
+                                   *catch-hook*)]
+          (cond
+           (contains? (meta ~'&throw-context) :catch-hook-return)
+           (:catch-hook-return (meta ~'&throw-context))
+           (contains? (meta ~'&throw-context) :catch-hook-throw)
+           (~throw-sym (:catch-hook-throw (meta ~'&throw-context)))
+           (contains? (meta ~'&throw-context) :catch-hook-rethrow)
+           (~throw-sym)
+           ~@(mapcat catch->cond catch-clauses)
+           :else
+           (~throw-sym)))))))
 
 ;; throw+ support
 
