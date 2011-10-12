@@ -18,7 +18,7 @@
 
 (defn partition-body
   "Partitions a try+ body into exprs, catch-clauses, finally clauses,
-  and a sentinel which is nil when the body is well formed."
+  and a sentinel which is nil when the body is well formed"
   [body]
   (let [[e c f s] (partition-by clause-type body)
         [e c f s] (if (-> (first e) clause-type nil?) [e c f s] [nil e c f])
@@ -37,7 +37,8 @@
       [exprs catch-clauses finally-clauses])))
 
 (defn resolved
-  "For symbols, returns the resolved value or throws if not resolvable"
+  "For a symbol, returns the var or Class to which it will be resolved
+  in the current namespace or throws if it could not be resolved"
   [x]
   (when (symbol? x)
     (or (resolve x)
@@ -69,7 +70,7 @@
 
 (defn throwable->context
   "Returns the context map associated with a Throwable t. If t or any
-  throwable in its cause chain is a Stone, returns its context, else
+  Throwable in its cause chain is a Stone, returns its context, else
   returns a new context with t as the thrown object."
   [t]
   (-> (loop [c t]
