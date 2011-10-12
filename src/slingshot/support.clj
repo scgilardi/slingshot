@@ -98,12 +98,12 @@
   *catch-hook* identity)
 
 (defn transform
-  "Returns a seq of catch clauses for try that implements the behavior
-  specified by a seq of catch clauses for try+. throw-sym names a
-  macro or function (usually throw+) that can accept zero or one
-  arguments. It is called with one argument for :catch-hook-throw
+  "Transforms a seq of catch clauses for try+ into a seq of catch
+  clauses for try that implements the specified behavior. throw-sym
+  names a macro or function (usually throw+) that can accept zero or
+  one arguments. It is called with one argument for :catch-hook-throw
   requests, or zero arguments for :catch-hook-rethrow requests or when
-  no catch clause matches."
+  no try+ catch clause matches."
   [catch-clauses throw-sym]
   ;; the code below uses only one local to minimize clutter in the
   ;; &env captured by throw+ forms within catch clauses (see the
