@@ -139,7 +139,7 @@
 
 (defn context->throwable
   "If object in context is a Throwable, returns it, else wraps it and
-   returns the wrapper."
+  returns the wrapper."
   [{:keys [object cause stack-trace] :as context}]
   (if (instance? Throwable object)
     object
