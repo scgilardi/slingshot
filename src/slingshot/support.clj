@@ -126,30 +126,6 @@
 
 ;; throw+ support
 
-(defn make-throwable
-  "Returns a throwable Stone that wraps the given a message, cause,
-  stack-trace, and context"
-  [message cause stack-trace context]
-  (Stone. message cause stack-trace context))
-
-(defn context-message
-  "Returns the default message string for a throw context"
-  [{:keys [message object]}]
-  (str message ": " (pr-str object)))
-
-(defn context->throwable
-  "If object in context is a Throwable, returns it, else wraps it and
-  returns the wrapper."
-  [{:keys [object cause stack-trace] :as context}]
-  (if (instance? Throwable object)
-    object
-    (make-throwable (context-message context) cause stack-trace context)))
-
-(defn default-throw-hook
-  "Default implementation of *throw-hook*"
-  [context]
-  (throw (context->throwable context)))
-
 (defn stack-trace
   "Returns the current stack trace beginning at the caller's frame"
   []
@@ -160,6 +136,30 @@
   "Expands to code that generates a map of locals: names to values"
   []
   `(zipmap '~(keys &env) [~@(keys &env)]))
+
+(defn throwable-message
+  "Returns the context's message augmented with a printed
+  representation of the thrown object"
+  [{:keys [message object]}]
+  (str message ": " (pr-str object)))
+
+(defn make-throwable
+  "Returns a throwable Stone that wraps context"
+  [{:keys [message cause stack-trace] :as context}]
+  (Stone. (throwable-message context) cause stack-trace context))
+
+(defn context->throwable
+  "If object in context is a Throwable, returns it, else wraps it and
+  returns the wrapper."
+  [{object :object :as context}]
+  (if (instance? Throwable object)
+    object
+    (make-throwable context)))
+
+(defn default-throw-hook
+  "Default implementation of *throw-hook*"
+  [context]
+  (throw (context->throwable context)))
 
 (defn rethrow
   "Rethrows the Throwable that try caught"

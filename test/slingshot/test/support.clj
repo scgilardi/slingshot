@@ -59,16 +59,18 @@
 
 (deftest test-make-throwable []
   (let [tmessage "test-make-throwable-1"
+        tobject 4
         tcause (Exception.)
-        tcontext {:a 1 :b 2}
         tstack-trace (stack-trace)
-        tobject (make-throwable
-                 tmessage tcause tstack-trace tcontext)
-        {:keys [message cause context stackTrace]} (bean tobject)]
-    (is (instance? slingshot.Stone tobject))
-    (is (= [message cause context (seq stackTrace)]
-           [tmessage tcause tcontext (seq tstack-trace)]))))
-
+        tcontext {:message tmessage
+                  :object tobject
+                  :cause tcause
+                  :stack-trace tstack-trace}
+        tthrowable (make-throwable tcontext)
+        {:keys [message cause context stackTrace]} (bean tthrowable)]
+    (is (instance? slingshot.Stone tthrowable))
+    (is (= [message cause (seq stackTrace) context]
+           [(throwable-message tcontext) tcause (seq tstack-trace) tcontext]))))
 
 (def test-hooked (atom nil))
 
