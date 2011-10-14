@@ -233,3 +233,15 @@
     (is (= "x-ray!" val))
     (is (= "x-ray!" (:object (-> wrapper .getCause .getCause
                                  .getCause .getContext))))))
+
+(deftest test-catching-stone
+  (let [e (Exception.)]
+    (try
+      (try+
+       (throw e)
+       (catch Exception _
+         (throw+ :a "msg")))
+      (is false)
+      (catch slingshot.Stone s
+        (is (= "msg: :a" (.getMessage s)))
+        (is (= e (.getCause s)))))))
