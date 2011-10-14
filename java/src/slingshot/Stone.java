@@ -6,7 +6,9 @@ public class Stone extends RuntimeException {
     public final Object object;
     public final Object context;
 
-    public Stone(String _messagePrefix, Object _object, Object _context) {
+    public Stone(String _messagePrefix, Object _object, Object _context,
+                 Throwable cause) {
+        super(cause);
         messagePrefix = _messagePrefix;
         object = _object;
         context = _context;

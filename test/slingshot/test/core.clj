@@ -170,3 +170,15 @@
 
 (deftest test-rethrow
   (is (= :zero (h))))
+
+(deftest test-cause
+  (let [e (Exception.)]
+    (try
+      (try+
+       (throw+ e)
+       (catch Exception e
+         (throw+ :a "msg")))
+      (is false)
+      (catch slingshot.Stone s
+        (is (= "msg :a" (.getMessage s)))
+        (is (= e (.getCause s)))))))

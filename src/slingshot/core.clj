@@ -52,7 +52,8 @@
               obj#
               {:obj obj#
                :env (dissoc env# '~'&throw-context)
-               :next (env# '~'&throw-context)}))))))
+               :next (env# '~'&throw-context)}
+              (-> (env# '~'&throw-context) meta :throwable)))))))
   ([obj] `(throw+ ~obj "Object thrown by throw+:"))
   ([] `(throw (-> ~'&throw-context meta :throwable))))
 
