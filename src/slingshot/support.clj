@@ -56,7 +56,9 @@
                         (pr-str selector))
              `(= (get (:object ~'&throw-context) ~key) ~val)))
          (seq? selector)
-         (prewalk-replace {(ns-qualify '%) '(:object &throw-context)} selector)
+         (prewalk-replace {(ns-qualify '%) '(:object &throw-context),
+                           '% '(:object &throw-context)}
+                          selector)
          :else ;; predicate
          `(~selector (:object ~'&throw-context)))
    `(let [~binding-form (:object ~'&throw-context)]
