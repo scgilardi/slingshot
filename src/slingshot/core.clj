@@ -1,5 +1,5 @@
 (ns slingshot.core
-  (:use [slingshot.support :only [env-map parse rethrow stack-trace
+  (:use [slingshot.support :only [env-map parse-try rethrow stack-trace
                                   throw-context transform]]))
 
 (defmacro try+
@@ -52,7 +52,7 @@
 
   See also throw+"
   [& body]
-  (let [[exprs catch-clauses finally-clauses] (parse body)]
+  (let [[exprs catch-clauses finally-clauses] (parse-try body)]
     `(try
        ~@exprs
        ~@(transform catch-clauses `throw+)

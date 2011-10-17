@@ -18,7 +18,7 @@
    (and (seq? item) (first item))
    :expr))
 
-(defn parse
+(defn parse-try
   "Returns a vector of seqs containing the exprs, catch clauses, and
   finally clauses in a try+ body, or throws if the body's structure is
   invalid"

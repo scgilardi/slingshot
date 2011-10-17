@@ -12,8 +12,8 @@
     (is (= :catch-clause (f '(catch x))))
     (is (= :finally-clause (f '(finally x))))))
 
-(deftest test-parse
-  (let [f parse]
+(deftest test-parse-try
+  (let [f parse-try]
     (is (= [nil nil nil]) (f ()))
     (is (= ['(1) nil nil] (f '(1))))
     (is (= [nil '((catch 1)) nil] (f '((catch 1)))))
