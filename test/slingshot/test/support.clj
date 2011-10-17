@@ -4,8 +4,8 @@
         [slingshot.support])
   (:import (java.util.concurrent ExecutionException)))
 
-(deftest test-part-type
-  (let [f part-type]
+(deftest test-try-item-type
+  (let [f try-item-type]
     (is (= :expr (f 3)))
     (is (= :expr (f ())))
     (is (= :expr (f '(nil? x))))

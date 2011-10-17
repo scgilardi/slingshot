@@ -8,9 +8,9 @@
   [fmt & args]
   (throw (IllegalArgumentException. (apply format fmt args))))
 
-(defn part-type
 ;; try+ support
 
+(defn try-item-type
   "Returns a classifying keyword for an item in a try+ body: :expr,
   :catch-clause, or :finally-clause"
   [item]
@@ -18,16 +18,25 @@
    (and (seq? item) (first item))
    :expr))
 
+(defn match-or-defer
+  "Takes a seq of seqs of try items and a try item type. If the first
+  item in the first seq has that item type, returns the seq, else
+  returns the seq prepended with nil"
+  [s type]
+  (if (-> s ffirst try-item-type (= type))
+    s
+    (cons nil s)))
+
 (defn parse-try
   "Returns a vector of seqs containing the exprs, catch clauses, and
   finally clauses in a try+ body, or throws if the body's structure is
   invalid"
   [body]
-  (let [[p q r s] (partition-by part-type body)
-        [e q r s] (if (-> p first part-type (= :expr)) [p q r s] [nil p q r])
-        [c r s] (if (-> q first part-type (= :catch-clause)) [q r s] [nil q r])
-        [f s] (if (-> r first part-type (= :finally-clause)) [r s] [nil r])]
-    (if (and (nil? s) (<= (count f) 1))
+  (let [groups (partition-by try-item-type body)
+        [e & groups] (match-or-defer groups :expr)
+        [c & groups] (match-or-defer groups :catch-clause)
+        [f & groups] (match-or-defer groups :finally-clause)]
+    (if (and (nil? groups) (<= (count f) 1))
       [e c f]
       (throw-arg "try+ form must match: %s"
                  "(try+ expr* catch-clause* finally-clause?)"))))
