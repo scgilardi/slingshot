@@ -92,18 +92,18 @@
   in its cause chain is a Stone, returns its context with t assoc'd as
   the value for :wrapper, else returns a new context with t as the
   thrown object."
-  [t]
-  (-> (loop [c t]
-        (cond (instance? Stone c)
-              (assoc (.getContext c) :wrapper t)
-              (.getCause c)
-              (recur (.getCause c))
+  [throwable]
+  (-> (loop [cause throwable]
+        (cond (instance? Stone cause)
+              (assoc (.getContext cause) :wrapper throwable)
+              (.getCause cause)
+              (recur (.getCause cause))
               :else
-              {:object t
-               :message (.getMessage t)
-               :cause (.getCause t)
-               :stack-trace (.getStackTrace t)}))
-      (with-meta {:throwable t})))
+              {:object throwable
+               :message (.getMessage throwable)
+               :cause (.getCause throwable)
+               :stack-trace (.getStackTrace throwable)}))
+      (with-meta {:throwable throwable})))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
