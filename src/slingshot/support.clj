@@ -85,9 +85,9 @@
 (defn cond-test-expr
   "Converts a try+ catch-clause into a test/expr pair for cond"
   [[_ selector binding-form & exprs]]
-(defn throwable->context
   [(cond-test selector) (cond-expr binding-form exprs)])
 
+(defn ->context
   "Returns a context map based on a Throwable t. If t or any Throwable
   in its cause chain is a Stone, returns its context with t assoc'd as
   the value for :wrapper, else returns a new context with t as the
@@ -138,8 +138,7 @@
   (when catch-clauses
     (list
      `(catch Throwable ~'&throw-context
-        (let [~'&throw-context (-> ~'&throw-context throwable->context
-                                   *catch-hook*)]
+        (let [~'&throw-context (-> ~'&throw-context ->context *catch-hook*)]
           (cond
            (contains? (meta ~'&throw-context) :catch-hook-return)
            (:catch-hook-return (meta ~'&throw-context))
@@ -147,7 +146,7 @@
            (~throw-sym (:catch-hook-throw (meta ~'&throw-context)))
            (contains? (meta ~'&throw-context) :catch-hook-rethrow)
            (~throw-sym)
-           ~@(mapcat catch->cond catch-clauses)
+           ~@(mapcat cond-test-expr catch-clauses)
            :else
            (~throw-sym)))))))
 
@@ -175,7 +174,7 @@
   [{:keys [message cause stack-trace] :as context}]
   (Stone. (throwable-message context) cause stack-trace context))
 
-(defn context->throwable
+(defn ->throwable
   "If object in context is a Throwable, returns it, else wraps it and
   returns the wrapper."
   [{object :object :as context}]
@@ -186,7 +185,7 @@
 (defn default-throw-hook
   "Default implementation of *throw-hook*"
   [context]
-  (throw (context->throwable context)))
+  (throw (->throwable context)))
 
 (defn rethrow
   "Rethrows the Throwable that try caught"
