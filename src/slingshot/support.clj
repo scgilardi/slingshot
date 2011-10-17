@@ -2,8 +2,6 @@
   (:use [clojure.walk :only [prewalk-replace]])
   (:import slingshot.Stone))
 
-;; try+ support
-
 (defn throw-arg
   "Throws an IllegalArgumentException with a message specified by args like
   those of clojure.core/format"
@@ -11,6 +9,8 @@
   (throw (IllegalArgumentException. (apply format fmt args))))
 
 (defn part-type
+;; try+ support
+
   "Returns a classifying keyword for an item in a try+ body: :expr,
   :catch-clause, or :finally-clause"
   [item]
