@@ -6,11 +6,11 @@
 
 (deftest test-part-type
   (let [f part-type]
-    (is (= 'expr (f 3)))
-    (is (= 'expr (f ())))
-    (is (= 'expr (f '(nil? x))))
-    (is (= 'catch (f '(catch x))))
-    (is (= 'finally (f '(finally x))))))
+    (is (= :expr (f 3)))
+    (is (= :expr (f ())))
+    (is (= :expr (f '(nil? x))))
+    (is (= :catch-clause (f '(catch x))))
+    (is (= :finally-clause (f '(finally x))))))
 
 (deftest test-parse
   (let [f parse]

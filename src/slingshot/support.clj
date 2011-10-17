@@ -11,10 +11,12 @@
   (throw (IllegalArgumentException. (apply format fmt args))))
 
 (defn part-type
-  "Returns a classifying symbol for an item in a try+ body: 'expr,
-  'catch, or 'finally"
-  [x]
-  (or (and (seq? x) (-> x first #{'catch 'finally})) 'expr))
+  "Returns a classifying keyword for an item in a try+ body: :expr,
+  :catch-clause, or :finally-clause"
+  [item]
+  ({'catch :catch-clause 'finally :finally-clause}
+   (and (seq? item) (first item))
+   :expr))
 
 (defn parse
   "Returns a vector of seqs containing the exprs, catch clauses, and
@@ -22,9 +24,9 @@
   invalid"
   [body]
   (let [[p q r s] (partition-by part-type body)
-        [e q r s] (if (-> p first part-type (= 'expr)) [p q r s] [nil p q r])
-        [c r s] (if (-> q first part-type (= 'catch)) [q r s] [nil q r])
-        [f s] (if (-> r first part-type (= 'finally)) [r s] [nil r])]
+        [e q r s] (if (-> p first part-type (= :expr)) [p q r s] [nil p q r])
+        [c r s] (if (-> q first part-type (= :catch-clause)) [q r s] [nil q r])
+        [f s] (if (-> r first part-type (= :finally-clause)) [r s] [nil r])]
     (if (and (nil? s) (<= (count f) 1))
       [e c f]
       (throw-arg "try+ form must match: %s"
