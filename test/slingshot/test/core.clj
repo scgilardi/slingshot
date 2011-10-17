@@ -216,7 +216,7 @@
   (is (= "1" (i)))
   (is (= "whoops" (j))))
 
-(deftest test-unmacroed-%
+(deftest test-unmacroed-pct
   (is (= :was-eee (try+ (throw+ "eee")
                         (catch (= % "eee") _ :was-eee)
                         (catch string? _ :no!)))))
