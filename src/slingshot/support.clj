@@ -41,37 +41,53 @@
       (throw-arg "try+ form must match: %s"
                  "(try+ expr* catch-clause* finally-clause?)"))))
 
-(defn class-name?
-  "Returns true if the argument is a symbol that resolves to a Class
-  in the current namespace"
-  [x]
-  (and (symbol? x) (class? (resolve x))))
+;; catch support
 
-(defn ns-qualify
-  "Returns a fully qualified symbol with the same name as the
-  argument, but \"in\" the current namespace"
-  [sym]
-  (-> *ns* ns-name name (symbol (name sym))))
+(defn selector-type
+  "Returns a classifying keyword for a selector: :class-name, :key-value,
+  :form, or :predicate"
+  [selector]
+  (cond
+   (and (symbol? selector) (class? (resolve selector))) :class-name
+   (vector? selector) :key-value
+   (seq? selector) :form
+   :else :predicate))
 
-(defn catch->cond
+(defn parse-key-value
+  "Returns a pair: the key and value for a key-value selector, or throws if
+  the selector's structure is invald"
+  [[key val :as selector]]
+  (if (= (count selector) 2)
+    [key val]
+    (throw-arg "key-value selector: %s does not match: [key val]"
+               (pr-str selector))))
+
+(defn cond-test
+  "Returns the test part of a cond test/expr pair given a selector"
+  [selector]
+  (let [x (-> *ns* ns-name name (symbol "%"))]
+    (prewalk-replace
+     {x '(:object &throw-context)}
+     (case (selector-type selector)
+       :class-name `(instance? ~selector ~x)
+       :key-value (let [[key val] (parse-key-value selector)]
+                    `(= (get ~x ~key) ~val))
+       :predicate `(~selector ~x)
+       :form selector))))
+
+(defn cond-expr
+  "Returns the expr part of a cond test/expr pair given a binding form
+  and seq of exprs"
+  [binding-form exprs]
+  `(let [~binding-form (:object ~'&throw-context)]
+     ~@exprs))
+
+(defn cond-test-expr
   "Converts a try+ catch-clause into a test/expr pair for cond"
   [[_ selector binding-form & exprs]]
-  [(cond (class-name? selector)
-         `(instance? ~selector (:object ~'&throw-context))
-         (vector? selector)
-         (let [[key val & sentinel] selector]
-           (if sentinel
-             (throw-arg "key-value selector: %s does not match: [key val]"
-                        (pr-str selector))
-             `(= (get (:object ~'&throw-context) ~key) ~val)))
-         (seq? selector)
-         (prewalk-replace {(ns-qualify '%) '(:object &throw-context)} selector)
-         :else ;; predicate
-         `(~selector (:object ~'&throw-context)))
-   `(let [~binding-form (:object ~'&throw-context)]
-      ~@exprs)])
-
 (defn throwable->context
+  [(cond-test selector) (cond-expr binding-form exprs)])
+
   "Returns a context map based on a Throwable t. If t or any Throwable
   in its cause chain is a Stone, returns its context with t assoc'd as
   the value for :wrapper, else returns a new context with t as the
