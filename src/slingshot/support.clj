@@ -6,7 +6,7 @@
 
 (defn throw-arg
   "Throws an IllegalArgumentException with a message specified by args like
-  those of clojure.core/format."
+  those of clojure.core/format"
   [fmt & args]
   (throw (IllegalArgumentException. (apply format fmt args))))
 
@@ -63,7 +63,7 @@
       ~@exprs)])
 
 (defn throwable->context
-  "Returns a context map based on Throwable t. If t or any Throwable
+  "Returns a context map based on a Throwable t. If t or any Throwable
   in its cause chain is a Stone, returns its context with t assoc'd as
   the value for :wrapper, else returns a new context with t as the
   thrown object."
