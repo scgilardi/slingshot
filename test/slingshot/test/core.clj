@@ -216,6 +216,11 @@
   (is (= "1" (i)))
   (is (= "whoops" (j))))
 
+(deftest test-unmacroed-%
+  (is (= :was-eee (try+ (throw+ "eee")
+                        (catch (= % "eee") :was-eee)
+                        (catch string? :no!)))))
+
 (deftest test-x-ray-vision
   (let [[val wrapper] (try+
                        (try
