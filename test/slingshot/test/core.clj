@@ -218,8 +218,8 @@
 
 (deftest test-unmacroed-%
   (is (= :was-eee (try+ (throw+ "eee")
-                        (catch (= % "eee") :was-eee)
-                        (catch string? :no!)))))
+                        (catch (= % "eee") _ :was-eee)
+                        (catch string? _ :no!)))))
 
 (deftest test-x-ray-vision
   (let [[val wrapper] (try+
