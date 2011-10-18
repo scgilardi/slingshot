@@ -2,15 +2,15 @@
   (:use [clojure.walk :only [prewalk-replace]])
   (:import slingshot.Stone))
 
-;; try+ support
-
 (defn throw-arg
-  "Throws an IllegalArgumentException with a message specified by args like
-  those of clojure.core/format."
+  "Throws an IllegalArgumentException with a message specified by args
+  like those of clojure.core/format"
   [fmt & args]
   (throw (IllegalArgumentException. (apply format fmt args))))
 
-(defn part-type
+;; try+ support
+
+(defn try-item-type
   "Returns a classifying keyword for an item in a try+ body: :expr,
   :catch-clause, or :finally-clause"
   [item]
@@ -18,76 +18,99 @@
    (and (seq? item) (first item))
    :expr))
 
-(defn parse
+(defn match-or-defer
+  "Takes a seq of seqs of try items and a try item type. If the first
+  item in the first seq has that item type, returns the seq, else
+  returns the seq prepended with nil"
+  [s type]
+  (if (-> s ffirst try-item-type (= type))
+    s
+    (cons nil s)))
+
+(defn parse-try
   "Returns a vector of seqs containing the exprs, catch clauses, and
   finally clauses in a try+ body, or throws if the body's structure is
   invalid"
   [body]
-  (let [[p q r s] (partition-by part-type body)
-        [e q r s] (if (-> p first part-type (= :expr)) [p q r s] [nil p q r])
-        [c r s] (if (-> q first part-type (= :catch-clause)) [q r s] [nil q r])
-        [f s] (if (-> r first part-type (= :finally-clause)) [r s] [nil r])]
-    (if (and (nil? s) (<= (count f) 1))
+  (let [groups (partition-by try-item-type body)
+        [e & groups] (match-or-defer groups :expr)
+        [c & groups] (match-or-defer groups :catch-clause)
+        [f & groups] (match-or-defer groups :finally-clause)]
+    (if (and (nil? groups) (<= (count f) 1))
       [e c f]
       (throw-arg "try+ form must match: %s"
                  "(try+ expr* catch-clause* finally-clause?)"))))
 
-(defn class-name?
-  "Returns true if the argument is a symbol that resolves to a Class
-  in the current namespace"
-  [x]
-  (and (symbol? x) (class? (resolve x))))
+;; catch support
 
-(defn ns-qualify
-  "Returns a fully qualified symbol with the same name as the
-  argument, but \"in\" the current namespace"
-  [sym]
-  (-> *ns* ns-name name (symbol (name sym))))
+(defn selector-type
+  "Returns a classifying keyword for a selector: :class-name, :key-value,
+  :form, or :predicate"
+  [selector]
+  (cond
+   (and (symbol? selector) (class? (resolve selector))) :class-name
+   (vector? selector) :key-value
+   (seq? selector) :form
+   :else :predicate))
 
-(defn catch->cond
+(defn parse-key-value
+  "Returns a pair: the key and value for a key-value selector, or throws if
+  the selector's structure is invald"
+  [[key val :as selector]]
+  (if (= (count selector) 2)
+    [key val]
+    (throw-arg "key-value selector: %s does not match: [key val]"
+               (pr-str selector))))
+
+(defn cond-test
+  "Returns the test part of a cond test/expr pair given a selector"
+  [selector]
+  (let [x (-> *ns* ns-name name (symbol "%"))]
+    (prewalk-replace
+     {x '(:object &throw-context)}
+     (case (selector-type selector)
+       :class-name `(instance? ~selector ~x)
+       :key-value (let [[key val] (parse-key-value selector)]
+                    `(= (get ~x ~key) ~val))
+       :predicate `(~selector ~x)
+       :form selector))))
+
+(defn cond-expr
+  "Returns the expr part of a cond test/expr pair given a binding form
+  and seq of exprs"
+  [binding-form exprs]
+  `(let [~binding-form (:object ~'&throw-context)]
+     ~@exprs))
+
+(defn cond-test-expr
   "Converts a try+ catch-clause into a test/expr pair for cond"
   [[_ selector binding-form & exprs]]
-  [(cond (class-name? selector)
-         `(instance? ~selector (:object ~'&throw-context))
-         (vector? selector)
-         (let [[key val & sentinel] selector]
-           (if sentinel
-             (throw-arg "key-value selector: %s does not match: [key val]"
-                        (pr-str selector))
-             `(= (get (:object ~'&throw-context) ~key) ~val)))
-         (seq? selector)
-         (prewalk-replace {(ns-qualify '%) '(:object &throw-context),
-                           '% '(:object &throw-context)}
-                          selector)
-         :else ;; predicate
-         `(~selector (:object ~'&throw-context)))
-   `(let [~binding-form (:object ~'&throw-context)]
-      ~@exprs)])
+  [(cond-test selector) (cond-expr binding-form exprs)])
 
-(defn throwable->context
-  "Returns a context map based on Throwable t. If t or any Throwable
+(defn ->context
+  "Returns a context map based on a Throwable t. If t or any Throwable
   in its cause chain is a Stone, returns its context with t assoc'd as
   the value for :wrapper, else returns a new context with t as the
   thrown object."
-  [t]
-  (-> (loop [c t]
-        (cond (instance? Stone c)
-              (assoc (.getContext c) :wrapper t)
-              (.getCause c)
-              (recur (.getCause c))
+  [throwable]
+  (-> (loop [cause throwable]
+        (cond (instance? Stone cause)
+              (assoc (.getContext cause) :wrapper throwable)
+              (.getCause cause)
+              (recur (.getCause cause))
               :else
-              {:object t
-               :message (.getMessage t)
-               :cause (.getCause t)
-               :stack-trace (.getStackTrace t)}))
-      (with-meta {:throwable t})))
+              {:object throwable
+               :message (.getMessage throwable)
+               :cause (.getCause throwable)
+               :stack-trace (.getStackTrace throwable)}))
+      (with-meta {:throwable throwable})))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
-  bound to a function of one argument, a context map with
-  metadata. Returns a (possibly modified) context map to be considered
-  by catch clauses. Existing metadata on the context map must be
-  preserved (or intentionally modified) in the returned context map.
+  bound to a function of one argument, a context map with metadata.
+  Returns a (possibly modified) context map to be considered by catch
+  clauses. Existing metadata on the context map must be preserved (or
+  intentionally modified) in the returned context map.
 
   Normal processing by catch clauses can be skipped by adding special
   keys to the metadata on the returned context map:
@@ -115,8 +138,7 @@
   (when catch-clauses
     (list
      `(catch Throwable ~'&throw-context
-        (let [~'&throw-context (-> ~'&throw-context throwable->context
-                                   *catch-hook*)]
+        (let [~'&throw-context (-> ~'&throw-context ->context *catch-hook*)]
           (cond
            (contains? (meta ~'&throw-context) :catch-hook-return)
            (:catch-hook-return (meta ~'&throw-context))
@@ -124,7 +146,7 @@
            (~throw-sym (:catch-hook-throw (meta ~'&throw-context)))
            (contains? (meta ~'&throw-context) :catch-hook-rethrow)
            (~throw-sym)
-           ~@(mapcat catch->cond catch-clauses)
+           ~@(mapcat cond-test-expr catch-clauses)
            :else
            (~throw-sym)))))))
 
@@ -152,7 +174,7 @@
   [{:keys [message cause stack-trace] :as context}]
   (Stone. (throwable-message context) cause stack-trace context))
 
-(defn context->throwable
+(defn ->throwable
   "If object in context is a Throwable, returns it, else wraps it and
   returns the wrapper."
   [{object :object :as context}]
@@ -163,7 +185,7 @@
 (defn default-throw-hook
   "Default implementation of *throw-hook*"
   [context]
-  (throw (context->throwable context)))
+  (throw (->throwable context)))
 
 (defn rethrow
   "Rethrows the Throwable that try caught"

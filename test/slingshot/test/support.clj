@@ -4,16 +4,19 @@
         [slingshot.support])
   (:import (java.util.concurrent ExecutionException)))
 
-(deftest test-part-type
-  (let [f part-type]
+(def qualified-percent
+  (-> *ns* ns-name name (symbol "%")))
+
+(deftest test-try-item-type
+  (let [f try-item-type]
     (is (= :expr (f 3)))
     (is (= :expr (f ())))
     (is (= :expr (f '(nil? x))))
     (is (= :catch-clause (f '(catch x))))
     (is (= :finally-clause (f '(finally x))))))
 
-(deftest test-parse
-  (let [f parse]
+(deftest test-parse-try
+  (let [f parse-try]
     (is (= [nil nil nil]) (f ()))
     (is (= ['(1) nil nil] (f '(1))))
     (is (= [nil '((catch 1)) nil] (f '((catch 1)))))
@@ -30,24 +33,32 @@
     (is (thrown? IllegalArgumentException (f '((finally 1) (catch 1)))))
     (is (thrown? IllegalArgumentException (f '((finally 1) (finally 2)))))))
 
-(deftest test-class-name?
-  (let [f class-name?]
-    (is (f 'Exception))
-    (is (not (f 'isa?)))
-    (is (not (f 3)))
-    (is (not (f '_)))))
+(deftest test-selector-type
+  (let [f selector-type]
+    (is (= :class-name (f 'Integer)))
+    (is (= :key-value (f [:type :terrific])))
+    (is (= :form) (f `(:one :two % :four)))
+    (is (= :predicate (f nil?)))))
 
-(deftest test-catch->cond
-  (let [f catch->cond]
-    (is (= (f (list '_ `Exception 'e 1))
-           [(list `instance? `Exception '(:object &throw-context))
-            (list `let '[e (:object &throw-context)] 1)]))
-    (is (= (f (list '_ `nil? 'e 1))
-           [(list `nil? '(:object &throw-context))
-            (list `let '[e (:object &throw-context)] 1)]))
-    (is (= (f (list '_ (list :yellow (ns-qualify '%)) 'e 1))
-           [(list :yellow '(:object &throw-context))
-            (list `let '[e (:object &throw-context)] 1)]))))
+(deftest test-cond-test-expr
+  (let [f cond-test-expr]
+    (binding [*ns* (the-ns 'slingshot.test.support)]
+      (is (= (f (list '_ `Exception 'e 1))
+             [(list `instance? `Exception '(:object &throw-context))
+              (list `let '[e (:object &throw-context)] 1)]))
+      (is (= (f (list '_ `nil? 'e 1))
+             [(list `nil? '(:object &throw-context))
+              (list `let '[e (:object &throw-context)] 1)]))
+      (is (= (f (list '_ (list :yellow qualified-percent) 'e 1))
+             [(list :yellow '(:object &throw-context))
+              (list `let '[e (:object &throw-context)] 1)])))))
+
+(deftest test-parse-key-value
+  (let [f parse-key-value]
+    (is (thrown? IllegalArgumentException (f [])))
+    (is (thrown? IllegalArgumentException (f [:a])))
+    (is (= [:a :b] (f [:a :b])))
+    (is (thrown? IllegalArgumentException (f [:a :b :c])))))
 
 (defn stack-trace-fn []
   (stack-trace))

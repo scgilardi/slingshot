@@ -1,14 +1,15 @@
 (ns slingshot.core
-  (:use [slingshot.support :only [env-map parse rethrow stack-trace
+  (:use [slingshot.support :only [env-map parse-try rethrow stack-trace
                                   throw-context transform]]))
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
+
     - specify objects to catch by class name, key-value pair,
       predicate, or selector form;
     - destructure the caught object;
-    - access the values of the locals visible at the throw site via
-      the &throw-context hidden argument.
+    - in a catch body, access the names and values of the locals
+      visible at the throw site.
 
   A selector form is a form containing one or more instances of % to
   be replaced by the thrown object. If it evaluates to truthy, the
@@ -17,34 +18,37 @@
   The class name, key-value pair, and predicate selectors are shorthand
   for these selector forms:
 
-    <class name>   => (instance? <class name> %)
+    <class name>  => (instance? <class name> %)
     [<key> <val>] => (= (get % <key>) <val>)
     <predicate>   => (<predicate> %)
 
   &throw-context is a map containing:
+
     - for all caught objects:
       :object       the thrown object;
       :stack-trace  the stack trace;
+
     - for Throwable caught objects:
       :message      the message, from .getMessage;
       :cause        the cause, from .getCause;
+
     - for non-Throwable caught objects:
       :message      the message, from the optional argument to throw+;
       :cause        the cause, captured by throw+, see below;
       :wrapper      the outermost Throwable wrapper of the caught object,
                     see below;
-      :environment  a map of locals visible at the throw+ site: symbols
-                    mapped to their bound values.
+      :environment  a map from names to values for locals visible at the
+                    throw+ site.
 
   To throw a non-Throwable object, throw+ wraps it with a Throwable
   object of class Stone. That Stone may in turn end up wrapped by
   other exceptions (e.g., instances of RuntimeException or
-  java.util.concurrent.ExecutionException). try+ sees through all
-  such wrappers to find the object wrapped by the first instance of
-  Stone in the outermost wrapper's cause chain. If needed, the
-  outermost wrapper is available within a catch clause a via
-  the :wrapper key in &throw-context. Any nested wrappers are
-  accessible via its cause chain.
+  java.util.concurrent.ExecutionException). try+ sees through all such
+  wrappers to find the object wrapped by the first instance of Stone
+  in the outermost wrapper's cause chain. If needed, the outermost
+  wrapper is available within a catch clause a via the :wrapper key in
+  &throw-context. Any nested wrappers are accessible via its cause
+  chain.
 
   When throw+ throws a non-Throwable object from within a try+ catch
   clause, the outermost wrapper of the caught object being processed
@@ -52,7 +56,7 @@
 
   See also throw+"
   [& body]
-  (let [[exprs catch-clauses finally-clauses] (parse body)]
+  (let [[exprs catch-clauses finally-clauses] (parse-try body)]
     `(try
        ~@exprs
        ~@(transform catch-clauses `throw+)
