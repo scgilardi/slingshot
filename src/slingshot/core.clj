@@ -1,5 +1,5 @@
 (ns slingshot.core
-  (:use [slingshot.support :only [env-map parse-try rethrow stack-trace
+  (:use [slingshot.support :only [environment parse-try rethrow stack-trace
                                   throw-context transform]]))
 
 (defmacro try+
@@ -73,7 +73,7 @@
 
   See also try+"
   ([object message]
-     `(throw-context ~object ~message (stack-trace) (env-map)))
+     `(throw-context ~object ~message (stack-trace) (environment)))
   ([object]
      `(throw+ ~object "Object thrown by throw+"))
   ([]

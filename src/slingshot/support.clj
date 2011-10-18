@@ -158,7 +158,7 @@
   (let [trace (.getStackTrace (Thread/currentThread))]
     (java.util.Arrays/copyOfRange trace 2 (alength trace))))
 
-(defmacro env-map
+(defmacro environment
   "Expands to code that generates a map of locals: names to values"
   []
   `(zipmap '~(keys &env) [~@(keys &env)]))
