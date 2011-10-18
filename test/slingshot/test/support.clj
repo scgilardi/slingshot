@@ -4,6 +4,9 @@
         [slingshot.support])
   (:import (java.util.concurrent ExecutionException)))
 
+(def qualified-percent
+  (-> *ns* ns-name name (symbol "%")))
+
 (deftest test-try-item-type
   (let [f try-item-type]
     (is (= :expr (f 3)))
@@ -37,17 +40,18 @@
     (is (= :form) (f `(:one :two % :four)))
     (is (= :predicate (f nil?)))))
 
-(deftest test-catch->cond
-  (let [f catch->cond]
-    (is (= (f (list '_ `Exception 'e 1))
-           [(list `instance? `Exception '(:object &throw-context))
-            (list `let '[e (:object &throw-context)] 1)]))
-    (is (= (f (list '_ `nil? 'e 1))
-           [(list `nil? '(:object &throw-context))
-            (list `let '[e (:object &throw-context)] 1)]))
-    (is (= (f (list '_ (list :yellow (ns-qualify '%)) 'e 1))
-           [(list :yellow '(:object &throw-context))
-            (list `let '[e (:object &throw-context)] 1)]))))
+(deftest test-cond-test-expr
+  (let [f cond-test-expr]
+    (binding [*ns* (the-ns 'slingshot.test.support)]
+      (is (= (f (list '_ `Exception 'e 1))
+             [(list `instance? `Exception '(:object &throw-context))
+              (list `let '[e (:object &throw-context)] 1)]))
+      (is (= (f (list '_ `nil? 'e 1))
+             [(list `nil? '(:object &throw-context))
+              (list `let '[e (:object &throw-context)] 1)]))
+      (is (= (f (list '_ (list :yellow qualified-percent) 'e 1))
+             [(list :yellow '(:object &throw-context))
+              (list `let '[e (:object &throw-context)] 1)])))))
 
 (deftest test-parse-key-value
   (let [f parse-key-value]
