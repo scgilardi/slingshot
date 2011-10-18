@@ -30,6 +30,12 @@
     (is (thrown? IllegalArgumentException (f '((finally 1) (catch 1)))))
     (is (thrown? IllegalArgumentException (f '((finally 1) (finally 2)))))))
 
+(deftest test-selector-type
+  (let [f selector-type]
+    (is (= :class-name (f 'Integer)))
+    (is (= :key-value (f [:type :terrific])))
+    (is (= :form) (f `(:one :two % :four)))
+    (is (= :predicate (f nil?)))))
 
 (deftest test-catch->cond
   (let [f catch->cond]
@@ -42,6 +48,13 @@
     (is (= (f (list '_ (list :yellow (ns-qualify '%)) 'e 1))
            [(list :yellow '(:object &throw-context))
             (list `let '[e (:object &throw-context)] 1)]))))
+
+(deftest test-parse-key-value
+  (let [f parse-key-value]
+    (is (thrown? IllegalArgumentException (f [])))
+    (is (thrown? IllegalArgumentException (f [:a])))
+    (is (= [:a :b] (f [:a :b])))
+    (is (thrown? IllegalArgumentException (f [:a :b :c])))))
 
 (defn stack-trace-fn []
   (stack-trace))
