@@ -49,13 +49,13 @@
       [:key-yields-value e#])
 
     ;; by key present
-    (catch (contains? % :a-key) e#
+    (catch (contains? ~'% :a-key) e#
       [:key-is-present e#])
 
     ;; by clojure type, with optional hierarchy
-    (catch (isa? (type %) ::sphere) e#
+    (catch (isa? (type ~'%) ::sphere) e#
       [:type-sphere (type e#) e#])
-    (catch (isa? h1 (type %) ::shape) e#
+    (catch (isa? h1 (type ~'%) ::shape) e#
       [:type-shape-in-h1 (type e#) e#])
 
     ;; by predicate

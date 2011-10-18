@@ -65,16 +65,14 @@
 (defn cond-test
   "Returns the test part of a cond test/expression pair given a selector"
   [selector]
-  (let [x (-> *ns* ns-name name (symbol "%"))]
-    (prewalk-replace
-     {x '(:object &throw-context),
-      '% '(:object &throw-context)}
-     (case (selector-type selector)
-       :class-name `(instance? ~selector ~x)
-       :key-value (let [[key val] (parse-key-value selector)]
-                    `(= (get ~x ~key) ~val))
-       :predicate `(~selector ~x)
-       :form selector))))
+  (prewalk-replace
+   {'% '(:object &throw-context)}
+   (case (selector-type selector)
+     :class-name `(instance? ~selector ~'%)
+     :key-value (let [[key val] (parse-key-value selector)]
+                  `(= (get ~'% ~key) ~val))
+     :predicate `(~selector ~'%)
+     :form selector)))
 
 (defn cond-expression
   "Returns the expression part of a cond test/expression pair given a

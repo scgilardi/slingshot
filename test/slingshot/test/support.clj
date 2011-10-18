@@ -4,9 +4,6 @@
         [slingshot.support])
   (:import (java.util.concurrent ExecutionException)))
 
-(def qualified-percent
-  (-> *ns* ns-name name (symbol "%")))
-
 (deftest test-try-item-type
   (let [f try-item-type]
     (is (= :expression (f 3)))
@@ -49,7 +46,7 @@
       (is (= (f (list '_ `nil? 'e 1))
              [(list `nil? '(:object &throw-context))
               (list `let '[e (:object &throw-context)] 1)]))
-      (is (= (f (list '_ (list :yellow qualified-percent) 'e 1))
+      (is (= (f (list '_ (list :yellow '%) 'e 1))
              [(list :yellow '(:object &throw-context))
               (list `let '[e (:object &throw-context)] 1)])))))
 
