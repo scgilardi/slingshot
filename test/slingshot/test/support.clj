@@ -9,9 +9,9 @@
 
 (deftest test-try-item-type
   (let [f try-item-type]
-    (is (= :expr (f 3)))
-    (is (= :expr (f ())))
-    (is (= :expr (f '(nil? x))))
+    (is (= :expression (f 3)))
+    (is (= :expression (f ())))
+    (is (= :expression (f '(nil? x))))
     (is (= :catch-clause (f '(catch x))))
     (is (= :finally-clause (f '(finally x))))))
 
@@ -40,8 +40,8 @@
     (is (= :form) (f `(:one :two % :four)))
     (is (= :predicate (f nil?)))))
 
-(deftest test-cond-test-expr
-  (let [f cond-test-expr]
+(deftest test-cond-test-expression
+  (let [f cond-test-expression]
     (binding [*ns* (the-ns 'slingshot.test.support)]
       (is (= (f (list '_ `Exception 'e 1))
              [(list `instance? `Exception '(:object &throw-context))

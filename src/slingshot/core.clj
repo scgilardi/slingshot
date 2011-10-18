@@ -56,9 +56,9 @@
 
   See also throw+"
   [& body]
-  (let [[exprs catch-clauses finally-clauses] (parse-try body)]
+  (let [[expressions catch-clauses finally-clauses] (parse-try body)]
     `(try
-       ~@exprs
+       ~@expressions
        ~@(transform catch-clauses `throw+)
        ~@finally-clauses)))
 

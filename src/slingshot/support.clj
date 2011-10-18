@@ -11,12 +11,12 @@
 ;; try+ support
 
 (defn try-item-type
-  "Returns a classifying keyword for an item in a try+ body: :expr,
+  "Returns a classifying keyword for an item in a try+ body: :expression,
   :catch-clause, or :finally-clause"
   [item]
   ({'catch :catch-clause 'finally :finally-clause}
    (and (seq? item) (first item))
-   :expr))
+   :expression))
 
 (defn match-or-defer
   "Takes a seq of seqs of try items and a try item type. If the first
@@ -28,18 +28,18 @@
     (cons nil s)))
 
 (defn parse-try
-  "Returns a vector of seqs containing the exprs, catch clauses, and
-  finally clauses in a try+ body, or throws if the body's structure is
-  invalid"
+  "Returns a vector of seqs containing the expressions, catch clauses,
+  and finally clauses in a try+ body, or throws if the body's
+  structure is invalid"
   [body]
   (let [groups (partition-by try-item-type body)
-        [e & groups] (match-or-defer groups :expr)
+        [e & groups] (match-or-defer groups :expression)
         [c & groups] (match-or-defer groups :catch-clause)
         [f & groups] (match-or-defer groups :finally-clause)]
     (if (and (nil? groups) (<= (count f) 1))
       [e c f]
       (throw-arg "try+ form must match: %s"
-                 "(try+ expr* catch-clause* finally-clause?)"))))
+                 "(try+ expression* catch-clause* finally-clause?)"))))
 
 ;; catch support
 
@@ -63,7 +63,7 @@
                (pr-str selector))))
 
 (defn cond-test
-  "Returns the test part of a cond test/expr pair given a selector"
+  "Returns the test part of a cond test/expression pair given a selector"
   [selector]
   (let [x (-> *ns* ns-name name (symbol "%"))]
     (prewalk-replace
@@ -75,17 +75,17 @@
        :predicate `(~selector ~x)
        :form selector))))
 
-(defn cond-expr
-  "Returns the expr part of a cond test/expr pair given a binding form
-  and seq of exprs"
-  [binding-form exprs]
+(defn cond-expression
+  "Returns the expression part of a cond test/expression pair given a
+  binding form and seq of expressions"
+  [binding-form expressions]
   `(let [~binding-form (:object ~'&throw-context)]
-     ~@exprs))
+     ~@expressions))
 
-(defn cond-test-expr
+(defn cond-test-expression
   "Converts a try+ catch-clause into a test/expr pair for cond"
-  [[_ selector binding-form & exprs]]
-  [(cond-test selector) (cond-expr binding-form exprs)])
+  [[_ selector binding-form & expressions]]
+  [(cond-test selector) (cond-expression binding-form expressions)])
 
 (defn ->context
   "Returns a context map based on a Throwable t. If t or any Throwable
@@ -146,7 +146,7 @@
            (~throw-sym (:catch-hook-throw (meta ~'&throw-context)))
            (contains? (meta ~'&throw-context) :catch-hook-rethrow)
            (~throw-sym)
-           ~@(mapcat cond-test-expr catch-clauses)
+           ~@(mapcat cond-test-expression catch-clauses)
            :else
            (~throw-sym)))))))
 
