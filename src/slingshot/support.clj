@@ -82,7 +82,7 @@
      ~@expressions))
 
 (defn cond-test-expression
-  "Converts a try+ catch-clause into a test/expr pair for cond"
+  "Converts a try+ catch-clause into a test/expression pair for cond"
   [[_ selector binding-form & expressions]]
   [(cond-test selector) (cond-expression binding-form expressions)])
 
