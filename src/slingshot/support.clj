@@ -3,8 +3,8 @@
   (:import slingshot.Stone))
 
 (defn throw-arg
-  "Throws an IllegalArgumentException with a message specified by args like
-  those of clojure.core/format"
+  "Throws an IllegalArgumentException with a message specified by args
+  like those of clojure.core/format"
   [fmt & args]
   (throw (IllegalArgumentException. (apply format fmt args))))
 
@@ -107,10 +107,10 @@
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
-  bound to a function of one argument, a context map with
-  metadata. Returns a (possibly modified) context map to be considered
-  by catch clauses. Existing metadata on the context map must be
-  preserved (or intentionally modified) in the returned context map.
+  bound to a function of one argument, a context map with metadata.
+  Returns a (possibly modified) context map to be considered by catch
+  clauses. Existing metadata on the context map must be preserved (or
+  intentionally modified) in the returned context map.
 
   Normal processing by catch clauses can be skipped by adding special
   keys to the metadata on the returned context map:
