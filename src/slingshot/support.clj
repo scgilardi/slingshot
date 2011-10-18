@@ -67,7 +67,8 @@
   [selector]
   (let [x (-> *ns* ns-name name (symbol "%"))]
     (prewalk-replace
-     {x '(:object &throw-context)}
+     {x '(:object &throw-context),
+      '% '(:object &throw-context)}
      (case (selector-type selector)
        :class-name `(instance? ~selector ~x)
        :key-value (let [[key val] (parse-key-value selector)]
