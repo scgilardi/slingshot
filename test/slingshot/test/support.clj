@@ -39,16 +39,15 @@
 
 (deftest test-cond-test-expression
   (let [f cond-test-expression]
-    (binding [*ns* (the-ns 'slingshot.test.support)]
-      (is (= (f (list '_ `Exception 'e 1))
-             [(list `instance? `Exception '(:object &throw-context))
-              (list `let '[e (:object &throw-context)] 1)]))
-      (is (= (f (list '_ `nil? 'e 1))
-             [(list `nil? '(:object &throw-context))
-              (list `let '[e (:object &throw-context)] 1)]))
-      (is (= (f (list '_ (list :yellow '%) 'e 1))
-             [(list :yellow '(:object &throw-context))
-              (list `let '[e (:object &throw-context)] 1)])))))
+    (is (= (f (list '_ `Exception 'e 1))
+           [(list `instance? `Exception '(:object &throw-context))
+            (list `let '[e (:object &throw-context)] 1)]))
+    (is (= (f (list '_ `nil? 'e 1))
+           [(list `nil? '(:object &throw-context))
+            (list `let '[e (:object &throw-context)] 1)]))
+    (is (= (f (list '_ (list :yellow '%) 'e 1))
+           [(list :yellow '(:object &throw-context))
+            (list `let '[e (:object &throw-context)] 1)]))))
 
 (deftest test-parse-key-value
   (let [f parse-key-value]
