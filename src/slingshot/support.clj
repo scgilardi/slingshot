@@ -94,7 +94,7 @@
           (cond-expression [binding-form expressions]
             `(let [~binding-form (:object ~'&throw-context)]
                ~@expressions))
-          (transform-catch [[_ selector binding-form & expressions]]
+          (transform [[_ selector binding-form & expressions]]
             [(cond-test selector) (cond-expression binding-form expressions)])]
     (when catch-clauses
       (list
@@ -110,7 +110,7 @@
              (~throw-sym (:catch-hook-throw (meta ~'&throw-context)))
              (contains? (meta ~'&throw-context) :catch-hook-rethrow)
              (~throw-sym)
-             ~@(mapcat transform-catch catch-clauses)
+             ~@(mapcat transform catch-clauses)
              :else
              (~throw-sym))))))))
 
