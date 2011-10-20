@@ -245,7 +245,7 @@
       (try+
        (throw e)
        (catch Exception _
-         (throw+ :a "msg")))
+         (throw+ :a "msg: %s" %)))
       (is false)
       (catch slingshot.Stone s
         (is (= "msg: :a" (.getMessage s)))

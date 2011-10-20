@@ -1,6 +1,6 @@
 (ns slingshot.core
-  (:use [slingshot.support :only [environment parse-try+ rethrow stack-trace
-                                  throw-context transform-catch]]))
+  (:use [slingshot.support :only [environment parse-throw+ parse-try+ rethrow
+                                  stack-trace throw-context transform-catch]]))
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
@@ -65,18 +65,30 @@
        ~@finally-clauses)))
 
 (defmacro throw+
-  "Like the throw special form, but can throw any object. Behaves the
-  same as throw for Throwable objects. For other objects, an optional
-  second argument specifies a message that is accessible in catch
-  clauses within both try forms (via .getMessage on the throwable
-  wrapper), and try+ forms (via the :message key in &throw-context).
-  Within a try+ catch clause, throw+ with no arguments rethrows the
-  caught object within its original (possibly nested) wrappers.
+  "Like the throw special form, but can throw any object:
+
+    - Has the same syntax and behavior as throw for Throwable objects;
+
+    - For other objects, an optional format string and args for
+      clojure.core/format specify a message that is accessible in
+      catch clauses within both try forms (via .getMessage on the
+      throwable wrapper), and try+ forms (via the :message key in
+      &throw-context);
+
+      - % symbols in args will be replaced with the thrown object;
+
+      - the default message is \"Object thrown by throw+: \" followed
+        by the result of calling pr-str on the object;
+
+    - Within a try+ catch clause, throw+ with no arguments rethrows
+      the caught object within its original (possibly nested)
+      wrappers.
 
   See also try+"
-  ([object message]
-     `(throw-context ~object ~message (stack-trace) (environment)))
+  ([object fmt & args]
+     (let [args (parse-throw+ object fmt args)]
+       `(throw-context (stack-trace) (environment) ~@args)))
   ([object]
-     `(throw+ ~object "Object thrown by throw+"))
+     `(throw+ ~object "Object thrown by throw+: %s" (pr-str ~'%)))
   ([]
      `(rethrow ~'&throw-context)))

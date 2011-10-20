@@ -64,8 +64,8 @@
     (is (= methodName "invoke"))
     (is (re-find #"stack_trace_fn" className))))
 
-(deftest test-make-throwable []
-  (let [tmessage "test-make-throwable-1"
+(deftest test-wrap []
+  (let [tmessage "test-wrap-1"
         tobject 4
         tcause (Exception.)
         tstack-trace (stack-trace)
@@ -73,11 +73,11 @@
                   :object tobject
                   :cause tcause
                   :stack-trace tstack-trace}
-        tthrowable (make-throwable tcontext)
+        tthrowable (wrap tcontext)
         {:keys [message cause context stackTrace]} (bean tthrowable)]
     (is (instance? slingshot.Stone tthrowable))
     (is (= [message cause (seq stackTrace) context]
-           [(throwable-message tcontext) tcause (seq tstack-trace) tcontext]))))
+           [tmessage tcause (seq tstack-trace) tcontext]))))
 
 (def test-hooked (atom nil))
 

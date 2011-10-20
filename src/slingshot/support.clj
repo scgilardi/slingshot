@@ -1,5 +1,5 @@
 (ns slingshot.support
-  (:use [clojure.walk :only [prewalk-replace]])
+  (:use [clojure.walk :only [postwalk-replace]])
   (:import slingshot.Stone))
 
 (defn throw-arg
@@ -151,6 +151,14 @@
 
 ;; throw+ support
 
+(defn parse-throw+
+  "Returns a seq containing object and format followed by a copy of
+  the items in args with % symbols replaced by object. Note:
+  postwalk-replace preserves metadata on maps, prewalk-replace does
+  not."
+  [object format args]
+  (concat [object format] (postwalk-replace {'% object} args)))
+
 (defn stack-trace
   "Returns the current stack trace beginning at the caller's frame"
   []
@@ -162,16 +170,10 @@
   []
   `(zipmap '~(keys &env) [~@(keys &env)]))
 
-(defn throwable-message
-  "Returns the context's message augmented with a printed
-  representation of the thrown object"
-  [{:keys [message object]}]
-  (str message ": " (pr-str object)))
-
-(defn make-throwable
+(defn wrap
   "Returns a throwable Stone that wraps context"
   [{:keys [message cause stack-trace] :as context}]
-  (Stone. (throwable-message context) cause stack-trace context))
+  (Stone. message cause stack-trace context))
 
 (defn ->throwable
   "Returns a throwable given a context: the object in context if it's
@@ -179,27 +181,12 @@
   [{object :object :as context}]
   (if (instance? Throwable object)
     object
-    (make-throwable context)))
+    (wrap context)))
 
 (defn default-throw-hook
   "Default implementation of *throw-hook*"
   [context]
   (throw (->throwable context)))
-
-(defn rethrow
-  "Rethrows the Throwable that try caught"
-  [context]
-  (throw (-> context meta :throwable)))
-
-(defn make-context
-  "Makes a throw context from arguments. Captures the cause if called
-  within a catch clause."
-  [object message stack-trace environment]
-  {:object object
-   :message message
-   :cause (-> (environment '&throw-context) meta :throwable)
-   :stack-trace stack-trace
-   :environment (dissoc environment '&throw-context)})
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
@@ -207,7 +194,23 @@
   default-throw-hook."}
   *throw-hook* default-throw-hook)
 
+(defn make-context
+  "Makes a throw context from arguments. Captures the cause if called
+  within a catch clause."
+  [stack-trace environment object fmt & args]
+  {:stack-trace stack-trace
+   :environment (dissoc environment '&throw-context)
+   :object object
+   :message (apply format fmt args)
+   :cause (-> (environment '&throw-context) meta :throwable)})
+
 (defn throw-context
   "Throws a context. Allows overrides of *throw-hook* to intervene."
-  [object message stack-trace environment]
-  (*throw-hook* (make-context object message stack-trace environment)))
+  [& args]
+  (*throw-hook* (apply make-context args)))
+
+(defn rethrow
+  "Within a try+ catch clause, throws the outermost wrapper of the
+  caught object"
+  [context]
+  (throw (-> context meta :throwable)))
