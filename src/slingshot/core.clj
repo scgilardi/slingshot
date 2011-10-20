@@ -7,7 +7,9 @@
 
     - specify objects to catch by class name, key-value pair,
       predicate, or selector form;
+
     - destructure the caught object;
+
     - in a catch body, access the names and values of the locals
       visible at the throw site.
 
@@ -43,10 +45,10 @@
   To throw a non-Throwable object, throw+ wraps it with a Throwable
   object of class Stone. That Stone may in turn end up wrapped by
   other exceptions (e.g., instances of RuntimeException or
-  java.util.concurrent.ExecutionException). try+ sees through all such
+  java.util.concurrent.ExecutionException). try+ sees through any such
   wrappers to find the object wrapped by the first instance of Stone
   in the outermost wrapper's cause chain. If needed, the outermost
-  wrapper is available within a catch clause a via the :wrapper key in
+  wrapper is available within a catch clause via the :wrapper key in
   &throw-context. Any nested wrappers are accessible via its cause
   chain.
 

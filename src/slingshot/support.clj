@@ -3,8 +3,8 @@
   (:import slingshot.Stone))
 
 (defn throw-arg
-  "Throws an IllegalArgumentException with a message specified by args
-  like those of clojure.core/format"
+  "Throws an IllegalArgumentException with a message specified by a
+  format string and args for clojure.core/format"
   [fmt & args]
   (throw (IllegalArgumentException. (apply format fmt args))))
 
@@ -29,8 +29,8 @@
 
 (defn parse-try
   "Returns a vector of seqs containing the expressions, catch clauses,
-  and finally clauses in a try+ body, or throws if the body's
-  structure is invalid"
+  and finally clauses in a try+ body, or throws if the body's structure
+  is invalid"
   [body]
   (let [groups (partition-by try-item-type body)
         [e & groups] (match-or-defer groups :expression)
@@ -87,9 +87,9 @@
   [(cond-test selector) (cond-expression binding-form expressions)])
 
 (defn ->context
-  "Returns a context map based on a Throwable t. If t or any Throwable
-  in its cause chain is a Stone, returns its context with t assoc'd as
-  the value for :wrapper, else returns a new context with t as the
+  "Returns a context given a Throwable t. If t or any Throwable in its
+  cause chain is a Stone, returns the Stone's context with t assoc'd
+  as the value for :wrapper, else returns a new context with t as the
   thrown object."
   [throwable]
   (-> (loop [cause throwable]
@@ -174,8 +174,8 @@
   (Stone. (throwable-message context) cause stack-trace context))
 
 (defn ->throwable
-  "If object in context is a Throwable, returns it, else wraps it and
-  returns the wrapper."
+  "Returns a throwable given a context: the object in context if it's
+  a Throwable, else a throwable Stone that wraps context"
   [{object :object :as context}]
   (if (instance? Throwable object)
     object
