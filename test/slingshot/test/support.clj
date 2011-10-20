@@ -4,16 +4,8 @@
         [slingshot.support])
   (:import (java.util.concurrent ExecutionException)))
 
-(deftest test-try-item-type
-  (let [f try-item-type]
-    (is (= :expression (f 3)))
-    (is (= :expression (f ())))
-    (is (= :expression (f '(nil? x))))
-    (is (= :catch-clause (f '(catch x))))
-    (is (= :finally-clause (f '(finally x))))))
-
-(deftest test-parse-try
-  (let [f parse-try]
+(deftest test-parse-try+
+  (let [f parse-try+]
     (is (= [nil nil nil]) (f ()))
     (is (= ['(1) nil nil] (f '(1))))
     (is (= [nil '((catch 1)) nil] (f '((catch 1)))))
@@ -29,32 +21,6 @@
     (is (thrown? IllegalArgumentException (f '((finally 1) (1)))))
     (is (thrown? IllegalArgumentException (f '((finally 1) (catch 1)))))
     (is (thrown? IllegalArgumentException (f '((finally 1) (finally 2)))))))
-
-(deftest test-selector-type
-  (let [f selector-type]
-    (is (= :class-name (f 'Integer)))
-    (is (= :key-value (f [:type :terrific])))
-    (is (= :form) (f `(:one :two % :four)))
-    (is (= :predicate (f nil?)))))
-
-(deftest test-cond-test-expression
-  (let [f cond-test-expression]
-    (is (= (f (list '_ `Exception 'e 1))
-           [(list `instance? `Exception '(:object &throw-context))
-            (list `let '[e (:object &throw-context)] 1)]))
-    (is (= (f (list '_ `nil? 'e 1))
-           [(list `nil? '(:object &throw-context))
-            (list `let '[e (:object &throw-context)] 1)]))
-    (is (= (f (list '_ (list :yellow '%) 'e 1))
-           [(list :yellow '(:object &throw-context))
-            (list `let '[e (:object &throw-context)] 1)]))))
-
-(deftest test-parse-key-value
-  (let [f parse-key-value]
-    (is (thrown? IllegalArgumentException (f [])))
-    (is (thrown? IllegalArgumentException (f [:a])))
-    (is (= [:a :b] (f [:a :b])))
-    (is (thrown? IllegalArgumentException (f [:a :b :c])))))
 
 (defn stack-trace-fn []
   (stack-trace))

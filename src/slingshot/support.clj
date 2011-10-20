@@ -10,81 +10,25 @@
 
 ;; try+ support
 
-(defn try-item-type
-  "Returns a classifying keyword for an item in a try+ body: :expression,
-  :catch-clause, or :finally-clause"
-  [item]
-  ({'catch :catch-clause 'finally :finally-clause}
-   (and (seq? item) (first item))
-   :expression))
-
-(defn match-or-defer
-  "Takes a seq of seqs of try items and a try item type. If the first
-  item in the first seq has that item type, returns the seq, else
-  returns the seq prepended with nil"
-  [s type]
-  (if (-> s ffirst try-item-type (= type))
-    s
-    (cons nil s)))
-
 (defn parse-try+
   "Returns a vector of seqs containing the expressions, catch clauses,
   and finally clauses in a try+ body, or throws if the body's structure
   is invalid"
   [body]
-  (let [groups (partition-by try-item-type body)
-        [e & groups] (match-or-defer groups :expression)
-        [c & groups] (match-or-defer groups :catch-clause)
-        [f & groups] (match-or-defer groups :finally-clause)]
-    (if (and (nil? groups) (<= (count f) 1))
-      [e c f]
-      (throw-arg "try+ form must match: %s"
-                 "(try+ expression* catch-clause* finally-clause?)"))))
-
-;; catch support
-
-(defn selector-type
-  "Returns a classifying keyword for a selector: :class-name, :key-value,
-  :form, or :predicate"
-  [selector]
-  (cond
-   (and (symbol? selector) (class? (resolve selector))) :class-name
-   (vector? selector) :key-value
-   (seq? selector) :form
-   :else :predicate))
-
-(defn parse-key-value
-  "Returns a pair: the key and value for a key-value selector, or throws if
-  the selector's structure is invald"
-  [[key val :as selector]]
-  (if (= (count selector) 2)
-    [key val]
-    (throw-arg "key-value selector: %s does not match: [key val]"
-               (pr-str selector))))
-
-(defn cond-test
-  "Returns the test part of a cond test/expression pair given a selector"
-  [selector]
-  (prewalk-replace
-   {'% '(:object &throw-context)}
-   (case (selector-type selector)
-     :class-name `(instance? ~selector ~'%)
-     :key-value (let [[key val] (parse-key-value selector)]
-                  `(= (get ~'% ~key) ~val))
-     :predicate `(~selector ~'%)
-     :form selector)))
-
-(defn cond-expression
-  "Returns the expression part of a cond test/expression pair given a
-  binding form and seq of expressions"
-  [binding-form expressions]
-  `(let [~binding-form (:object ~'&throw-context)]
-     ~@expressions))
-
-(defn cond-test-expression
-  "Converts a try+ catch-clause into a test/expression pair for cond"
-  [[_ selector binding-form & expressions]]
-  [(cond-test selector) (cond-expression binding-form expressions)])
+  (letfn [(try-item-type [item]
+            ({'catch :catch-clause 'finally :finally-clause}
+             (and (seq? item) (first item))
+             :expression))
+          (match-or-defer [s type]
+            (if (-> s ffirst try-item-type (= type)) s (cons nil s)))]
+    (let [groups (partition-by try-item-type body)
+          [e & groups] (match-or-defer groups :expression)
+          [c & groups] (match-or-defer groups :catch-clause)
+          [f & groups] (match-or-defer groups :finally-clause)]
+      (if (and (nil? groups) (<= (count f) 1))
+        [e c f]
+        (throw-arg "try+ form must match: %s"
+                   "(try+ expression* catch-clause* finally-clause?)")))))
 
 (defn ->context
   "Returns a context given a Throwable t. If t or any Throwable in its
@@ -131,23 +75,44 @@
   requests, or zero arguments for :catch-hook-rethrow requests or when
   no try+ catch clause matches."
   [catch-clauses throw-sym]
-  ;; the code below uses only one local to minimize clutter in the
-  ;; &env captured by throw+ forms within catch clauses (see the
-  ;; special handling of &throw-context in make-context)
-  (when catch-clauses
-    (list
-     `(catch Throwable ~'&throw-context
-        (let [~'&throw-context (-> ~'&throw-context ->context *catch-hook*)]
-          (cond
-           (contains? (meta ~'&throw-context) :catch-hook-return)
-           (:catch-hook-return (meta ~'&throw-context))
-           (contains? (meta ~'&throw-context) :catch-hook-throw)
-           (~throw-sym (:catch-hook-throw (meta ~'&throw-context)))
-           (contains? (meta ~'&throw-context) :catch-hook-rethrow)
-           (~throw-sym)
-           ~@(mapcat cond-test-expression catch-clauses)
-           :else
-           (~throw-sym)))))))
+  (letfn [(class-name? [selector]
+            (and (symbol? selector) (class? (resolve selector))))
+          (parse-key-value [[key val :as selector]]
+            (if (= (count selector) 2)
+              [key val]
+              (throw-arg "key-value selector: %s does not match: %s"
+                         (pr-str selector) "[key val]")))
+          (cond-test [selector]
+            (postwalk-replace
+             {'% '(:object &throw-context)}
+             (cond
+              (class-name? selector) `(instance? ~selector ~'%)
+              (vector? selector) (let [[key val] (parse-key-value selector)]
+                                   `(= (get ~'% ~key) ~val))
+              (seq? selector) selector
+              :else `(~selector ~'%))))
+          (cond-expression [binding-form expressions]
+            `(let [~binding-form (:object ~'&throw-context)]
+               ~@expressions))
+          (transform-catch [[_ selector binding-form & expressions]]
+            [(cond-test selector) (cond-expression binding-form expressions)])]
+    (when catch-clauses
+      (list
+       ;; the code below uses only one local to minimize clutter in the
+       ;; &env captured by throw+ forms within catch clauses (see the
+       ;; special handling of &throw-context in make-context)
+       `(catch Throwable ~'&throw-context
+          (let [~'&throw-context (-> ~'&throw-context ->context *catch-hook*)]
+            (cond
+             (contains? (meta ~'&throw-context) :catch-hook-return)
+             (:catch-hook-return (meta ~'&throw-context))
+             (contains? (meta ~'&throw-context) :catch-hook-throw)
+             (~throw-sym (:catch-hook-throw (meta ~'&throw-context)))
+             (contains? (meta ~'&throw-context) :catch-hook-rethrow)
+             (~throw-sym)
+             ~@(mapcat transform-catch catch-clauses)
+             :else
+             (~throw-sym))))))))
 
 ;; throw+ support
 
