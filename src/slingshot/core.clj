@@ -1,6 +1,6 @@
 (ns slingshot.core
-  (:use [slingshot.support :only [environment parse-try rethrow stack-trace
-                                  throw-context transform]]))
+  (:use [slingshot.support :only [environment parse-try+ rethrow stack-trace
+                                  throw-context transform-catch]]))
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
@@ -58,10 +58,10 @@
 
   See also throw+"
   [& body]
-  (let [[expressions catch-clauses finally-clauses] (parse-try body)]
+  (let [[expressions catch-clauses finally-clauses] (parse-try+ body)]
     `(try
        ~@expressions
-       ~@(transform catch-clauses `throw+)
+       ~@(transform-catch catch-clauses `throw+)
        ~@finally-clauses)))
 
 (defmacro throw+

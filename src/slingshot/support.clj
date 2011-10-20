@@ -27,7 +27,7 @@
     s
     (cons nil s)))
 
-(defn parse-try
+(defn parse-try+
   "Returns a vector of seqs containing the expressions, catch clauses,
   and finally clauses in a try+ body, or throws if the body's structure
   is invalid"
@@ -123,7 +123,7 @@
   Defaults to identity."}
   *catch-hook* identity)
 
-(defn transform
+(defn transform-catch
   "Transforms a seq of catch clauses for try+ into a seq of catch
   clauses for try that implements the specified behavior. throw-sym
   names a macro or function (usually throw+) that can accept zero or
