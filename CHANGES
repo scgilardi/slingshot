@@ -1,0 +1,4 @@
+* version 0.7.0
+  - throw+: specify message as fmt & args rather than a single string
+    - can use % in args (at any depth) to represent the thrown object
+  - support: move small helper functions into letfns
