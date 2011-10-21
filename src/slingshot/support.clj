@@ -116,10 +116,10 @@
 
 ;; throw+ support
 
-(defn quote-all
+(defn replace-all
   "Returns a copy of s with all instances of object quoted"
-  [object s]
-  (postwalk-replace {object `(quote ~object)} s))
+  [old new s]
+  (postwalk-replace {old new} s))
 
 (defn stack-trace
   "Returns the current stack trace beginning at the caller's frame"
