@@ -88,7 +88,7 @@
   ([object fmt & args]
      `(let [~'&thrown-object ~object]
         (throw-context (stack-trace) (environment) ~'&thrown-object ~fmt
-                       ~@(replace-all '% '&thrown-object args))))
+                       ~@(replace-all {'% '&thrown-object} args))))
   ([object]
      `(throw+ ~object "Object thrown by throw+: %s" (pr-str ~'%)))
   ([]

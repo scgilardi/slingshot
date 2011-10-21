@@ -117,9 +117,9 @@
 ;; throw+ support
 
 (defn replace-all
-  "Returns a copy of s with all instances of object quoted"
-  [old new s]
-  (postwalk-replace {old new} s))
+  "Returns a copy of coll with keys in smap replaced by their values"
+  [smap coll]
+  (postwalk-replace smap coll))
 
 (defn stack-trace
   "Returns the current stack trace beginning at the caller's frame"
