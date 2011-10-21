@@ -2,3 +2,5 @@
   - throw+: specify message as fmt & args rather than a single string
     - can use % in args (at any depth) to represent the thrown object
   - support: move small helper functions into letfns
+* version 0.7.1
+  - throw+: fix so that the thrown object is only eval'd once
