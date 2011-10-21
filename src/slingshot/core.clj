@@ -1,5 +1,5 @@
 (ns slingshot.core
-  (:use [slingshot.support :only [environment parse-throw+ parse-try+ rethrow
+  (:use [slingshot.support :only [environment parse-try+ quote-all rethrow
                                   stack-trace throw-context transform-catch]]))
 
 (defmacro try+
@@ -86,8 +86,8 @@
 
   See also try+"
   ([object fmt & args]
-     (let [args (parse-throw+ object fmt args)]
-       `(throw-context (stack-trace) (environment) ~@args)))
+     `(throw-context (stack-trace) (environment) ~object ~fmt
+                     ~@(quote-all '% args)))
   ([object]
      `(throw+ ~object "Object thrown by throw+: %s" (pr-str ~'%)))
   ([]

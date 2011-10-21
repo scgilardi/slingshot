@@ -116,13 +116,10 @@
 
 ;; throw+ support
 
-(defn parse-throw+
-  "Returns a seq containing object and format followed by a copy of
-  the items in args with % symbols replaced by object. Note:
-  postwalk-replace preserves metadata on maps, prewalk-replace does
-  not."
-  [object format args]
-  (concat [object format] (postwalk-replace {'% ''%} args)))
+(defn quote-all
+  "Returns a copy of s with all instances of object quoted"
+  [object s]
+  (postwalk-replace {object `(quote ~object)} s))
 
 (defn stack-trace
   "Returns the current stack trace beginning at the caller's frame"
