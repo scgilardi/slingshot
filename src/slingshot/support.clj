@@ -68,8 +68,8 @@
   *catch-hook* identity)
 
 (defn transform-catch
-  "Transforms a seq of catch clauses for try+ into a seq of catch
-  clauses for try that implements the specified behavior. throw-sym
+  "Transforms a seq of catch clauses for try+ into a seq of one catch
+  clause for try that implements the specified behavior. throw-sym
   names a macro or function (usually throw+) that can accept zero or
   one arguments. It is called with one argument for :catch-hook-throw
   requests, or zero arguments for :catch-hook-rethrow requests or when
