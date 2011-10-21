@@ -4,3 +4,6 @@
   - support: move small helper functions into letfns
 * version 0.7.1
   - throw+: fix so that the thrown object is only eval'd once
+* version 0.7.2
+  - throw+: introduce &thrown-object to allow both single-evaluation
+    of object and deep substitution of % simultaneously
