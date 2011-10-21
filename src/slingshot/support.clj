@@ -122,7 +122,7 @@
   postwalk-replace preserves metadata on maps, prewalk-replace does
   not."
   [object format args]
-  (concat [object format] (postwalk-replace {'% object} args)))
+  (concat [object format] (postwalk-replace {'% ''%} args)))
 
 (defn stack-trace
   "Returns the current stack trace beginning at the caller's frame"
@@ -166,7 +166,7 @@
   {:stack-trace stack-trace
    :environment (dissoc environment '&throw-context)
    :object object
-   :message (apply format fmt args)
+   :message (apply format fmt (postwalk-replace {'% object} args))
    :cause (-> (environment '&throw-context) meta :throwable)})
 
 (defn throw-context

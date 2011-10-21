@@ -250,3 +250,11 @@
       (catch slingshot.Stone s
         (is (= "msg: :a" (.getMessage s)))
         (is (= e (.getCause s)))))))
+
+(deftest test-eval-object-once
+  (let [bumps (atom 0)
+        bump (fn [] (swap! bumps inc))]
+    (try+
+     (throw+ (bump) "this is it: %s %s %s" % % %)
+     (catch Object _))
+    (is (= @bumps 1))))
