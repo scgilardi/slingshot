@@ -86,9 +86,10 @@
 
   See also try+"
   ([object fmt & args]
-     `(let [~'&thrown-object ~object]
-        (throw-context (stack-trace) (environment) ~'&thrown-object ~fmt
-                       ~@(replace-all {'% '&thrown-object} args))))
+     (let [obj (gensym)]
+       `(let [~obj ~object]
+          (throw-context (stack-trace) (dissoc (environment) '~obj)
+                         ~obj ~fmt ~@(replace-all {'% obj} args)))))
   ([object]
      `(throw+ ~object "Object thrown by throw+: %s" (pr-str ~'%)))
   ([]

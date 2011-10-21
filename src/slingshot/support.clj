@@ -161,7 +161,7 @@
   within a catch clause."
   [stack-trace environment object fmt & args]
   {:stack-trace stack-trace
-   :environment (dissoc environment '&throw-context '&thrown-object)
+   :environment (dissoc environment '&throw-context)
    :object object
    :message (apply format fmt args)
    :cause (-> (environment '&throw-context) meta :throwable)})
