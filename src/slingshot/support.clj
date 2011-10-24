@@ -15,12 +15,13 @@
   and finally clauses in a try+ body, or throws if the body's structure
   is invalid"
   [body]
-  (letfn [(try-item-type [item]
-            ({'catch :catch-clause 'finally :finally-clause}
-             (and (seq? item) (first item))
-             :expression))
-          (match-or-defer [s type]
-            (if (-> s ffirst try-item-type (= type)) s (cons nil s)))]
+  (letfn
+      [(try-item-type [item]
+         ({'catch :catch-clause 'finally :finally-clause}
+          (and (seq? item) (first item))
+          :expression))
+       (match-or-defer [s type]
+         (if (-> s ffirst try-item-type (= type)) s (cons nil s)))]
     (let [groups (partition-by try-item-type body)
           [e & groups] (match-or-defer groups :expression)
           [c & groups] (match-or-defer groups :catch-clause)
@@ -75,27 +76,32 @@
   requests, or zero arguments for :catch-hook-rethrow requests or when
   no try+ catch clause matches."
   [catch-clauses throw-sym]
-  (letfn [(class-name? [selector]
-            (and (symbol? selector) (class? (resolve selector))))
-          (parse-key-value [[key val :as selector]]
-            (if (= (count selector) 2)
-              [key val]
-              (throw-arg "key-value selector: %s does not match: %s"
-                         (pr-str selector) "[key val]")))
-          (cond-test [selector]
-            (postwalk-replace
-             {'% '(:object &throw-context)}
-             (cond
-              (class-name? selector) `(instance? ~selector ~'%)
-              (vector? selector) (let [[key val] (parse-key-value selector)]
-                                   `(= (get ~'% ~key) ~val))
-              (seq? selector) selector
-              :else `(~selector ~'%))))
-          (cond-expression [binding-form expressions]
-            `(let [~binding-form (:object ~'&throw-context)]
-               ~@expressions))
-          (transform [[_ selector binding-form & expressions]]
-            [(cond-test selector) (cond-expression binding-form expressions)])]
+  (letfn
+      [(cond-test [selector]
+         (letfn
+             [(class-name []
+                (and (symbol? selector) (class? (resolve selector))
+                     `(instance? ~selector ~'%)))
+              (key-value []
+                (and (vector? selector)
+                     (if (= (count selector) 2)
+                       (let [[key val] selector]
+                         `(= (get ~'% ~key) ~val))
+                       (throw-arg
+                        "key-value selector: %s does not match: %s"
+                        (pr-str selector) "[key val]"))))
+              (form []
+                (and (seq? selector) selector))
+              (predicate []
+                `(~selector ~'%))]
+           (postwalk-replace
+            {'% '(:object &throw-context)}
+            (or (class-name) (key-value) (form) (predicate)))))
+       (cond-expression [binding-form expressions]
+         `(let [~binding-form (:object ~'&throw-context)]
+            ~@expressions))
+       (transform [[_ selector binding-form & expressions]]
+         [(cond-test selector) (cond-expression binding-form expressions)])]
     (when catch-clauses
       (list
        ;; the code below uses only one local to minimize clutter in the
