@@ -176,8 +176,8 @@
   [& args]
   (*throw-hook* (apply make-context args)))
 
-(defn rethrow
+(defmacro rethrow
   "Within a try+ catch clause, throws the outermost wrapper of the
   caught object"
-  [context]
-  (throw (-> context meta :throwable)))
+  []
+  `(throw (-> ~'&throw-context meta :throwable)))

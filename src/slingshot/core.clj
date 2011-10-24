@@ -93,4 +93,4 @@
   ([object]
      `(throw+ ~object "Object thrown by throw+: %s" (pr-str ~'%)))
   ([]
-     `(rethrow ~'&throw-context)))
+     `(rethrow)))
