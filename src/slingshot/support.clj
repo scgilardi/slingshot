@@ -1,6 +1,11 @@
 (ns slingshot.support
-  (:use [clojure.walk :only [postwalk-replace]])
+  (:require [clojure.walk])
   (:import slingshot.Stone))
+
+(defn replace-all
+  "Returns a copy of coll with keys in smap replaced by their values"
+  [smap coll]
+  (clojure.walk/postwalk-replace smap coll))
 
 (defn throw-arg
   "Throws an IllegalArgumentException with a message specified by a
@@ -94,9 +99,8 @@
                 (and (seq? selector) selector))
               (predicate []
                 `(~selector ~'%))]
-           (postwalk-replace
-            {'% '(:object &throw-context)}
-            (or (class-name) (key-value) (form) (predicate)))))
+           (replace-all {'% '(:object &throw-context)}
+                        (or (class-name) (key-value) (form) (predicate)))))
        (cond-expression [binding-form expressions]
          `(let [~binding-form (:object ~'&throw-context)]
             ~@expressions))
@@ -121,11 +125,6 @@
              (~throw-sym))))))))
 
 ;; throw+ support
-
-(defn replace-all
-  "Returns a copy of coll with keys in smap replaced by their values"
-  [smap coll]
-  (postwalk-replace smap coll))
 
 (defn stack-trace
   "Returns the current stack trace beginning at the caller's frame"
