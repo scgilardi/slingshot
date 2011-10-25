@@ -20,13 +20,13 @@
   is invalid"
   [body]
   (letfn
-      [(try-item-type [item]
+      [(item-type [item]
          ({'catch :catch-clause 'finally :finally-clause}
           (and (seq? item) (first item))
           :expression))
        (match-or-defer [s type]
-         (if (-> s ffirst try-item-type (= type)) s (cons nil s)))]
-    (let [groups (partition-by try-item-type body)
+         (if (-> s ffirst item-type (= type)) s (cons nil s)))]
+    (let [groups (partition-by item-type body)
           [e & groups] (match-or-defer groups :expression)
           [c & groups] (match-or-defer groups :catch-clause)
           [f & groups] (match-or-defer groups :finally-clause)]
