@@ -1,6 +1,6 @@
 (ns slingshot.test.support
   (:use [clojure.test]
-        [slingshot.core :only [throw+ try+]]
+        [slingshot.slingshot :only [throw+ try+]]
         [slingshot.support])
   (:import (java.util.concurrent ExecutionException)))
 

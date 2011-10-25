@@ -1,4 +1,4 @@
-(ns slingshot.core
+(ns slingshot.slingshot
   (:use [slingshot.support :only [environment parse-try+ replace-all rethrow
                                   stack-trace throw-context transform-catch]]))
 
