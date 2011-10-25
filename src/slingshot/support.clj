@@ -42,14 +42,14 @@
   thrown object."
   [throwable]
   (-> (loop [cause throwable]
-              (assoc (.getContext cause) :wrapper throwable)
-              (.getCause cause)
-              (recur (.getCause cause))
-              :else
-              {:object throwable
-               :message (.getMessage throwable)
-               :cause (.getCause throwable)
-               :stack-trace (.getStackTrace throwable)}))
+        (if (instance? slingshot.Stone cause)
+          (assoc (.getContext cause) :wrapper throwable)
+          (if-let [cause (.getCause cause)]
+            (recur cause)
+            {:object throwable
+             :message (.getMessage throwable)
+             :cause (.getCause throwable)
+             :stack-trace (.getStackTrace throwable)})))
       (with-meta {:throwable throwable})))
 
 (def ^{:dynamic true
