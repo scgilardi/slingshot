@@ -1,6 +1,5 @@
 (ns slingshot.support
-  (:require [clojure.walk])
-  (:import slingshot.Stone))
+  (:require [clojure.walk]))
 
 (defn replace-all
   "Returns a copy of coll with keys in smap replaced by their values"
@@ -43,7 +42,6 @@
   thrown object."
   [throwable]
   (-> (loop [cause throwable]
-        (cond (instance? Stone cause)
               (assoc (.getContext cause) :wrapper throwable)
               (.getCause cause)
               (recur (.getCause cause))
@@ -140,7 +138,7 @@
 (defn wrap
   "Returns a throwable Stone that wraps context"
   [{:keys [message cause stack-trace] :as context}]
-  (Stone. message cause stack-trace context))
+  (slingshot.Stone. message cause stack-trace context))
 
 (defn ->throwable
   "Returns a throwable given a context: the object in context if it's
