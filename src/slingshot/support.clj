@@ -93,9 +93,8 @@
                      (if (= (count selector) 2)
                        (let [[key val] selector]
                          `(= (get ~'% ~key) ~val))
-                       (throw-arg
-                        "key-value selector: %s does not match: %s"
-                        (pr-str selector) "[key val]"))))
+                       (throw-arg "key-value selector: %s does not match: %s"
+                                  (pr-str selector) "[key val]"))))
               (form []
                 (and (seq? selector) selector))
               (predicate []
