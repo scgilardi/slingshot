@@ -163,7 +163,7 @@
 
 (defn make-context
   "Makes a throw context from arguments. Captures the cause if called
-  within a catch clause."
+  within a try+ catch clause."
   [stack-trace environment object fmt & args]
   {:stack-trace stack-trace
    :environment (dissoc environment '&throw-context)
