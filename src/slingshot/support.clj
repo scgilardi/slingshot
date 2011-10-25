@@ -41,16 +41,19 @@
   as the value for :wrapper, else returns a new context with t as the
   thrown object."
   [throwable]
-  (-> (loop [cause throwable]
-        (if (instance? slingshot.Stone cause)
-          (assoc (.getContext cause) :wrapper throwable)
-          (if-let [cause (.getCause cause)]
-            (recur cause)
-            {:object throwable
-             :message (.getMessage throwable)
-             :cause (.getCause throwable)
-             :stack-trace (.getStackTrace throwable)})))
-      (with-meta {:throwable throwable})))
+  (letfn
+      [(find-stone [throwable]
+         (if (instance? slingshot.Stone throwable)
+           throwable
+           (when-let [cause (.getCause throwable)]
+             (recur cause))))]
+    (-> (if-let [stone (find-stone throwable)]
+          (assoc (.getContext stone) :wrapper throwable)
+          {:object throwable
+           :message (.getMessage throwable)
+           :cause (.getCause throwable)
+           :stack-trace (.getStackTrace throwable)})
+        (with-meta {:throwable throwable}))))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
