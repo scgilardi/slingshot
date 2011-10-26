@@ -7,3 +7,8 @@
 * version 0.7.2
   - throw+: introduce &thrown-object to allow both single-evaluation
     of object and deep substitution of % simultaneously
+* version 0.8.0
+  - breaking change: slingshot.core -> slingshot.slingshot
+  - remove &thrown-object in favor of a gensym. (the user will never
+    need to refer to it
+  - simplify/clarify support functions
