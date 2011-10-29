@@ -100,7 +100,38 @@ Enhanced throw and catch for Clojure
 Usage
 -----
 
-  See the tests for examples
+  project.clj
+
+        [slingshot "0.8.0"]
+
+  tensor/parse.clj
+
+        (ns tensor.parse
+          (:use [slingshot.slingshot :only [throw+]]))
+
+        (defn parse-tree [tree hint]
+          (if (bad-tree? tree)
+            (throw+ {:type ::bad-tree :tree tree :hint hint})
+            (parse-good-tree)))
+
+  math/expression.clj
+
+        (ns math.expression
+          (:require [tensor.parse]
+                    [clojure.tools.logging :as log])
+          (:use [slingshot.slingshot :only [throw+ try+]]))
+
+        (defn read-file [file]
+          (try+
+            [...]
+            (tensor.parse/parse-tree tree)
+            [...]
+            (catch [:type :tensor.parse/bad-tree] [:keys [tree hint]]
+              (log/error "failed to parse tensor" tree "with hint" hint)
+              (throw+))
+            (catch Object o
+              (log/error (:throwable &throw-context) "unexpected error")
+              (throw+))))
 
 Credits
 -------
