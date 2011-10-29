@@ -38,8 +38,8 @@
 (defn ->context
   "Returns a context given a Throwable t. If t or any Throwable in its
   cause chain is a Stone, returns the Stone's context with t assoc'd
-  as the value for :wrapper, else returns a new context with t as the
-  thrown object."
+  as the value for :throwable, else returns a new context with t as
+  the thrown object."
   [throwable]
   (letfn
       [(find-stone [throwable]
@@ -47,25 +47,23 @@
            throwable
            (when-let [cause (.getCause throwable)]
              (recur cause))))]
-    (-> (if-let [stone (find-stone throwable)]
-          (assoc (.getContext stone) :wrapper throwable)
-          {:object throwable
-           :message (.getMessage throwable)
-           :cause (.getCause throwable)
-           :stack-trace (.getStackTrace throwable)})
-        (with-meta {:throwable throwable}))))
+    (if-let [stone (find-stone throwable)]
+      (assoc (.getContext stone) :throwable throwable)
+      {:object throwable
+       :message (.getMessage throwable)
+       :cause (.getCause throwable)
+       :stack-trace (.getStackTrace throwable)
+       :throwable throwable})))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
-  bound to a function of one argument, a context map with metadata.
-  Returns a (possibly modified) context map to be considered by catch
-  clauses. Existing metadata on the context map must be preserved (or
-  intentionally modified) in the returned context map.
+  bound to a function of one argument, a context map. Returns
+  a (possibly modified) context map to be considered by catch clauses.
 
   Normal processing by catch clauses can be skipped by adding special
-  keys to the metadata on the returned context map:
+  keys to the context map:
 
-  If the metadata contains the key:
+  If the context contains the key:
     - :catch-hook-return, try+ will return the corresponding value;
     - :catch-hook-throw, try+ will throw+ the corresponding value;
     - :catch-hook-rethrow, try+ will rethrow the caught object's
@@ -114,11 +112,11 @@
        `(catch Throwable ~'&throw-context
           (let [~'&throw-context (-> ~'&throw-context ->context *catch-hook*)]
             (cond
-             (contains? (meta ~'&throw-context) :catch-hook-return)
-             (:catch-hook-return (meta ~'&throw-context))
-             (contains? (meta ~'&throw-context) :catch-hook-throw)
-             (~throw-sym (:catch-hook-throw (meta ~'&throw-context)))
-             (contains? (meta ~'&throw-context) :catch-hook-rethrow)
+             (contains? ~'&throw-context :catch-hook-return)
+             (:catch-hook-return ~'&throw-context)
+             (contains? ~'&throw-context :catch-hook-throw)
+             (~throw-sym (:catch-hook-throw ~'&throw-context))
+             (contains? ~'&throw-context :catch-hook-rethrow)
              (~throw-sym)
              ~@(mapcat transform catch-clauses)
              :else
@@ -169,7 +167,7 @@
    :environment (dissoc environment '&throw-context)
    :object object
    :message (apply format fmt args)
-   :cause (-> (environment '&throw-context) meta :throwable)})
+   :cause (-> (environment '&throw-context) :throwable)})
 
 (defn throw-context
   "Throws a context. Allows overrides of *throw-hook* to intervene."
@@ -180,4 +178,4 @@
   "Within a try+ catch clause, throws the outermost wrapper of the
   caught object"
   []
-  `(throw (-> ~'&throw-context meta :throwable)))
+  `(throw (-> ~'&throw-context :throwable)))

@@ -157,7 +157,7 @@
         context2 (next-context context1)]
 
     (is (= #{:object :message :cause :stack-trace :environment}
-           (disj (set (keys context)) :wrapper)
+           (disj (set (keys context)) :throwable)
            (set (keys context1))
            (set (keys context2))))
     (is (= 8 (-> context :object)))
@@ -234,7 +234,7 @@
                          (catch Throwable x
                            (throw (RuntimeException. x))))
                        (catch string? x
-                         [x (:wrapper &throw-context)]))]
+                         [x (:throwable &throw-context)]))]
     (is (= "x-ray!" val))
     (is (= "x-ray!" (:object (-> wrapper .getCause .getCause
                                  .getCause .getContext))))))

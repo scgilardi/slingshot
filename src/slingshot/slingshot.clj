@@ -26,21 +26,22 @@
 
   &throw-context is a map containing:
 
-    - for all caught objects:
-      :object       the thrown object;
-      :stack-trace  the stack trace;
-
     - for Throwable caught objects:
+      :object       the caught object;
       :message      the message, from .getMessage;
       :cause        the cause, from .getCause;
+      :stack-trace  the stack trace, from .getStackTrace;
+      :throwable    the caught object;
 
     - for non-Throwable caught objects:
+      :object       the caught object;
       :message      the message, from the optional argument to throw+;
       :cause        the cause, captured by throw+, see below;
-      :wrapper      the outermost Throwable wrapper of the caught object,
+      :stack-trace  the stack trace, captured by throw+;
+      :throwable    the outermost Throwable wrapper of the caught object,
                     see below;
-      :environment  a map from names to values for locals visible at the
-                    throw+ site.
+      :environment  a map from names to values for locals visible at
+                    the throw+ site.
 
   To throw a non-Throwable object, throw+ wraps it with a Throwable
   object of class Stone. That Stone may in turn end up wrapped by
@@ -48,7 +49,7 @@
   java.util.concurrent.ExecutionException). try+ sees through any such
   wrappers to find the object wrapped by the first instance of Stone
   in the outermost wrapper's cause chain. If needed, the outermost
-  wrapper is available within a catch clause via the :wrapper key in
+  wrapper is available within a catch clause via the :throwable key in
   &throw-context. Any nested wrappers are accessible via its cause
   chain.
 
