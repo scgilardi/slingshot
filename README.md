@@ -112,7 +112,7 @@ Usage
         (defn parse-tree [tree hint]
           (if (bad-tree? tree)
             (throw+ {:type ::bad-tree :tree tree :hint hint})
-            (parse-good-tree)))
+            (parse-good-tree tree hint)))
 
   math/expression.clj
 
@@ -126,10 +126,10 @@ Usage
             [...]
             (tensor.parse/parse-tree tree)
             [...]
-            (catch [:type :tensor.parse/bad-tree] [:keys [tree hint]]
+            (catch [:type :tensor.parse/bad-tree] {:keys [tree hint]}
               (log/error "failed to parse tensor" tree "with hint" hint)
               (throw+))
-            (catch Object o
+            (catch Object _
               (log/error (:throwable &throw-context) "unexpected error")
               (throw+))))
 
