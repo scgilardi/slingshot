@@ -44,8 +44,8 @@
                     the throw+ site.
 
   To throw a non-Throwable object, throw+ wraps it with a Throwable
-  object of class Stone. That Stone may in turn end up wrapped by
-  other exceptions (e.g., instances of RuntimeException or
+  object of class slingshot.Stone. That Stone may in turn end up
+  wrapped by other exceptions (e.g., instances of RuntimeException or
   java.util.concurrent.ExecutionException). try+ sees through any such
   wrappers to find the object wrapped by the first instance of Stone
   in the outermost wrapper's cause chain. If needed, the outermost
