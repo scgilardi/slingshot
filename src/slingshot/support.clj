@@ -167,7 +167,7 @@
    :environment (dissoc environment '&throw-context)
    :object object
    :message (apply format fmt args)
-   :cause (-> (environment '&throw-context) :throwable)})
+   :cause (:throwable (environment '&throw-context))})
 
 (defn throw-context
   "Throws a context. Allows overrides of *throw-hook* to intervene."
@@ -178,4 +178,4 @@
   "Within a try+ catch clause, throws the outermost wrapper of the
   caught object"
   []
-  `(throw (-> ~'&throw-context :throwable)))
+  `(throw (:throwable ~'&throw-context)))
