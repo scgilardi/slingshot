@@ -2,13 +2,14 @@
   (:require [clojure.walk]))
 
 (defn replace-all
-  "Returns a copy of coll with keys in smap replaced by their values"
+  "Returns a deep copy of coll with all instances of the keys in smap
+  replaced by their values"
   [smap coll]
   (clojure.walk/postwalk-replace smap coll))
 
 (defn throw-arg
   "Throws an IllegalArgumentException with a message specified by a
-  format string and args for clojure.core/format"
+  arguments for clojure.core/format"
   [fmt & args]
   (throw (IllegalArgumentException. (apply format fmt args))))
 
@@ -38,8 +39,7 @@
 (defn ->context
   "Returns a context given a Throwable t. If t or any Throwable in its
   cause chain is a Stone, returns the Stone's context with t assoc'd
-  as the value for :throwable, else returns a new context with t as
-  the thrown object."
+  as the value for :throwable, else returns a new context based on t."
   [throwable]
   (letfn
       [(find-stone [throwable]
