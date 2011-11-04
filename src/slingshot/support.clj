@@ -162,17 +162,17 @@
 (defn make-context
   "Makes a throw context from arguments. Captures the cause if called
   within a try+ catch clause."
-  [stack-trace environment object fmt & args]
-  {:stack-trace stack-trace
-   :environment (dissoc environment '&throw-context)
-   :object object
+  [object [fmt & args] stack-trace environment]
+  {:object object
    :message (apply format fmt args)
-   :cause (:throwable (environment '&throw-context))})
+   :cause (:throwable (environment '&throw-context))
+   :stack-trace stack-trace
+   :environment (dissoc environment '&throw-context)})
 
 (defn throw-context
   "Throws a context. Allows overrides of *throw-hook* to intervene."
-  [& args]
-  (*throw-hook* (apply make-context args)))
+  [object fmt-args stack-trace environment]
+  (*throw-hook* (make-context object fmt-args stack-trace environment)))
 
 (defmacro rethrow
   "Within a try+ catch clause, throws the outermost wrapper of the
