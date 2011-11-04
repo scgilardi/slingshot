@@ -13,6 +13,6 @@
     need to refer to it)
   - simplify/clarify support functions
 * version 0.8.0+
-  - retire :wrapper and mvoe :throwable to the context proper
+  - retire :wrapper and move :throwable to the context proper
   - stop using metadata on the context
   - provide an example in README.md
