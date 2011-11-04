@@ -36,24 +36,26 @@
         (throw-arg "try+ form must match: %s"
                    "(try+ expression* catch-clause* finally-clause?)")))))
 
+(defn find-context
+  "Searches throwable and its cause chain for a Stone. If one is
+  found, returns the context it wraps, else returns nil."
+  [throwable]
+  (if (instance? slingshot.Stone throwable)
+    (.getContext throwable)
+    (when-let [cause (.getCause throwable)]
+      (recur cause))))
+
 (defn ->context
   "Returns a context given a Throwable t. If t or any Throwable in its
   cause chain is a Stone, returns the Stone's context with t assoc'd
   as the value for :throwable, else returns a new context based on t."
   [throwable]
-  (letfn
-      [(find-stone [throwable]
-         (if (instance? slingshot.Stone throwable)
-           throwable
-           (when-let [cause (.getCause throwable)]
-             (recur cause))))]
-    (if-let [stone (find-stone throwable)]
-      (assoc (.getContext stone) :throwable throwable)
-      {:object throwable
-       :message (.getMessage throwable)
-       :cause (.getCause throwable)
-       :stack-trace (.getStackTrace throwable)
-       :throwable throwable})))
+  (-> (or (find-context throwable)
+          {:object throwable
+           :message (.getMessage throwable)
+           :cause (.getCause throwable)
+           :stack-trace (.getStackTrace throwable)})
+      (assoc :throwable throwable)))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
