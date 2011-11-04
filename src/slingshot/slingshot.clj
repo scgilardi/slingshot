@@ -35,7 +35,7 @@
 
     - for non-Throwable caught objects:
       :object       the caught object;
-      :message      the message, from the optional argument to throw+;
+      :message      the message, from the optional arguments to throw+;
       :cause        the cause, captured by throw+, see below;
       :stack-trace  the stack trace, captured by throw+;
       :throwable    the outermost Throwable wrapper of the caught object,
