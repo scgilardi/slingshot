@@ -95,12 +95,12 @@
                          `(= (get ~'% ~key) ~val))
                        (throw-arg "key-value selector: %s does not match: %s"
                                   (pr-str selector) "[key val]"))))
-              (form []
+              (selector-form []
                 (and (seq? selector) selector))
               (predicate []
                 `(~selector ~'%))]
-           (replace-all {'% '(:object &throw-context)}
-                        (or (class-name) (key-value) (form) (predicate)))))
+           (->> (or (class-name) (key-value) (selector-form) (predicate))
+                (replace-all {'% '(:object &throw-context)}))))
        (cond-expression [binding-form expressions]
          `(let [~binding-form (:object ~'&throw-context)]
             ~@expressions))
