@@ -90,7 +90,7 @@ Enhanced throw and catch for Clojure
   `try+` sees through all such wrappers to find the object wrapped by
   the first instance of `Stone` in the outermost wrapper's cause
   chain. If needed, the outermost wrapper is available within a catch
-  clause a via the `:wrapper` key in `&throw-context`. Any nested
+  clause a via the `:throwable` key in `&throw-context`. Any nested
   wrappers are accessible via its cause chain.
 
   When `throw+` throws a non-`Throwable` object from within a `try+`
