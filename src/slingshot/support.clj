@@ -106,23 +106,22 @@
             ~@expressions))
        (transform [[_ selector binding-form & expressions]]
          [(cond-test selector) (cond-expression binding-form expressions)])]
-    (when catch-clauses
-      (list
-       ;; the code below uses only one local name to minimize clutter
-       ;; in the &env captured by throw+ forms within catch clauses
-       ;; (see the special handling of &throw-context in make-context)
-       `(catch Throwable ~'&throw-context
-          (let [~'&throw-context (-> ~'&throw-context ->context *catch-hook*)]
-            (cond
-             (contains? ~'&throw-context :catch-hook-return)
-             (:catch-hook-return ~'&throw-context)
-             (contains? ~'&throw-context :catch-hook-throw)
-             (~throw-sym (:catch-hook-throw ~'&throw-context))
-             (contains? ~'&throw-context :catch-hook-rethrow)
-             (~throw-sym)
-             ~@(mapcat transform catch-clauses)
-             :else
-             (~throw-sym))))))))
+    (list
+     ;; the code below uses only one local name to minimize clutter
+     ;; in the &env captured by throw+ forms within catch clauses
+     ;; (see the special handling of &throw-context in make-context)
+     `(catch Throwable ~'&throw-context
+        (let [~'&throw-context (-> ~'&throw-context ->context *catch-hook*)]
+          (cond
+           (contains? ~'&throw-context :catch-hook-return)
+           (:catch-hook-return ~'&throw-context)
+           (contains? ~'&throw-context :catch-hook-throw)
+           (~throw-sym (:catch-hook-throw ~'&throw-context))
+           (contains? ~'&throw-context :catch-hook-rethrow)
+           (~throw-sym)
+           ~@(mapcat transform catch-clauses)
+           :else
+           (~throw-sym)))))))
 
 ;; throw+ support
 
