@@ -12,7 +12,13 @@
   - remove &thrown-object in favor of a gensym. (the user will never
     need to refer to it)
   - simplify/clarify support functions
-* version 0.8.0+
+* version 0.9.0
   - retire :wrapper and move :throwable to the context proper
   - stop using metadata on the context
   - provide an example in README.md
+  - doc string fixes
+  - change so catch hook always runs even when there are no catch
+    clauses
+  - provide slingshot/get-thrown-object to retrieve the object
+    thrown by throw or throw+ given a Throwable caught within an
+    ordinary try form.
