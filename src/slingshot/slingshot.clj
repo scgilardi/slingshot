@@ -95,3 +95,12 @@
      `(throw+ ~object "Object thrown by throw+: %s" (pr-str ~'%)))
   ([]
      `(rethrow)))
+
+(defn get-thrown-object
+  "Returns the object thrown by throw or throw+ given a Throwable
+  caught within an ordinary try form. If t is a Stone wrapping an
+  object thrown by throw+, return the object, else return t."
+  [t]
+  (if (instance? slingshot.Stone t)
+    (-> t .getContext :object)
+    t))

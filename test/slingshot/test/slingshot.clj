@@ -1,6 +1,6 @@
 (ns slingshot.test.slingshot
   (:use [clojure.test]
-        [slingshot.slingshot :only [try+ throw+]])
+        [slingshot.slingshot :only [try+ throw+ get-thrown-object]])
   (:import java.util.concurrent.ExecutionException))
 
 (defrecord exception-record [error-code duration-ms message])
@@ -258,3 +258,19 @@
      (throw+ (bump) "this is it: %s %s %s" % % %)
      (catch Object _))
     (is (= @bumps 1))))
+
+(deftest test-get-thrown-object
+  (let [object (Object.)
+        exception (Exception.)
+        t1 (try
+             (throw+ object)
+             (catch Throwable t t))
+        t2 (try
+             (throw+ exception)
+             (catch Throwable t t))
+        t3 (try
+             (throw exception)
+             (catch Throwable t t))]
+    (is (identical? object (get-thrown-object t1)))
+    (is (identical? exception (get-thrown-object t2)))
+    (is (identical? exception (get-thrown-object t3)))))
