@@ -1,6 +1,7 @@
 (ns slingshot.test.slingshot
   (:use [clojure.test]
-        [slingshot.slingshot :only [try+ throw+ get-thrown-object]])
+        [slingshot.slingshot :only [try+ throw+ get-throw-context
+                                    get-thrown-object]])
   (:import java.util.concurrent.ExecutionException))
 
 (defrecord exception-record [error-code duration-ms message])
@@ -258,6 +259,35 @@
      (throw+ (bump) "this is it: %s %s %s" % % %)
      (catch Object _))
     (is (= @bumps 1))))
+
+(deftest test-get-throw-context
+  (let [object (Object.)
+        exception1 (Exception.)
+        exception2 (Exception. "ex1" exception1)
+        t1 (try
+             (throw+ object)
+             (catch Throwable t t))
+        t2 (try
+             (throw+ exception2)
+             (catch Throwable t t))
+        t3 (try
+             (throw exception2)
+             (catch Throwable t t))]
+    (is (= #{:object :message :cause :stack-trace :throwable :environment}
+           (-> t1 get-throw-context keys set)))
+    (is (= #{:object :message :cause :stack-trace :throwable}
+           (-> t2 get-throw-context keys set)))
+    (is (= #{:object :message :cause :stack-trace :throwable}
+           (-> t3 get-throw-context keys set)))
+
+    (is (identical? object (:object (get-throw-context t1))))
+    (is (identical? exception2 (:object (get-throw-context t2))))
+    (is (identical? exception2 (:object (get-throw-context t3))))
+
+    (is (identical? exception1 (:cause (get-throw-context t2))))
+    (is (identical? exception1 (:cause (get-throw-context t3))))
+    (is (= "ex1" (:message (get-throw-context t2))))
+    (is (= "ex1" (:message (get-throw-context t3))))))
 
 (deftest test-get-thrown-object
   (let [object (Object.)

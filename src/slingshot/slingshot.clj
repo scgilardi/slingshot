@@ -1,6 +1,7 @@
 (ns slingshot.slingshot
   (:use [slingshot.support :only [environment parse-try+ replace-all rethrow
-                                  stack-trace throw-context transform-catch]]))
+                                  stack-trace throw-context transform-catch
+                                  ->context]]))
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
@@ -96,11 +97,18 @@
   ([]
      `(rethrow)))
 
+(defn get-throw-context
+  "Returns a throw context given a Throwable caught within an ordinary
+  try form. If t or any Throwable in its cause chain is a Stone,
+  returns the Stone's context with t assoc'd as the value
+  for :throwable, else returns a new context based on t.
+
+  See also try+"
+  [t]
+  (->context t))
+
 (defn get-thrown-object
   "Returns the object thrown by throw or throw+ given a Throwable
-  caught within an ordinary try form. If t is a Stone wrapping an
-  object thrown by throw+, return the object, else return t."
+  caught within an ordinary try form."
   [t]
-  (if (instance? slingshot.Stone t)
-    (-> t .getContext :object)
-    t))
+  (:object (get-throw-context t)))
