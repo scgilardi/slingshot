@@ -111,4 +111,4 @@
   "Returns the object thrown by throw or throw+ given a Throwable
   caught within an ordinary try form."
   [t]
-  (:object (get-throw-context t)))
+  (-> t get-throw-context :object))
