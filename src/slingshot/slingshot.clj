@@ -1,7 +1,5 @@
 (ns slingshot.slingshot
-  (:use [slingshot.support :only [environment get-context parse-try+ replace-all
-                                  rethrow stack-trace throw-context
-                                  transform-catch]]))
+  (:require [slingshot.support :as s]))
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
@@ -60,10 +58,10 @@
 
   See also throw+"
   [& body]
-  (let [[expressions catch-clauses finally-clauses] (parse-try+ body)]
+  (let [[expressions catch-clauses finally-clauses] (s/parse-try+ body)]
     `(try
        ~@expressions
-       ~@(transform-catch catch-clauses `throw+)
+       ~@(s/transform-catch catch-clauses `throw+)
        ~@finally-clauses)))
 
 (defmacro throw+
@@ -90,12 +88,12 @@
   ([object fmt & args]
      (let [obj (gensym)]
        `(let [~obj ~object]
-          (throw-context ~obj (format ~fmt ~@(replace-all {'% obj} args))
-                         (stack-trace) (dissoc (environment) '~obj)))))
+          (s/throw-context ~obj (format ~fmt ~@(s/replace-all {'% obj} args))
+                           (s/stack-trace) (dissoc (s/environment) '~obj)))))
   ([object]
      `(throw+ ~object "Object thrown by throw+: %s" (pr-str ~'%)))
   ([]
-     `(rethrow)))
+     `(s/rethrow)))
 
 (defn get-throw-context
   "Returns a throw context given a Throwable caught within an ordinary
@@ -105,7 +103,7 @@
 
   See also try+"
   [t]
-  (get-context t))
+  (s/get-context t))
 
 (defn get-thrown-object
   "Returns the object thrown by throw or throw+ given a Throwable
