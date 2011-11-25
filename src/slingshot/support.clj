@@ -13,6 +13,21 @@
   [fmt & args]
   (throw (IllegalArgumentException. (apply format fmt args))))
 
+(defn make-context
+  "Makes a throw context from arguments. Captures the cause if called
+  with multiple arguments from within a try+ catch clause."
+  ([throwable]
+     {:object throwable
+      :message (.getMessage throwable)
+      :cause (.getCause throwable)
+      :stack-trace (.getStackTrace throwable)})
+  ([object message stack-trace environment]
+     {:object object
+      :message message
+      :cause (:throwable (environment '&throw-context))
+      :stack-trace stack-trace
+      :environment (dissoc environment '&throw-context)}))
+
 ;; try+ support
 
 (defn parse-try+
@@ -51,10 +66,7 @@
   as the value for :throwable, else returns a new context based on t."
   [throwable]
   (-> (or (find-context throwable)
-          {:object throwable
-           :message (.getMessage throwable)
-           :cause (.getCause throwable)
-           :stack-trace (.getStackTrace throwable)})
+          (make-context throwable))
       (assoc :throwable throwable)))
 
 (def ^{:dynamic true
@@ -159,16 +171,6 @@
   bound to a function of one argument, a context map. Defaults to
   default-throw-hook."}
   *throw-hook* default-throw-hook)
-
-(defn make-context
-  "Makes a throw context from arguments. Captures the cause if called
-  within a try+ catch clause."
-  [object message stack-trace environment]
-  {:object object
-   :message message
-   :cause (:throwable (environment '&throw-context))
-   :stack-trace stack-trace
-   :environment (dissoc environment '&throw-context)})
 
 (defn throw-context
   "Throws a context. Allows overrides of *throw-hook* to intervene."
