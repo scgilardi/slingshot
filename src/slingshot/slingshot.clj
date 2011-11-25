@@ -88,8 +88,10 @@
   ([object fmt & args]
      (let [obj (gensym)]
        `(let [~obj ~object]
-          (s/throw-context ~obj (format ~fmt ~@(s/replace-all {'% obj} args))
-                           (s/stack-trace) (dissoc (s/environment) '~obj)))))
+          (s/throw-context ~obj
+                           (format ~fmt ~@(s/replace-all {'% obj} args))
+                           (s/stack-trace)
+                           (dissoc (s/environment) '~obj)))))
   ([object]
      `(throw+ ~object "Object thrown by throw+: %s" (pr-str ~'%)))
   ([]
