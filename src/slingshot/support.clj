@@ -60,7 +60,7 @@
     (when-let [cause (.getCause throwable)]
       (recur cause))))
 
-(defn ->context
+(defn get-context
   "Returns a context given a Throwable t. If t or any Throwable in its
   cause chain is a Stone, returns the Stone's context with t assoc'd
   as the value for :throwable, else returns a new context based on t."
@@ -123,7 +123,7 @@
      ;; in the &env captured by throw+ forms within catch clauses
      ;; (see the special handling of &throw-context in make-context)
      `(catch Throwable ~'&throw-context
-        (let [~'&throw-context (-> ~'&throw-context ->context *catch-hook*)]
+        (let [~'&throw-context (-> ~'&throw-context get-context *catch-hook*)]
           (cond
            (contains? ~'&throw-context :catch-hook-return)
            (:catch-hook-return ~'&throw-context)

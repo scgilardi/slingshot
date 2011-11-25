@@ -1,7 +1,7 @@
 (ns slingshot.slingshot
-  (:use [slingshot.support :only [environment parse-try+ replace-all rethrow
-                                  stack-trace throw-context transform-catch
-                                  ->context]]))
+  (:use [slingshot.support :only [environment get-context parse-try+ replace-all
+                                  rethrow stack-trace throw-context
+                                  transform-catch]]))
 
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
@@ -105,7 +105,7 @@
 
   See also try+"
   [t]
-  (->context t))
+  (get-context t))
 
 (defn get-thrown-object
   "Returns the object thrown by throw or throw+ given a Throwable
