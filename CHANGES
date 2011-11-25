@@ -29,3 +29,4 @@
     - clients looking for a uniform map-based interface to reading
       the object, message, cause, and stack traces of objects thrown
       by throw or throw+ now have it
+  - shortened default message to "throw+: %s"

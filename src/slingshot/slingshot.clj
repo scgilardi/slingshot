@@ -77,8 +77,8 @@
 
       - % symbols in args will be replaced with the thrown object;
 
-      - the default message is \"Object thrown by throw+: \" followed
-        by the result of calling pr-str on the object;
+      - the default message is \"throw+: \" followed by the result of
+        calling pr-str on the object;
 
     - Within a try+ catch clause, throw+ with no arguments rethrows
       the caught object within its original (possibly nested)
@@ -93,7 +93,7 @@
                            (s/stack-trace)
                            (dissoc (s/environment) '~obj)))))
   ([object]
-     `(throw+ ~object "Object thrown by throw+: %s" (pr-str ~'%)))
+     `(throw+ ~object "throw+: %s" (pr-str ~'%)))
   ([]
      `(s/rethrow)))
 
