@@ -153,7 +153,7 @@
   [{:keys [message cause stack-trace] :as context}]
   (slingshot.Stone. message cause stack-trace context))
 
-(defn ->throwable
+(defn get-throwable
   "Returns a throwable given a context: the object in context if it's
   a Throwable, else a throwable Stone that wraps context"
   [{object :object :as context}]
@@ -164,7 +164,7 @@
 (defn default-throw-hook
   "Default implementation of *throw-hook*"
   [context]
-  (throw (->throwable context)))
+  (throw (get-throwable context)))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of throw+. Must be
