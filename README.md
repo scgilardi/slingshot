@@ -83,15 +83,14 @@ Enhanced throw and catch for Clojure
         :environment  a map from names to values for locals visible at
                       the throw+ site.
 
-  To throw a non-`Throwable` object, `throw+` wraps it with a
-  `Throwable` object of class `slingshot.Stone`. That `Stone` may in
-  turn end up wrapped by other exceptions (e.g., instances of
-  `RuntimeException` or `java.util.concurrent.ExecutionException`).
-  `try+` sees through all such wrappers to find the object wrapped by
-  the first instance of `Stone` in the outermost wrapper's cause
-  chain. If needed, the outermost wrapper is available within a catch
-  clause a via the `:throwable` key in `&throw-context`. Any nested
-  wrappers are accessible via its cause chain.
+  To throw a non-`Throwable` object, `throw+` wraps it in a
+  `Throwable` context wrapper. That wrapper may in turn end up wrapped
+  by other exceptions (e.g., instances of `RuntimeException` or
+  `java.util.concurrent.ExecutionException`). `try+` sees through all
+  such wrappers to find the thrown object. If needed, the outermost
+  wrapper is available within a catch clause a via the `:throwable`
+  key in `&throw-context`. Any nested wrappers are accessible via its
+  cause chain.
 
   When `throw+` throws a non-`Throwable` object from within a `try+`
   catch clause, the outermost wrapper of the caught object being
@@ -102,7 +101,7 @@ Usage
 
   project.clj
 
-        [slingshot "0.8.0"]
+        [slingshot "0.9.0"]
 
   tensor/parse.clj
 
