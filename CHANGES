@@ -30,3 +30,7 @@
       the object, message, cause, and stack traces of objects thrown
       by throw or throw+ now have it
   - shortened default message to "throw+: %s"
+  - reorganize support namespace: context section
+  - remove references to Stone in docs, replace with wrapper
+  - slingshot.Stone -> slingshot.ExceptionInfo
+    - named after similar new class in clojure.lang in 1.4
