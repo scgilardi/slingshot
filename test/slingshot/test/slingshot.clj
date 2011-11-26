@@ -150,7 +150,7 @@
 (defn ix [] (try+ (hx) (catch integer? w &throw-context)))
 
 (defn next-context [x]
-  (-> x :cause .getContext))
+  (-> x :cause .getData))
 
 (deftest test-throw-context
   (let [context (ix)
@@ -183,8 +183,8 @@
 
 (deftest test-uncaught
   (is (thrown-with-msg? Exception #"^uncaught$" (e)))
-  (is (thrown-with-msg? slingshot.Stone #"^throw\+: .*" (f)))
-  (is (thrown-with-msg? slingshot.Stone #"wasn't caught" (g))))
+  (is (thrown-with-msg? slingshot.ExceptionInfo #"^throw\+: .*" (f)))
+  (is (thrown-with-msg? slingshot.ExceptionInfo #"wasn't caught" (g))))
 
 (defn h []
   (try+
@@ -238,9 +238,9 @@
                          [x (:throwable &throw-context)]))]
     (is (= "x-ray!" val))
     (is (= "x-ray!" (:object (-> wrapper .getCause .getCause
-                                 .getCause .getContext))))))
+                                 .getCause .getData))))))
 
-(deftest test-catching-stone
+(deftest test-catching-wrapper
   (let [e (Exception.)]
     (try
       (try+
@@ -248,7 +248,7 @@
        (catch Exception _
          (throw+ :a "msg: %s" %)))
       (is false)
-      (catch slingshot.Stone s
+      (catch slingshot.ExceptionInfo s
         (is (= "msg: :a" (.getMessage s)))
         (is (= e (.getCause s)))))))
 

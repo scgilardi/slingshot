@@ -35,15 +35,15 @@
         tobject 4
         tcause (Exception.)
         tstack-trace (stack-trace)
-        tcontext {:message tmessage
+        tdata {:message tmessage
                   :object tobject
                   :cause tcause
                   :stack-trace tstack-trace}
-        tthrowable (wrap tcontext)
-        {:keys [message cause context stackTrace]} (bean tthrowable)]
-    (is (instance? slingshot.Stone tthrowable))
-    (is (= [message cause (seq stackTrace) context]
-           [tmessage tcause (seq tstack-trace) tcontext]))))
+        tthrowable (wrap tdata)
+        {:keys [message cause data stackTrace]} (bean tthrowable)]
+    (is (instance? slingshot.ExceptionInfo tthrowable))
+    (is (= [message cause (seq stackTrace) data]
+           [tmessage tcause (seq tstack-trace) tdata]))))
 
 (def test-hooked (atom nil))
 

@@ -33,14 +33,14 @@
 (defn wrap
   "Returns a Throwable context wrapper given a context"
   [{:keys [message cause stack-trace] :as context}]
-  (slingshot.Stone. message cause stack-trace context))
+  (slingshot.ExceptionInfo. message context stack-trace cause))
 
 (defn unwrap
   "Searches Throwable t and its cause chain for a Throwable context
   wrapper. If one is found, returns the context, else returns nil."
   [^Throwable t]
-  (if (instance? slingshot.Stone t)
-    (.getContext t)
+  (if (instance? slingshot.ExceptionInfo t)
+    (.getData ^slingshot.ExceptionInfo t)
     (when-let [cause (.getCause t)]
       (recur cause))))
 
