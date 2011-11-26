@@ -18,11 +18,11 @@
 (defn make-context
   "Makes a throw context from arguments. Captures the cause if called
   with multiple arguments from within a try+ catch clause."
-  ([throwable]
-     {:object throwable
-      :message (.getMessage throwable)
-      :cause (.getCause throwable)
-      :stack-trace (.getStackTrace throwable)})
+  ([^Throwable t]
+     {:object t
+      :message (.getMessage t)
+      :cause (.getCause t)
+      :stack-trace (.getStackTrace t)})
   ([object message stack-trace environment]
      {:object object
       :message message
@@ -36,12 +36,12 @@
   (slingshot.Stone. message cause stack-trace context))
 
 (defn unwrap
-  [throwable]
-  (if (instance? slingshot.Stone throwable)
-    (.getContext throwable)
-    (when-let [cause (.getCause throwable)]
   "Searches Throwable t and its cause chain for a Throwable context
   wrapper. If one is found, returns the context, else returns nil."
+  [^Throwable t]
+  (if (instance? slingshot.Stone t)
+    (.getContext t)
+    (when-let [cause (.getCause t)]
       (recur cause))))
 
 (defn get-throwable
@@ -56,10 +56,10 @@
   "Returns a context given a Throwable t. If t or any Throwable in its
   cause chain is a context wrapper, returns the context with t assoc'd
   as the value for :throwable, else returns a new context based on t."
-  [throwable]
-  (-> (or (unwrap throwable)
-          (make-context throwable))
-      (assoc :throwable throwable)))
+  [^Throwable t]
+  (-> (or (unwrap t)
+          (make-context t))
+      (assoc :throwable t)))
 
 ;; try+ support
 
