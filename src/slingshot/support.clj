@@ -8,7 +8,7 @@
   (clojure.walk/postwalk-replace smap coll))
 
 (defn throw-arg
-  "Throws an IllegalArgumentException with a message specified by a
+  "Throws an IllegalArgumentException with a message specified by
   arguments for clojure.core/format"
   [fmt & args]
   (throw (IllegalArgumentException. (apply format fmt args))))
