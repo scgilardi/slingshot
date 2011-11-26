@@ -8,8 +8,8 @@
   (clojure.walk/postwalk-replace smap coll))
 
 (defn throw-arg
-  "Throws an IllegalArgumentException with a message specified by
-  arguments for clojure.core/format"
+  "Throws an IllegalArgumentException with a message given arguments
+  for clojure.core/format"
   [fmt & args]
   (throw (IllegalArgumentException. (apply format fmt args))))
 
@@ -31,22 +31,22 @@
       :environment (dissoc environment '&throw-context)}))
 
 (defn wrap
-  "Returns a throwable Stone that wraps context"
+  "Returns a Throwable context wrapper given a context"
   [{:keys [message cause stack-trace] :as context}]
   (slingshot.Stone. message cause stack-trace context))
 
 (defn unwrap
-  "Searches throwable and its cause chain for a Stone. If one is
-  found, returns the context it wraps, else returns nil."
   [throwable]
   (if (instance? slingshot.Stone throwable)
     (.getContext throwable)
     (when-let [cause (.getCause throwable)]
+  "Searches Throwable t and its cause chain for a Throwable context
+  wrapper. If one is found, returns the context, else returns nil."
       (recur cause))))
 
 (defn get-throwable
-  "Returns a throwable given a context: the object in context if it's
-  a Throwable, else a throwable Stone that wraps context"
+  "Returns a Throwable given a context: the object in context if it's
+  a Throwable, else a Throwable context wrapper"
   [{object :object :as context}]
   (if (instance? Throwable object)
     object
@@ -54,7 +54,7 @@
 
 (defn get-context
   "Returns a context given a Throwable t. If t or any Throwable in its
-  cause chain is a Stone, returns the Stone's context with t assoc'd
+  cause chain is a context wrapper, returns the context with t assoc'd
   as the value for :throwable, else returns a new context based on t."
   [throwable]
   (-> (or (unwrap throwable)
