@@ -44,6 +44,14 @@
     (when-let [cause (.getCause throwable)]
       (recur cause))))
 
+(defn get-throwable
+  "Returns a throwable given a context: the object in context if it's
+  a Throwable, else a throwable Stone that wraps context"
+  [{object :object :as context}]
+  (if (instance? Throwable object)
+    object
+    (wrap context)))
+
 (defn get-context
   "Returns a context given a Throwable t. If t or any Throwable in its
   cause chain is a Stone, returns the Stone's context with t assoc'd
@@ -52,14 +60,6 @@
   (-> (or (unwrap throwable)
           (make-context throwable))
       (assoc :throwable throwable)))
-
-(defn get-throwable
-  "Returns a throwable given a context: the object in context if it's
-  a Throwable, else a throwable Stone that wraps context"
-  [{object :object :as context}]
-  (if (instance? Throwable object)
-    object
-    (wrap context)))
 
 ;; try+ support
 
