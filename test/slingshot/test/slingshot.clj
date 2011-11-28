@@ -150,15 +150,15 @@
 (defn ix [] (try+ (hx) (catch integer? w &throw-context)))
 
 (defn next-context [x]
-  (-> x :cause .getData))
+  (-> x :cause get-throw-context))
 
 (deftest test-throw-context
   (let [context (ix)
         context1 (next-context context)
         context2 (next-context context1)]
 
-    (is (= #{:object :message :cause :stack-trace :environment}
-           (disj (set (keys context)) :throwable)
+    (is (= #{:object :message :cause :stack-trace :environment :throwable}
+           (set (keys context))
            (set (keys context1))
            (set (keys context2))))
     (is (= 8 (-> context :object)))

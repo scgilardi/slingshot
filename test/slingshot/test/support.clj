@@ -35,11 +35,12 @@
         tobject 4
         tcause (Exception.)
         tstack-trace (stack-trace)
-        tdata {:message tmessage
-                  :object tobject
-                  :cause tcause
-                  :stack-trace tstack-trace}
-        tthrowable (wrap tdata)
+        tdata {:object tobject :environment {'a 1 'b 2}}
+        tcontext (assoc tdata
+                   :message tmessage
+                   :cause tcause
+                   :stack-trace tstack-trace)
+        tthrowable (wrap tcontext)
         {:keys [message cause data stackTrace]} (bean tthrowable)]
     (is (instance? slingshot.ExceptionInfo tthrowable))
     (is (= [message cause (seq stackTrace) data]
