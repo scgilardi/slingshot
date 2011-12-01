@@ -34,3 +34,9 @@
   - remove references to Stone in docs, replace with wrapper
   - slingshot.Stone -> slingshot.ExceptionInfo
     - named after similar new class in clojure.lang in 1.4
+  - no longer redundantly stores message, cause, and stack-trace in
+    the payload of ExceptionInfo--now stored only in the like-named
+    member variables
+  - reduced reflection warnings
+  - doc update including moving description of throw context to
+    get-throw context
