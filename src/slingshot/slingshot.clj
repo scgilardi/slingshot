@@ -107,6 +107,8 @@
   the caught object within its original (possibly nested) wrappers.
 
   See also try+"
+  ([object]
+     `(throw+ ~object "throw+: %s" (pr-str ~'%)))
   ([object fmt & args]
      (let [obj (gensym)]
        `(let [~obj ~object]
@@ -114,8 +116,6 @@
                            (format ~fmt ~@(s/replace-all {'% obj} args))
                            (s/stack-trace)
                            (dissoc (s/environment) '~obj)))))
-  ([object]
-     `(throw+ ~object "throw+: %s" (pr-str ~'%)))
   ([]
      `(s/rethrow)))
 
