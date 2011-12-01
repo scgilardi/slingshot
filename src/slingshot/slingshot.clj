@@ -132,7 +132,8 @@
   (s/get-context t))
 
 (defn get-thrown-object
-  "Returns the object thrown by throw or throw+ given a Throwable
-  caught within an ordinary try form."
+  "Returns the object thrown by throw or throw+ given a Throwable.
+  Useful for processing a Throwable outside of a try+ form when the
+  source of the Throwable may or may not have been throw+."
   [t]
   (-> t get-throw-context :object))
