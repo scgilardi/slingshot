@@ -4,27 +4,34 @@
 (defmacro try+
   "Like the try special form, but with enhanced catch clauses:
 
+    - catch non-Throwable objects thrown by throw+ as well as
+      Throwable objects thrown by throw or throw+;
+
     - specify objects to catch by class name, key-value pair,
-      predicate, or selector form;
+      predicate, or arbitrary selector form;
 
     - destructure the caught object;
 
-    - in a catch body, access the names and values of the locals
-      visible at the throw site.
+    - in a catch clause, access the names and values of the locals
+      visible at the throw site, including the name of the enclosing
+      function and its arguments (unless shadowed by nested locals).
 
   A selector form is a form containing one or more instances of % to
   be replaced by the thrown object. If it evaluates to truthy, the
   object is caught.
 
-  The class name, key-value pair, and predicate selectors are shorthand
-  for these selector forms:
+    The class name, key-value pair, and predicate selectors are
+    shorthand for these selector forms:
 
-    <class name>  => (instance? <class name> %)
-    [<key> <val>] => (= (get % <key>) <val>)
-    <predicate>   => (<predicate> %)
+      <class name>  => (instance? <class name> %)
+      [<key> <val>] => (= (get % <key>) <val>)
+      <predicate>   => (<predicate> %)
 
   &throw-context is a local acessible within try+ catch clauses. It is
   a map containing:
+  The binding form in a try+ catch clause is not required to be a
+  simple symbol. It is subject to destructuring which allows easy
+  access to the contents of a thrown collection.
 
     - for Throwable caught objects:
       :object       the caught object;
@@ -51,6 +58,8 @@
   object. If needed, the outermost wrapper is available within a catch
   clause via the :throwable key in &throw-context. Any nested wrappers
   are accessible via its cause chain.
+  The hidden local &throw-context is visible within try+ catch
+  clauses, bound to the throw context for the caught object.
 
   When throw+ throws a non-Throwable object from within a try+ catch
   clause, the outermost wrapper of the caught object being processed
