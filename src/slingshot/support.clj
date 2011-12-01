@@ -11,7 +11,7 @@
   "Throws an IllegalArgumentException with a message given arguments
   for clojure.core/format"
   [fmt & args]
-  (throw (IllegalArgumentException. (apply format fmt args))))
+  (throw (IllegalArgumentException. ^String (apply format fmt args))))
 
 ;; context support
 
