@@ -74,24 +74,37 @@
        ~@finally-clauses)))
 
 (defmacro throw+
-  "Like the throw special form, but can throw any object:
+  "Like the throw special form, but can throw any object by wrapping
+  non-Throwable objects in a Throwable wrapper.
 
-    - Has the same syntax and behavior as throw for Throwable objects;
+  throw+ has the same syntax and behavior as throw for Throwable
+  objects. The message, cause, and stack trace are those carried by
+  the Throwable.
 
-    - For other objects, an optional format string and args for
-      clojure.core/format specify a message that is accessible in
-      catch clauses within both try forms (via .getMessage on the
-      throwable wrapper), and try+ forms (via the :message key in
-      &throw-context);
+  For non-Throwable objects, throw+ packages the object, message,
+  cause, stack trace, and environment in a Throwable wrapper:
 
-      - % symbols in args will be replaced with the thrown object;
+    - message: specified by an optional format string and args for
+      clojure.core/format:
 
-      - the default message is \"throw+: \" followed by the result of
-        calling pr-str on the object;
+      - % symbols (at any nesting depth) within args represent the
+        thrown object
 
-    - Within a try+ catch clause, throw+ with no arguments rethrows
-      the caught object within its original (possibly nested)
-      wrappers.
+      - the default is: \"throw+: %s\" (pr-str %)
+
+    - cause: for a throw+ call within a try+ catch clause, the cause
+      is the outermost wrapper of the caught object being processed.
+      In any other case, the cause is nil;
+
+    - stack trace: the stack trace of the current thread at the time
+      of the throw+ call, starting at the function that encloses it;
+
+    - environment: a map from names to values for locals visible at
+      the throw+ call site, including the enclosing function and its
+      arguments (unless shadowed by nested locals).
+
+  Within a try+ catch clause, a throw+ call with no arguments rethrows
+  the caught object within its original (possibly nested) wrappers.
 
   See also try+"
   ([object fmt & args]
