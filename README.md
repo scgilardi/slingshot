@@ -78,19 +78,23 @@ Enhanced throw and catch for Clojure
         :message      the message, from the optional argument to throw+;
         :cause        the cause, captured by throw+, see below;
         :stack-trace  the stack trace, captured by throw+;
-        :throwable    the outermost Throwable wrapper of the caught object,
-                      see below;
         :environment  a map from names to values for locals visible at
                       the throw+ site.
+        :wrapper      the Throwable wrapper that carried the object
+        :throwable    the outermost Throwable whose cause chain contains
+                      the wrapper, see below;
 
   To throw a non-`Throwable` object, `throw+` wraps it in a
-  `Throwable` context wrapper. That wrapper may in turn end up wrapped
-  by other exceptions (e.g., instances of `RuntimeException` or
+  `Throwable` wrapper. The wrapper is available via the `:wrapper`
+  key in `&throw-context`.
+
+
+  Between being thrown and caught, the wrapper may be wrapped by other
+  exceptions (e.g., instances of `RuntimeException` or
   `java.util.concurrent.ExecutionException`). `try+` sees through all
-  such wrappers to find the thrown object. If needed, the outermost
-  wrapper is available within a catch clause a via the `:throwable`
-  key in `&throw-context`. Any nested wrappers are accessible via its
-  cause chain.
+  such wrappers to find the thrown object. The outermost wrapper is
+  available within a catch clause a via the `:throwable` key in
+  `&throw-context`.
 
   When `throw+` throws a non-`Throwable` object from within a `try+`
   catch clause, the outermost wrapper of the caught object being
