@@ -16,8 +16,8 @@
 ;; context support
 
 (defn make-context
-  "Makes a throw context from arguments. Captures the cause if called
-  with multiple arguments from within a try+ catch clause."
+  "Makes a throw context from arguments. Captures the cause from the
+  environment argument if present."
   ([^Throwable t]
      {:object t
       :message (.getMessage t)
@@ -31,7 +31,7 @@
       :environment (dissoc environment '&throw-context)}))
 
 (defn wrap
-  "Returns a Throwable context wrapper given a context"
+  "Returns a context wrapper given a context"
   [context]
   (let [{:keys [message cause stack-trace]} context
         data (-> (dissoc context :message :cause :stack-trace)
@@ -40,7 +40,8 @@
       (.setStackTrace stack-trace))))
 
 (defn unwrap
-  "Returns the context if t is a context wrapper, else returns nil"
+  "Returns the context with t assoc'd as the value for :wrapper if t
+  is a context wrapper, else returns nil"
   [^Throwable t]
   (when (instance? slingshot.ExceptionInfo t)
     (let [data (.getData ^slingshot.ExceptionInfo t)]
@@ -52,8 +53,8 @@
           :wrapper t)))))
 
 (defn unwrap-all
-  "Searches Throwable t and its cause chain for a Throwable context
-  wrapper. If one is found, returns the context, else returns nil."
+  "Searches Throwable t and its cause chain for a context wrapper. If
+  one is found, returns the context, else returns nil."
   [^Throwable t]
   (or (unwrap t)
       (when-let [cause (.getCause t)]
@@ -69,8 +70,9 @@
 
 (defn get-context
   "Returns a context given a Throwable t. If t or any Throwable in its
-  cause chain is a context wrapper, returns the context with t assoc'd
-  as the value for :throwable, else returns a new context based on t."
+  cause chain is a context wrapper, returns the context, else creates
+  a new context based on t. In either case, the returned context will
+  have t assoc'd as the value for :throwable."
   [^Throwable t]
   (-> (or (unwrap-all t)
           (make-context t))
