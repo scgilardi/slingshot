@@ -41,8 +41,8 @@
       (.setStackTrace stack-trace))))
 
 (defn unwrap
-  "Returns the context with t assoc'd as the value for :wrapper if t
-  is a context wrapper, else returns nil"
+  "If t is a context wrapper, returns the context with t assoc'd as
+  the value for :wrapper, else returns nil"
   [^Throwable t]
   (when (instance? slingshot.ExceptionInfo t)
     (let [data (.getData ^slingshot.ExceptionInfo t)]
