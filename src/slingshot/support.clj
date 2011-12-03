@@ -34,7 +34,8 @@
   "Returns a context wrapper given a context"
   [context]
   (let [{:keys [message cause stack-trace]} context
-        data (-> (dissoc context :message :cause :stack-trace)
+        data (-> context
+                 (dissoc :message :cause :stack-trace)
                  (with-meta {:type ::wrapper}))]
     (doto (slingshot.ExceptionInfo. message data cause)
       (.setStackTrace stack-trace))))
