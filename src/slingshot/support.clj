@@ -34,21 +34,30 @@
   "Returns a Throwable context wrapper given a context"
   [context]
   (let [{:keys [message cause stack-trace]} context
-        data (dissoc context :message :cause :stack-trace)]
+        data (-> (dissoc context :message :cause :stack-trace)
+                 (with-meta {:type ::wrapper}))]
     (doto (slingshot.ExceptionInfo. message data cause)
       (.setStackTrace stack-trace))))
 
 (defn unwrap
+  "Returns the context if t is a context wrapper, else returns nil"
+  [^Throwable t]
+  (when (instance? slingshot.ExceptionInfo t)
+    (let [data (.getData ^slingshot.ExceptionInfo t)]
+      (when (= (type data) ::wrapper)
+        (assoc data
+          :message (.getMessage t)
+          :cause (.getCause t)
+          :stack-trace (.getStackTrace t)
+          :wrapper t)))))
+
+(defn unwrap-all
   "Searches Throwable t and its cause chain for a Throwable context
   wrapper. If one is found, returns the context, else returns nil."
   [^Throwable t]
-  (if (instance? slingshot.ExceptionInfo t)
-    (assoc (.getData ^slingshot.ExceptionInfo t)
-      :message (.getMessage t)
-      :cause (.getCause t)
-      :stack-trace (.getStackTrace t))
-    (when-let [cause (.getCause t)]
-      (recur cause))))
+  (or (unwrap t)
+      (when-let [cause (.getCause t)]
+        (recur cause))))
 
 (defn get-throwable
   "Returns a Throwable given a context: the object in context if it's
@@ -63,7 +72,7 @@
   cause chain is a context wrapper, returns the context with t assoc'd
   as the value for :throwable, else returns a new context based on t."
   [^Throwable t]
-  (-> (or (unwrap t)
+  (-> (or (unwrap-all t)
           (make-context t))
       (assoc :throwable t)))
 

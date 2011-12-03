@@ -116,16 +116,20 @@
       :cause        the cause, see throw+;
       :stack-trace  the stack trace, see throw+;
       :environment  the environment, see throw+;
-      :throwable    the outermost Throwable wrapper of the object,
+      :wrapper      the Throwable wrapper that carried the object,
                     see below;
+      :throwable    the outermost Throwable whose cause chain contains
+                    the wrapper, see below;
 
   To throw a non-Throwable object, throw+ wraps it in a Throwable
-  wrapper. That wrapper may in turn end up wrapped by other
+  wrapper. The wrapper is available via the :wrapper key in the throw
+  context.
+
+  Between being thrown and caught, the wrapper may be wrapped by other
   exceptions (e.g., instances of RuntimeException or
   java.util.concurrent.ExecutionException). get-throw-context sees
-  through any such wrappers to find the thrown object. If needed, the
-  outermost wrapper is available via :throwable key in the throw
-  context. Any nested wrappers are accessible via its cause chain.
+  through all nested wrappers to find the thrown object. The outermost
+  wrapper is available via the :throwable key in the throw context.
 
   See also try+"
   [t]

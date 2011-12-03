@@ -69,7 +69,8 @@
   (binding [*catch-hook* #(reset! catch-hooked %)]
     (try+ (throw+ "catch-hook-string") (catch string? x x))
     (is (= (set (keys @catch-hooked))
-           (set [:throwable :object :message :cause :stack-trace :environment])))
+           (set [:object :message :cause :stack-trace :environment :wrapper
+                 :throwable])))
     (is (= "catch-hook-string" (:object @catch-hooked))))
   (binding [*catch-hook* (catch-hook-return 42)]
     (is (= 42 (try+ (throw+ "boo") (catch string? x x)))))

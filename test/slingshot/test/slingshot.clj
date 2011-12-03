@@ -157,7 +157,8 @@
         context1 (next-context context)
         context2 (next-context context1)]
 
-    (is (= #{:object :message :cause :stack-trace :environment :throwable}
+    (is (= #{:object :message :cause :stack-trace :environment :wrapper
+             :throwable}
            (set (keys context))
            (set (keys context1))
            (set (keys context2))))
@@ -273,7 +274,8 @@
         t3 (try
              (throw exception2)
              (catch Throwable t t))]
-    (is (= #{:object :message :cause :stack-trace :throwable :environment}
+    (is (= #{:object :message :cause :stack-trace :environment :wrapper
+             :throwable}
            (-> t1 get-throw-context keys set)))
     (is (= #{:object :message :cause :stack-trace :throwable}
            (-> t2 get-throw-context keys set)))
@@ -304,3 +306,14 @@
     (is (identical? object (get-thrown-object t1)))
     (is (identical? exception (get-thrown-object t2)))
     (is (identical? exception (get-thrown-object t3)))))
+
+(deftest test-wrapper-and-throwable
+  (let [context (try+
+                 (try
+                   (throw+ :afp "wrapper-0")
+                   (catch Exception e
+                     (throw (RuntimeException. "wrapper-1" e))))
+                 (catch Object _
+                   &throw-context))]
+    (is (= "wrapper-0" (-> context :wrapper .getMessage)))
+    (is (= "wrapper-1" (-> context :throwable .getMessage)))))

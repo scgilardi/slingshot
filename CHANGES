@@ -40,3 +40,5 @@
   - reduced reflection warnings
   - doc update including moving description of throw context to
     get-throw context
+  - provide the immediate object wrapper at :wrapper in the context
+    (accessible via get-throw-context or in &throw-context)
