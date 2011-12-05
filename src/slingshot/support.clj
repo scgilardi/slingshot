@@ -55,7 +55,8 @@
 
 (defn unwrap-all
   "Searches Throwable t and its cause chain for a context wrapper. If
-  one is found, returns the context, else returns nil."
+  one is found, returns the context with the wrapper assoc'd as the
+  value for :wrapper, else returns nil."
   [^Throwable t]
   (or (unwrap t)
       (when-let [cause (.getCause t)]
@@ -71,9 +72,10 @@
 
 (defn get-context
   "Returns a context given a Throwable t. If t or any Throwable in its
-  cause chain is a context wrapper, returns the context, else creates
-  a new context based on t. In either case, the returned context will
-  have t assoc'd as the value for :throwable."
+  cause chain is a context wrapper, returns the context with the
+  wrapper assoc'd as the value for :wrapper and t assoc'd as the value
+  for :throwable. Otherwise creates a new context based on t with t
+  assoc'd as the value for :throwable."
   [^Throwable t]
   (-> (or (unwrap-all t)
           (make-context t))

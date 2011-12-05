@@ -31,8 +31,8 @@
   simple symbol. It is subject to destructuring which allows easy
   access to the contents of a thrown collection.
 
-  The hidden local &throw-context is visible within try+ catch
-  clauses, bound to the throw context for the caught object.
+  The local &throw-context is available within try+ catch clauses,
+  bound to the throw context for the caught object.
 
   See also: throw+, get-throw-context"
   [& body]
@@ -75,7 +75,7 @@
   Within a try+ catch clause, a throw+ call with no arguments rethrows
   the caught object within its original (possibly nested) wrappers.
 
-  See also try+"
+  See also try+, get-throw-context"
   ([object]
      `(throw+ ~object "throw+: %s" (pr-str ~'%)))
   ([object fmt & args]
@@ -94,12 +94,12 @@
   thrown object as a Clojure map.
 
   If t or any Throwable in its cause chain wraps a non-Throwable
-  object thrown by throw+, returns its associated context with t
-  assoc'd as the value for :throwable, else returns a new context
-  based on t.
+  object thrown by throw+, returns the associated context with t
+  assoc'd as the value for :throwable, and the wrapper assoc'd as the
+  value for :wrapper, else returns a new context based on t.
 
-  Within a try+ catch clause, prefer using the &throw-context hidden
-  local to calling get-throw-context explicitly.
+  Within a try+ catch clause, prefer using the &throw-context local to
+  calling get-throw-context explicitly.
 
   A throw context is a map containing:
 
@@ -127,9 +127,9 @@
 
   Between being thrown and caught, the wrapper may be wrapped by other
   exceptions (e.g., instances of RuntimeException or
-  java.util.concurrent.ExecutionException). get-throw-context sees
-  through all nested wrappers to find the thrown object. The outermost
-  wrapper is available via the :throwable key in the throw context.
+  java.util.concurrent.ExecutionException). get-throw-context searches
+  all nested wrappers to find the thrown object. The outermost wrapper
+  is available via the :throwable key in the throw context.
 
   See also try+"
   [t]
@@ -138,6 +138,8 @@
 (defn get-thrown-object
   "Returns the object thrown by throw or throw+ given a Throwable.
   Useful for processing a Throwable outside of a try+ form when the
-  source of the Throwable may or may not have been throw+."
+  source of the Throwable may or may not have been throw+.
+
+  See also get-throw-context"
   [t]
   (-> t get-throw-context :object))
