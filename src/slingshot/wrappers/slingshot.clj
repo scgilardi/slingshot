@@ -2,11 +2,11 @@
   (:import slingshot.ExceptionInfo))
 
 (defn wrap [data message cause stack-trace]
-  (doto (ExceptionInfo. message (with-meta data {:type ::wrapper}) cause)
+  (doto (ExceptionInfo. message (vary-meta data assoc ::wrapper? true) cause)
     (.setStackTrace stack-trace)))
 
 (defn unwrap [t]
   (when (instance? ExceptionInfo t)
     (let [data (.getData ^ExceptionInfo t)]
-      (when (= (type data) ::wrapper)
-        data))))
+      (when (::wrapper? (meta data))
+        (vary-meta data dissoc ::wrapper?)))))
