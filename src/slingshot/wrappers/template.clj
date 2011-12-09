@@ -1,5 +1,4 @@
-;; loaded from wrapper namespaces after they import the appropriate
-;; ExceptionInfo class
+;; loaded by wrapper namespaces after importing their ExceptionInfo
 
 (defn wrap [data message cause stack-trace]
   (doto (ExceptionInfo. message (vary-meta data assoc ::wrapper? true) cause)
