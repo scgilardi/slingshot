@@ -2,14 +2,14 @@
   (:require [clojure.walk])
   (:refer-clojure :exclude [ex-data ex-info]))
 
-(def ex-ns
-  (if (and (resolve 'clojure.core/ex-data) (resolve 'clojure.core/ex-info))
+(def ex-info-ns
+  (if (and (resolve 'clojure.core/ex-info) (resolve 'clojure.core/ex-data))
     'clojure.core
     (doto 'slingshot.ex-info
       require)))
 
-(def ex-data @(ns-resolve ex-ns 'ex-data))
-(def ex-info @(ns-resolve ex-ns 'ex-info))
+(def ex-info @(ns-resolve ex-info-ns 'ex-info))
+(def ex-data @(ns-resolve ex-info-ns 'ex-data))
 
 (defn replace-all
   "Returns a deep copy of coll with all instances of the keys in smap
