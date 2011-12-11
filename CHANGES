@@ -22,7 +22,7 @@
   - provide slingshot/get-thrown-object to retrieve the object
     thrown by throw or throw+ given a Throwable caught within an
     ordinary try form.
-* version next
+* version 0.10.0
   - add get-throw-context and reimplement get-thrown-object using it
     - get-thrown-object will now find stones in cause chains like
       try+/catch does
