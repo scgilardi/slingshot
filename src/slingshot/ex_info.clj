@@ -1,8 +1,8 @@
 (ns slingshot.ex-info
-  "provides implementations of ex-data and ex-info for slingshot to
+  "provides implementations of ex-info and ex-data for slingshot to
   use with clojure versions earlier than 1.4.0
 
-  ex-data and ex-info are currently scheduled to be available in
+  ex-info and ex-data are currently scheduled to be available in
   clojure.core starting with release 1.4.0. These implementations are
   based on that code (issue CLJ-733), using slingshot.ExceptionInfo in
   place of clojure.lang.ExceptionInfo.
