@@ -46,22 +46,24 @@
   "Returns a context wrapper given a context"
   [context]
   (let [{:keys [message cause stack-trace]} context
-        data (dissoc context :message :cause :stack-trace)
-        ex (ex-info message (with-meta data {:type ::wrapper}) cause)]
-    (.setStackTrace ^Throwable ex stack-trace)
-    ex))
+        data (-> (dissoc context :message :cause :stack-trace)
+                 (vary-meta assoc ::wrapper? true))
+        ^Throwable wrapper (ex-info message data cause)]
+    (doto wrapper
+      (.setStackTrace stack-trace))))
 
 (defn unwrap
   "If t is a context wrapper, returns the context with t assoc'd as
   the value for :wrapper, else returns nil"
   [^Throwable t]
   (when-let [data (ex-data t)]
-    (when (= (type data) ::wrapper)
-      (assoc data
-        :message (.getMessage t)
-        :cause (.getCause t)
-        :stack-trace (.getStackTrace t)
-        :wrapper t))))
+    (when (::wrapper? (meta data))
+      (-> (assoc data
+            :message (.getMessage t)
+            :cause (.getCause t)
+            :stack-trace (.getStackTrace t)
+            :wrapper t)
+          (vary-meta dissoc ::wrapper?)))))
 
 (defn unwrap-all
   "Searches Throwable t and its cause chain for a context wrapper. If
