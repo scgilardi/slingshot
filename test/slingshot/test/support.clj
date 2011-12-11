@@ -2,6 +2,7 @@
   (:use [clojure.test]
         [slingshot.slingshot :only [throw+ try+]]
         [slingshot.support])
+  (:refer-clojure :exclude [ex-data ex-info])
   (:import (java.util.concurrent ExecutionException)))
 
 (deftest test-parse-try+
@@ -42,7 +43,7 @@
                    :stack-trace tstack-trace)
         tthrowable (wrap tcontext)
         {:keys [message cause data stackTrace]} (bean tthrowable)]
-    (is (instance? slingshot.ExceptionInfo tthrowable))
+    (is (ex-data tthrowable))
     (is (= [message cause (seq stackTrace) data]
            [tmessage tcause (seq tstack-trace) tdata]))))
 

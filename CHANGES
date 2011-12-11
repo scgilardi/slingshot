@@ -42,3 +42,5 @@
     get-throw context
   - provide the immediate object wrapper at :wrapper in the context
     (accessible via get-throw-context or in &throw-context)
+  - use clojure.core's ex-data and ex-info if available, but don't
+    depend on them

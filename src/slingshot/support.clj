@@ -1,14 +1,16 @@
 (ns slingshot.support
-  (:require [clojure.walk]))
+  (:require [clojure.walk])
+  (:refer-clojure :exclude [ex-data ex-info]))
 
-(if (try
-      (resolve 'clojure.lang.ExceptionInfo)
-      (catch ClassNotFoundException e))
-  (require :reload '[slingshot.wrappers.clojure :as wrapper])
-  (require :reload '[slingshot.wrappers.slingshot :as wrapper]))
-
-(def wrapper-wrap @(resolve 'wrapper/wrap))
-(def wrapper-unwrap @(resolve 'wrapper/unwrap))
+(if (and (resolve 'clojure.core/ex-data)
+         (resolve 'clojure.core/ex-info))
+  (do
+    (def ex-data @(resolve 'clojure.core/ex-data))
+    (def ex-info @(resolve 'clojure.core/ex-info)))
+  (do
+    (require 'slingshot.ex-fns)
+    (def ex-data @(resolve 'slingshot.ex-fns/ex-data))
+    (def ex-info @(resolve 'slingshot.ex-fns/ex-info))))
 
 (defn replace-all
   "Returns a deep copy of coll with all instances of the keys in smap
@@ -43,19 +45,22 @@
   "Returns a context wrapper given a context"
   [context]
   (let [{:keys [message cause stack-trace]} context
-        data (dissoc context :message :cause :stack-trace)]
-    (wrapper-wrap data message cause stack-trace)))
+        data (dissoc context :message :cause :stack-trace)
+        ex (ex-info message (with-meta data {:type ::wrapper}) cause)]
+    (.setStackTrace ^Throwable ex stack-trace)
+    ex))
 
 (defn unwrap
   "If t is a context wrapper, returns the context with t assoc'd as
   the value for :wrapper, else returns nil"
   [^Throwable t]
-  (when-let [data (wrapper-unwrap t)]
-    (assoc data
-      :message (.getMessage t)
-      :cause (.getCause t)
-      :stack-trace (.getStackTrace t)
-      :wrapper t)))
+  (when-let [data (ex-data t)]
+    (when (= (type data) ::wrapper)
+      (assoc data
+        :message (.getMessage t)
+        :cause (.getCause t)
+        :stack-trace (.getStackTrace t)
+        :wrapper t))))
 
 (defn unwrap-all
   "Searches Throwable t and its cause chain for a context wrapper. If

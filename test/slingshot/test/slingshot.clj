@@ -184,8 +184,8 @@
 
 (deftest test-uncaught
   (is (thrown-with-msg? Exception #"^uncaught$" (e)))
-  (is (thrown-with-msg? slingshot.ExceptionInfo #"^throw\+: .*" (f)))
-  (is (thrown-with-msg? slingshot.ExceptionInfo #"wasn't caught" (g))))
+  (is (thrown-with-msg? Exception #"^throw\+: .*" (f)))
+  (is (thrown-with-msg? Exception #"wasn't caught" (g))))
 
 (defn h []
   (try+
@@ -249,7 +249,7 @@
        (catch Exception _
          (throw+ :a "msg: %s" %)))
       (is false)
-      (catch slingshot.ExceptionInfo s
+      (catch Exception s
         (is (= "msg: :a" (.getMessage s)))
         (is (= e (.getCause s)))))))
 
