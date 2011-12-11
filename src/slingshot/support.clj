@@ -5,7 +5,7 @@
 (def ex-ns
   (if (and (resolve 'clojure.core/ex-data) (resolve 'clojure.core/ex-info))
     'clojure.core
-    (doto 'slingshot.ex-fns
+    (doto 'slingshot.ex-info
       require)))
 
 (def ex-data @(ns-resolve ex-ns 'ex-data))

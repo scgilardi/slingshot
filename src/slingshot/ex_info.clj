@@ -1,4 +1,4 @@
-(ns slingshot.ex-fns
+(ns slingshot.ex-info
   "provides implementations of ex-data and ex-info for slingshot to
   use with clojure versions earlier than 1.4.0
 
