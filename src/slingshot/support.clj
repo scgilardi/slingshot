@@ -2,15 +2,6 @@
   (:require [clojure.walk])
   (:refer-clojure :exclude [ex-data ex-info]))
 
-(def ex-info-ns
-  (if (and (resolve 'clojure.core/ex-info) (resolve 'clojure.core/ex-data))
-    'clojure.core
-    (doto 'slingshot.ex-info
-      require)))
-
-(def ex-info @(ns-resolve ex-info-ns 'ex-info))
-(def ex-data @(ns-resolve ex-info-ns 'ex-data))
-
 (defn replace-all
   "Returns a deep copy of coll with all instances of the keys in smap
   replaced by their values"
@@ -22,6 +13,17 @@
   for clojure.core/format"
   [fmt & args]
   (throw (IllegalArgumentException. ^String (apply format fmt args))))
+
+;; ex-info support
+
+(def ex-info-ns
+  (if (and (resolve 'clojure.core/ex-info) (resolve 'clojure.core/ex-data))
+    'clojure.core
+    (doto 'slingshot.ex-info
+      require)))
+
+(def ex-info @(ns-resolve ex-info-ns 'ex-info))
+(def ex-data @(ns-resolve ex-info-ns 'ex-data))
 
 ;; context support
 
