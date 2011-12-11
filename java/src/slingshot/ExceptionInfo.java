@@ -2,6 +2,8 @@ package slingshot;
 
 import clojure.lang.IPersistentMap;
 
+// see namespace doc for slingshot.ex-info
+
 public class ExceptionInfo extends RuntimeException {
 
     final IPersistentMap data;
