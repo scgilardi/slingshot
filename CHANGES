@@ -44,4 +44,8 @@
     (accessible via get-throw-context or in &throw-context)
   - use clojure.core's ex-data and ex-info if available, but don't
     depend on them
-* version next
+* version 0.10.1
+  - fix slingshot version in examples to match release
+  - remove reflection warnings from tests and turn on checking in
+    project.clj [resolves issue 18]
+

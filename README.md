@@ -105,7 +105,7 @@ Usage
 
   project.clj
 
-        [slingshot "0.10.0"]
+        [slingshot "0.10.1"]
 
   tensor/parse.clj
 
