@@ -238,8 +238,7 @@
                        (catch string? x
                          [x (:throwable &throw-context)]))]
     (is (= "x-ray!" val))
-    (is (= "x-ray!" (:object (-> wrapper .getCause .getCause
-                                 .getCause .getData))))))
+    (is (= "x-ray!" (get-thrown-object wrapper)))))
 
 (deftest test-catching-wrapper
   (let [e (Exception.)]
@@ -315,5 +314,5 @@
                      (throw (RuntimeException. "wrapper-1" e))))
                  (catch Object _
                    &throw-context))]
-    (is (= "wrapper-0" (-> context :wrapper .getMessage)))
-    (is (= "wrapper-1" (-> context :throwable .getMessage)))))
+    (is (= "wrapper-0" (.getMessage ^Throwable (:wrapper context))))
+    (is (= "wrapper-1" (.getMessage ^Throwable (:throwable context))))))
