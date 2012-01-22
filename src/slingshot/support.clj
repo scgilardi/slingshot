@@ -208,8 +208,9 @@
 
 (defn throw-context
   "Throws a context. Allows overrides of *throw-hook* to intervene."
-  [object message stack-trace environment]
-  (*throw-hook* (make-context object message stack-trace environment)))
+  [object fmt args stack-trace environment]
+  (let [message (apply format fmt args)]
+    (*throw-hook* (make-context object message stack-trace environment))))
 
 (defmacro rethrow
   "Within a try+ catch clause, throws the outermost wrapper of the

@@ -53,8 +53,8 @@
   For non-Throwable objects, throw+ packages the object, message,
   cause, stack trace, and environment in a Throwable wrapper:
 
-    - message: specified by an optional format string and args for
-      clojure.core/format:
+    - message: optional, specified either by a string or a format
+      string and args for clojure.core/format:
 
       - % symbols (at any nesting depth) within args represent the
         thrown object
@@ -78,11 +78,14 @@
   See also try+, get-throw-context"
   ([object]
      `(throw+ ~object "throw+: %s" (pr-str ~'%)))
-  ([object fmt & args]
+  ([object message]
+     `(throw+ ~object "%s" ~message))
+  ([object fmt arg & args]
      (let [obj (gensym)]
        `(let [~obj ~object]
           (s/throw-context ~obj
-                           (format ~fmt ~@(s/replace-all {'% obj} args))
+                           ~fmt
+                           (list ~@(s/replace-all {'% obj} (cons arg args)))
                            (s/stack-trace)
                            (dissoc (s/environment) '~obj)))))
   ([]
