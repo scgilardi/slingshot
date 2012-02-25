@@ -48,7 +48,7 @@
   - fix slingshot version in examples to match release
   - remove reflection warnings from tests and turn on checking in
     project.clj [resolves issue 18]
-* version next
+* version 0.10.2
   - accept a simple string as a message for throw+ (issue 19)
   - for catch, only interpret a form as a selector if it contains a %
     symbol, allows function literals for predicates (issue 20
