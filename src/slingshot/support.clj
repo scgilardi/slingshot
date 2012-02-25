@@ -8,6 +8,17 @@
   [smap coll]
   (clojure.walk/postwalk-replace smap coll))
 
+(defn appears-within?
+  "Returns true if x appears within coll at any nesting depth"
+  [x coll]
+  (let [result (atom false)]
+    (clojure.walk/postwalk
+     (fn [t]
+       (when (= x t)
+         (reset! result true)))
+     coll)
+    @result))
+
 (defn throw-arg
   "Throws an IllegalArgumentException with a message given arguments
   for clojure.core/format"
@@ -155,7 +166,8 @@
                        (throw-arg "key-value selector: %s does not match: %s"
                                   (pr-str selector) "[key val]"))))
               (selector-form []
-                (and (seq? selector) selector))
+                (and (seq? selector) (appears-within? '% selector)
+                     selector))
               (predicate []
                 `(~selector ~'%))]
            (->> (or (class-name) (key-value) (selector-form) (predicate))

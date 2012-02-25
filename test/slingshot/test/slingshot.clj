@@ -316,3 +316,11 @@
                    &throw-context))]
     (is (= "wrapper-0" (.getMessage ^Throwable (:wrapper context))))
     (is (= "wrapper-1" (.getMessage ^Throwable (:throwable context))))))
+
+(deftest test-inline-predicate
+  (is (= :not-caught (try+
+                      (throw+ {:foo true})
+                      (catch #(-> % :foo (= false)) data
+                        :caught)
+                      (catch Object _
+                        :not-caught)))))
