@@ -35,6 +35,7 @@
 
 (def ex-info @(ns-resolve ex-info-ns 'ex-info))
 (def ex-data @(ns-resolve ex-info-ns 'ex-data))
+(def ex-class (ns-resolve ex-info-ns 'ExceptionInfo))
 
 ;; context support
 
