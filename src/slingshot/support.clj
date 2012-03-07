@@ -171,8 +171,8 @@
                      selector))
               (predicate []
                 `(~selector ~'%))]
-           (->> (or (class-name) (key-value) (selector-form) (predicate))
-                (replace-all {'% '(:object &throw-context)}))))
+           `(let [~'% (:object ~'&throw-context)]
+              ~(or (class-name) (key-value) (selector-form) (predicate)))))
        (cond-expression [binding-form expressions]
          `(let [~binding-form (:object ~'&throw-context)]
             ~@expressions))
