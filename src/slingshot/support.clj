@@ -2,12 +2,6 @@
   (:require [clojure.walk])
   (:refer-clojure :exclude [ex-data ex-info]))
 
-(defn replace-all
-  "Returns a deep copy of coll with all instances of the keys in smap
-  replaced by their values"
-  [smap coll]
-  (clojure.walk/postwalk-replace smap coll))
-
 (defn appears-within?
   "Returns true if x appears within coll at any nesting depth"
   [x coll]
