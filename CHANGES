@@ -51,6 +51,10 @@
 * version 0.10.2
   - accept a simple string as a message for throw+ (issue 19)
   - for catch, only interpret a form as a selector if it contains a %
-    symbol, allows function literals for predicates (issue 20
+    symbol, allows function literals for predicates (issue 20)
 * version next
-  - 
+  - make exception class available from support and add clojure.test
+    support for testing that the proper exception is thrown (issue 21)
+  - remove replace-all and % substitution in source in favor of using
+    let to bind % (issue 22)
+
