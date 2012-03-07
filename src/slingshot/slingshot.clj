@@ -81,13 +81,11 @@
   ([object message]
      `(throw+ ~object "%s" ~message))
   ([object fmt arg & args]
-     (let [obj (gensym)]
-       `(let [~obj ~object]
-          (s/throw-context ~obj
-                           ~fmt
-                           (list ~@(s/replace-all {'% obj} (cons arg args)))
-                           (s/stack-trace)
-                           (dissoc (s/environment) '~obj)))))
+     `(let [environment# (s/environment)
+            ~'% ~object
+            message# (apply format (list ~fmt ~arg ~@args))
+            stack-trace# (s/stack-trace)]
+        (s/throw-context ~'% message# stack-trace# environment#)))
   ([]
      `(s/rethrow)))
 
