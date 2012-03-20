@@ -57,4 +57,5 @@
     support for testing that the proper exception is thrown (issue 21)
   - remove replace-all and % substitution in source in favor of using
     let to bind % (issue 22)
-
+  - key-value pair -> key-values, generalize key-value selector to
+    allow any even number of items in the vector (issue 23)

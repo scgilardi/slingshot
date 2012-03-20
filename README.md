@@ -34,8 +34,8 @@ Enhanced throw and catch for Clojure
     - a **class name**: (e.g., `RuntimeException`, `my.clojure.record`),
       matches any instance of that class, or
 
-    - a **key-value pair**: (two element vector), matches objects where
-      `(get object key)` returns `val`, or
+    - a **key-values**: (e.g., `[key val & kvs]`), matches objects
+      where `(and (= (get object key) val ...))`, or
 
     - a **predicate**: (function of one argument like `map?`, `set?`),
       matches any Object for which the predicate returns a truthy
@@ -45,12 +45,12 @@ Enhanced throw and catch for Clojure
       `%` to be replaced by the thrown object, matches any object for
       which the form evaluates to truthy.
 
-    - the class name, key-value pair, and predicate selectors are
+    - the class name, key-values, and predicate selectors are
       shorthand for these selector forms:
 
           `<class name>  => (instance? <class name> %)`
 
-          `[<key> <val>] => (= (get % <key>) <val>)`
+          `[<key> <val> & <kvs>] => (and (= (get % <key>) <val>) ...)`
 
           `<predicate>   => (<predicate> %)`
 

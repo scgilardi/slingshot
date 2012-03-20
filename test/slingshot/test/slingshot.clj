@@ -49,6 +49,10 @@
     (catch [:a-key 4] e#
       [:key-yields-value e#])
 
+    ;; by multiple-key-value
+    (catch [:key1 4 :key2 5] e#
+      [:keys-yield-values e#])
+
     ;; by key present
     (catch (contains? ~'% :a-key) e#
       [:key-is-present e#])
@@ -70,7 +74,6 @@
       [:pred-map e# (meta e#)])))
 
 (deftest test-try+
-
   (testing "catch by class derived from Throwable"
     (testing "treat throwables exactly as throw does, interop with try/throw"
       (is (= [:class-exception exception-1]
@@ -90,9 +93,13 @@
     (is (= [:class-exception-record exception-record-1]
            (mega-try (throw+ exception-record-1)))))
 
-  (testing "catch by key, with optional value"
-    (is (= [:key-is-present #{:a-key}] (mega-try (throw+ #{:a-key}))))
-    (is (= [:key-yields-value {:a-key 4}] (mega-try (throw+ {:a-key 4})))))
+  (testing "catch by key is present"
+    (is (= [:key-is-present #{:a-key}] (mega-try (throw+ #{:a-key})))))
+
+  (testing "catch by keys and values"
+    (is (= [:key-yields-value {:a-key 4}] (mega-try (throw+ {:a-key 4}))))
+    (is (= [:keys-yield-values {:key1 4 :key2 5}]
+           (mega-try (throw+ {:key1 4 :key2 5})))))
 
   (testing "catch by clojure type with optional hierarchy"
     (is (= [:type-sphere ::sphere a-sphere] (mega-try (throw+ a-sphere))))

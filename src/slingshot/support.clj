@@ -153,20 +153,20 @@
              [(class-name []
                 (and (symbol? selector) (class? (resolve selector))
                      `(instance? ~selector ~'%)))
-              (key-value []
+              (key-values []
                 (and (vector? selector)
-                     (if (= (count selector) 2)
-                       (let [[key val] selector]
-                         `(= (get ~'% ~key) ~val))
-                       (throw-arg "key-value selector: %s does not match: %s"
-                                  (pr-str selector) "[key val]"))))
+                     (if (even? (count selector))
+                       `(and ~@(for [[key val] (partition 2 selector)]
+                                 `(= (get ~'% ~key) ~val)))
+                       (throw-arg "key-values selector: %s does not match: %s"
+                                  (pr-str selector) "[key val & kvs]"))))
               (selector-form []
                 (and (seq? selector) (appears-within? '% selector)
                      selector))
               (predicate []
                 `(~selector ~'%))]
            `(let [~'% (:object ~'&throw-context)]
-              ~(or (class-name) (key-value) (selector-form) (predicate)))))
+              ~(or (class-name) (key-values) (selector-form) (predicate)))))
        (cond-expression [binding-form expressions]
          `(let [~binding-form (:object ~'&throw-context)]
             ~@expressions))

@@ -7,7 +7,7 @@
     - catch non-Throwable objects thrown by throw+ as well as
       Throwable objects thrown by throw or throw+;
 
-    - specify objects to catch by class name, key-value pair,
+    - specify objects to catch by class name, key-values,
       predicate, or arbitrary selector form;
 
     - destructure the caught object;
@@ -20,12 +20,12 @@
   be replaced by the thrown object. If it evaluates to truthy, the
   object is caught.
 
-    The class name, key-value pair, and predicate selectors are
+    The class name, key-values, and predicate selectors are
     shorthand for these selector forms:
 
-      <class name>  => (instance? <class name> %)
-      [<key> <val>] => (= (get % <key>) <val>)
-      <predicate>   => (<predicate> %)
+      <class name>          => (instance? <class name> %)
+      [<key> <val> & <kvs>] => (and (= (get % <key>) <val>) ...)
+      <predicate>           => (<predicate> %)
 
   The binding form in a try+ catch clause is not required to be a
   simple symbol. It is subject to destructuring which allows easy
