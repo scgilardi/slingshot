@@ -34,8 +34,8 @@ Enhanced throw and catch for Clojure
     - a **class name**: (e.g., `RuntimeException`, `my.clojure.record`),
       matches any instance of that class, or
 
-    - a **key-values**: (e.g., `[key val & kvs]`), matches objects
-      where `(and (= (get object key) val ...))`, or
+    - a **key-values** vector: (e.g., `[key val & kvs]`), matches
+      objects where `(and (= (get object key) val) ...)`, or
 
     - a **predicate**: (function of one argument like `map?`, `set?`),
       matches any Object for which the predicate returns a truthy
