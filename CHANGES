@@ -59,3 +59,5 @@
     let to bind % (issue 22)
   - key-value pair -> key-values, generalize key-value selector to
     allow any even number of items in the vector (issue 23)
+* version next
+  -
