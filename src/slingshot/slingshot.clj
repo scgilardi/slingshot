@@ -80,10 +80,10 @@
      `(throw+ ~object "throw+: %s" (pr-str ~'%)))
   ([object message]
      `(throw+ ~object "%s" ~message))
-  ([object fmt arg & args]
+  ([object fmt & args]
      `(let [environment# (s/environment)
             ~'% ~object
-            message# (apply format (list ~fmt ~arg ~@args))
+            message# (format ~fmt ~@args)
             stack-trace# (s/stack-trace)]
         (s/throw-context ~'% message# stack-trace# environment#)))
   ([]
