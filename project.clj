@@ -1,6 +1,6 @@
 (defproject slingshot "0.10.4-SNAPSHOT"
   :description "Enhanced throw, try, leveraging Clojure's capabilities"
-  :dependencies [[org.clojure/clojure "1.2.1"]]
+  :dev-dependencies [[org.clojure/clojure "1.4.0"]]
   :java-source-path "java/src"
   :warn-on-reflection true
   :url "https://github.com/scgilardi/slingshot")
