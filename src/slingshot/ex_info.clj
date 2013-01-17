@@ -10,7 +10,7 @@
   This allows slingshot to be compatible with previous versions of
   clojure while also fully supporting clojure.1.4.0 and whatever tools
   may be created based on clojure.lang.ExceptionInfo."
-  (import slingshot.ExceptionInfo))
+  (:import slingshot.ExceptionInfo))
 
 (defn ex-info
   "Create an instance of ExceptionInfo, a RuntimeException subclass
