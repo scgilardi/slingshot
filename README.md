@@ -102,12 +102,15 @@ Enhanced throw and catch for Clojure
 Usage
 -----
 
-  project.clj
+project.clj
 
-        [slingshot "0.10.3"]
+```clojure
+[slingshot "0.10.3"]
+```
 
-  tensor/parse.clj
+tensor/parse.clj
 
+```clojure
         (ns tensor.parse
           (:use [slingshot.slingshot :only [throw+]]))
 
@@ -115,9 +118,11 @@ Usage
           (if (bad-tree? tree)
             (throw+ {:type ::bad-tree :tree tree :hint hint})
             (parse-good-tree tree hint)))
+```
 
-  math/expression.clj
+math/expression.clj
 
+```clojure
         (ns math.expression
           (:require [tensor.parse]
                     [clojure.tools.logging :as log])
@@ -134,6 +139,7 @@ Usage
             (catch Object _
               (log/error (:throwable &throw-context) "unexpected error")
               (throw+))))
+```
 
 Credits
 -------
