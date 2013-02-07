@@ -111,34 +111,34 @@ project.clj
 tensor/parse.clj
 
 ```clojure
-        (ns tensor.parse
-          (:use [slingshot.slingshot :only [throw+]]))
+(ns tensor.parse
+  (:use [slingshot.slingshot :only [throw+]]))
 
-        (defn parse-tree [tree hint]
-          (if (bad-tree? tree)
-            (throw+ {:type ::bad-tree :tree tree :hint hint})
-            (parse-good-tree tree hint)))
+(defn parse-tree [tree hint]
+  (if (bad-tree? tree)
+    (throw+ {:type ::bad-tree :tree tree :hint hint})
+    (parse-good-tree tree hint)))
 ```
 
 math/expression.clj
 
 ```clojure
-        (ns math.expression
-          (:require [tensor.parse]
-                    [clojure.tools.logging :as log])
-          (:use [slingshot.slingshot :only [throw+ try+]]))
+(ns math.expression
+  (:require [tensor.parse]
+            [clojure.tools.logging :as log])
+  (:use [slingshot.slingshot :only [throw+ try+]]))
 
-        (defn read-file [file]
-          (try+
-            [...]
-            (tensor.parse/parse-tree tree)
-            [...]
-            (catch [:type :tensor.parse/bad-tree] {:keys [tree hint]}
-              (log/error "failed to parse tensor" tree "with hint" hint)
-              (throw+))
-            (catch Object _
-              (log/error (:throwable &throw-context) "unexpected error")
-              (throw+))))
+(defn read-file [file]
+  (try+
+    [...]
+    (tensor.parse/parse-tree tree)
+    [...]
+    (catch [:type :tensor.parse/bad-tree] {:keys [tree hint]}
+      (log/error "failed to parse tensor" tree "with hint" hint)
+      (throw+))
+    (catch Object _
+      (log/error (:throwable &throw-context) "unexpected error")
+      (throw+))))
 ```
 
 Credits
