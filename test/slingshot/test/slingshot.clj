@@ -380,14 +380,19 @@
   (doseq [throw? [true false]
           catch? [true false]
           broken-else? [true false]
-          finally? [true false]
-          :let [expect-else? (not throw?)]]
-    (let [try-else-form (gen-try-else-form throw? catch? finally? broken-else?)
-          actual (eval try-else-form)
-          expected (vec (remove nil?
-                                [:body
-                                 (when (and throw? catch?) :catch)
-                                 (when (not throw?) :else)
-                                 (when finally? :finally)
-                                 (when (and throw? (not catch?)) :bang!)]))]
-      (is (= actual expected)))))
+          finally? [true false]]
+    (testing (str "test-else: throw? " throw? " catch? " catch?
+                  " broken-else? " broken-else? " finally? " finally?)
+      (let [try-else-form (gen-try-else-form throw? catch? finally? broken-else?)
+            actual (eval try-else-form)
+            expected (vec (remove nil?
+                                  [:body
+                                   (when (and throw? catch?) :catch)
+                                   (when (not throw?) :else)
+                                   (when finally? :finally)
+                                   ; expect an escaped exception when either:
+                                   ;  a) the else clause runs, and throws
+                                   ;  b) the body throws, and is not caught
+                                   (when (or (and (not throw?) broken-else?)
+                                             (and throw? (not catch?))) :bang!)]))]
+        (is (= actual expected))))))
