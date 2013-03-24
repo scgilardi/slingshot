@@ -36,7 +36,7 @@
 
   See also: throw+, get-throw-context"
   [& body]
-  (let [[expressions catch-clauses finally-clauses] (s/parse-try+ body)]
+  (let [[expressions catch-clauses else-clauses finally-clauses] (s/parse-try+ body)]
     `(try
        ~@expressions
        ~@(s/transform-catch catch-clauses `throw+)

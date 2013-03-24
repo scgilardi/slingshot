@@ -108,7 +108,7 @@
   [body]
   (letfn
       [(item-type [item]
-         ({'catch :catch-clause 'finally :finally-clause}
+         ({'catch :catch-clause 'else :else-clause 'finally :finally-clause}
           (and (seq? item) (first item))
           :expression))
        (match-or-defer [s type]
@@ -116,11 +116,12 @@
     (let [groups (partition-by item-type body)
           [e & groups] (match-or-defer groups :expression)
           [c & groups] (match-or-defer groups :catch-clause)
+          [l & groups] (match-or-defer groups :else-clause)
           [f & groups] (match-or-defer groups :finally-clause)]
-      (if (and (nil? groups) (<= (count f) 1))
-        [e c f]
+      (if (and (nil? groups) (<= (count f) 1) (<= (count l) 1))
+        [e c l f]
         (throw-arg "try+ form must match: %s"
-                   "(try+ expression* catch-clause* finally-clause?)")))))
+                   "(try+ expression* catch-clause* else-clause? finally-clause?)")))))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
