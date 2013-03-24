@@ -331,3 +331,63 @@
                         :caught)
                       (catch Object _
                         :not-caught)))))
+
+(defn gen-body
+  [rec-sym throw?]
+  (let [body `(swap! ~rec-sym #(conj % :body))]
+    (if throw?
+      (list 'do body `(throw+ (Exception.)))
+      body)))
+
+(defn gen-catch-clause
+  [rec-sym]
+  `(catch Exception e# (swap! ~rec-sym #(conj % :catch))))
+
+(defn gen-else-clause
+  [rec-sym broken?]
+  (let [else-body `(swap! ~rec-sym #(conj % :else))]
+    (if broken?
+      (list 'else (list 'do else-body `(throw+ (Exception.))))
+      (list 'else else-body))))
+
+(defn gen-finally-clause
+  [rec-sym]
+  `(finally (swap! ~rec-sym #(conj % :finally))))
+
+(defn gen-try-else-form
+  "Generate variations of (try ... (else ...) ...) forms, which (when eval'd) 
+  will return a vector describing the sequence in which things were evaluated,
+  e.g. [:body :catch :finally]"
+  [throw? catch? finally? broken-else?]
+  (let [rec-sym (gensym "rec")
+        body (gen-body rec-sym throw?)
+        catch-clause (when catch? (gen-catch-clause rec-sym))
+        else-clause (gen-else-clause rec-sym broken-else?)
+        finally-clause (when finally? (gen-finally-clause rec-sym))]
+    `(let [~rec-sym (atom [])]
+       (try+
+         ~(remove nil? `(try+
+                          ~body
+                          ~catch-clause
+                          ~else-clause
+                          ~finally-clause))
+         (catch Object e#
+           ; if the inner try+ threw, report it as a :bang! in the return vec
+           (swap! ~rec-sym #(conj % :bang!))))
+       @~rec-sym)))
+
+(deftest test-else
+  (doseq [throw? [true false]
+          catch? [true false]
+          broken-else? [true false]
+          finally? [true false]
+          :let [expect-else? (not throw?)]]
+    (let [try-else-form (gen-try-else-form throw? catch? finally? broken-else?)
+          actual (eval try-else-form)
+          expected (vec (remove nil?
+                                [:body
+                                 (when (and throw? catch?) :catch)
+                                 (when (not throw?) :else)
+                                 (when finally? :finally)
+                                 (when (and throw? (not catch?)) :bang!)]))]
+      (is (= actual expected)))))
