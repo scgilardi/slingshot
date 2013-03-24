@@ -147,7 +147,7 @@
   one arguments. It is called with one argument for :catch-hook-throw
   requests, or zero arguments for :catch-hook-rethrow requests or when
   no try+ catch clause matches."
-  [catch-clauses throw-sym]
+  [catch-clauses throw-sym threw?-sym]
   (letfn
       [(cond-test [selector]
          (letfn
@@ -178,6 +178,7 @@
      ;; in the &env captured by throw+ forms within catch clauses
      ;; (see the special handling of &throw-context in make-context)
      `(catch Throwable ~'&throw-context
+        (reset! ~threw?-sym true)
         (let [~'&throw-context (-> ~'&throw-context get-context *catch-hook*)]
           (cond
            (contains? ~'&throw-context :catch-hook-return)
@@ -189,6 +190,16 @@
            ~@(mapcat transform catch-clauses)
            :else
            (~throw-sym)))))))
+
+(defn transform-finally
+  "Creates a finally clause from the original finally and else clauses."
+  [finally-clause else-clause threw?-sym]
+  (list `(finally
+           (try
+             ~(when else-clause
+                `(when-not @~threw?-sym
+                   ~(cons 'do (rest else-clause))))
+             ~finally-clause))))
 
 ;; throw+ support
 
