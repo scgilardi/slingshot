@@ -2,6 +2,7 @@
   (:use [clojure.test]
         [slingshot.slingshot :only [try+ throw+ get-throw-context
                                     get-thrown-object]])
+  (:require [clojure.string :as str])
   (:import java.util.concurrent.ExecutionException))
 
 (defrecord exception-record [error-code duration-ms message])
@@ -54,7 +55,7 @@
       [:keys-yield-values e#])
 
     ;; by key present
-    (catch (contains? ~'% :a-key) e#
+    (catch (and (set? ~'%) (contains? ~'% :a-key)) e#
       [:key-is-present e#])
 
     ;; by clojure type, with optional hierarchy
@@ -84,7 +85,7 @@
              (try (throw exception-1)
                   (catch Exception e [:class-exception e])))))
     (testing "IllegalArgumentException thrown by clojure/core"
-      (is (= :class-iae (first (mega-try (first 1)))))))
+      (is (= :class-iae (first (mega-try (str/replace "foo" 1 1)))))))
 
   (testing "catch by java class generically"
     (is (= [:class-string "fail"] (mega-try (throw+ "fail")))))
