@@ -5,6 +5,8 @@
   (:require [clojure.string :as str])
   (:import java.util.concurrent.ExecutionException))
 
+(set! *warn-on-reflection* true)
+
 (defrecord exception-record [error-code duration-ms message])
 (defrecord x-failure [message])
 
@@ -332,3 +334,9 @@
                         :caught)
                       (catch Object _
                         :not-caught)))))
+
+(deftest test-reflection
+  (try+
+    nil
+    (catch Exception e
+      (.getMessage e))))
