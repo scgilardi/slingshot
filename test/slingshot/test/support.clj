@@ -11,29 +11,29 @@
 
     (is (= ['(1) nil nil nil] (f '(1))))
     (is (= [nil '((catch 1)) nil nil] (f '((catch 1)))))
-    (is (= [nil nil '((else 1)) nil] (f '((else 1)))))
-    (is (= [nil nil nil '((finally 1))] (f '((finally 1)))))
+    (is (= [nil nil '(else 1) nil] (f '((else 1)))))
+    (is (= [nil nil nil '(finally 1)] (f '((finally 1)))))
 
     (is (= ['(1) '((catch 1)) nil nil] (f '(1 (catch 1)))))
-    (is (= ['(1) nil '((else 1)) nil] (f '(1 (else 1)))))
-    (is (= ['(1) nil nil '((finally 1))] (f '(1 (finally 1)))))
+    (is (= ['(1) nil '(else 1) nil] (f '(1 (else 1)))))
+    (is (= ['(1) nil nil '(finally 1)] (f '(1 (finally 1)))))
 
-    (is (= ['(1) '((catch 1)) nil '((finally 1))]
+    (is (= ['(1) '((catch 1)) nil '(finally 1)]
            (f '(1 (catch 1) (finally 1)))))
-    (is (= ['(1) '((catch 1) (catch 2)) nil '((finally 1))]
+    (is (= ['(1) '((catch 1) (catch 2)) nil '(finally 1)]
            (f '(1 (catch 1) (catch 2) (finally 1)))))
-    (is (= ['(1) '((catch 1)) '((else 1)) nil]
+    (is (= ['(1) '((catch 1)) '(else 1) nil]
            (f '(1 (catch 1) (else 1)))))
-    (is (= ['(1) '((catch 1) (catch 2)) '((else 1)) nil]
+    (is (= ['(1) '((catch 1) (catch 2)) '(else 1) nil]
            (f '(1 (catch 1) (catch 2) (else 1)))))
 
-    (is (= [nil nil '((else 1)) '((finally 1))]
+    (is (= [nil nil '(else 1) '(finally 1)]
            (f '((else 1) (finally 1)))))
-    (is (= ['(1) nil '((else 1)) '((finally 1))]
+    (is (= ['(1) nil '(else 1) '(finally 1)]
            (f '(1 (else 1) (finally 1)))))
-    (is (= [nil '((catch 1)) '((else 1)) nil]
+    (is (= [nil '((catch 1)) '(else 1) nil]
            (f '((catch 1) (else 1)))))
-    (is (= ['(1) '((catch 1)) '((else 1)) nil]
+    (is (= ['(1) '((catch 1)) '(else 1) nil]
            (f '(1 (catch 1) (else 1)))))
 
     (is (thrown? IllegalArgumentException (f '((catch 1) (1)))))

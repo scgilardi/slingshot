@@ -37,12 +37,12 @@
   See also: throw+, get-throw-context"
   [& body]
   (let [threw?-sym (gensym "threw?")
-        [expressions catch-clauses else-clauses finally-clauses] (s/parse-try+ body)]
+        [expressions catches else finally] (s/parse-try+ body)]
     `(let [~threw?-sym (atom false)]
        (try
          ~@expressions
-         ~@(s/transform-catch catch-clauses `throw+ threw?-sym)
-         ~@(s/transform-finally (first finally-clauses) (first else-clauses) threw?-sym)))))
+         ~@(s/gen-catch catches `throw+ threw?-sym)
+         ~@(s/gen-finally else finally threw?-sym)))))
 
 (defmacro throw+
   "Like the throw special form, but can throw any object by wrapping
