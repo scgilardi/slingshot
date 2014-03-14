@@ -2,7 +2,8 @@
   (:require [slingshot.support :as s]))
 
 (defmacro try+
-  "Like the try special form, but with enhanced catch clauses:
+  "Like the try special form, but with enhanced catch clauses and an
+  optional else clause:
 
     - catch non-Throwable objects thrown by throw+ as well as
       Throwable objects thrown by throw or throw+;
@@ -15,6 +16,10 @@
     - in a catch clause, access the names and values of the locals
       visible at the throw site, including the name of the enclosing
       function and its arguments (unless shadowed by nested locals).
+
+    - the contents of an optional else clause after all catch clauses
+      and before any finally clause will be executed if nothing is
+      thrown from within the try+ body.
 
   A selector form is a form containing one or more instances of % to
   be replaced by the thrown object. If it evaluates to truthy, the

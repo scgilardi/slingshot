@@ -141,13 +141,14 @@
   Defaults to identity."}
   *catch-hook* identity)
 
-  "Transforms a seq of catch clauses for try+ into a seq of one catch
-  clause for try that implements the specified behavior. throw-sym
-  names a macro or function (usually throw+) that can accept zero or
-  one arguments. It is called with one argument for :catch-hook-throw
-  requests, or zero arguments for :catch-hook-rethrow requests or when
-  no try+ catch clause matches."
 (defn gen-catch
+  "Transforms a seq of catch clauses for try+ into a list containing
+  one catch clause for try that implements the specified behavior.
+  throw-sym names a macro or function (usually throw+) that can accept
+  zero or one arguments. It is called with one argument
+  for :catch-hook-throw requests, or zero arguments
+  for :catch-hook-rethrow requests or when no try+ catch clause
+  matches."
   [catch-clauses throw-sym threw?-sym]
   (letfn
       [(cond-test [selector]
@@ -192,8 +193,10 @@
            :else
            (~throw-sym)))))))
 
-  "Creates a finally clause from the original finally and else clauses."
 (defn gen-finally
+  "Returns either nil or a list containing a finally clause for a try
+  form based on the parsed else and/or finally clause from a try+
+  form"
   [else-clause finally-clause threw?-sym]
   (cond else-clause
         (list
