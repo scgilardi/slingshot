@@ -108,7 +108,7 @@
   [body]
   (letfn
       [(item-type [item]
-         ({'catch :catch-clause 'finally :finally-clause}
+         ({'catch :catch-clause 'else :else-clause 'finally :finally-clause}
           (and (seq? item) (first item))
           :expression))
        (match-or-defer [s type]
@@ -116,11 +116,12 @@
     (let [groups (partition-by item-type body)
           [e & groups] (match-or-defer groups :expression)
           [c & groups] (match-or-defer groups :catch-clause)
+          [l & groups] (match-or-defer groups :else-clause)
           [f & groups] (match-or-defer groups :finally-clause)]
-      (if (and (nil? groups) (<= (count f) 1))
-        [e c f]
+      (if (and (nil? groups) (<= (count f) 1) (<= (count l) 1))
+        [e c l f]
         (throw-arg "try+ form must match: %s"
-                   "(try+ expression* catch-clause* finally-clause?)")))))
+                   "(try+ expression* catch-clause* else-clause? finally-clause?)")))))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
@@ -146,7 +147,7 @@
   one arguments. It is called with one argument for :catch-hook-throw
   requests, or zero arguments for :catch-hook-rethrow requests or when
   no try+ catch clause matches."
-  [catch-clauses throw-sym]
+  [catch-clauses throw-sym threw?-sym]
   (letfn
       [(cond-test [selector]
          (letfn
@@ -177,6 +178,7 @@
      ;; in the &env captured by throw+ forms within catch clauses
      ;; (see the special handling of &throw-context in make-context)
      `(catch Throwable ~'&throw-context
+        (reset! ~threw?-sym true)
         (let [~'&throw-context (-> ~'&throw-context get-context *catch-hook*)]
           (cond
            (contains? ~'&throw-context :catch-hook-return)
@@ -188,6 +190,16 @@
            ~@(mapcat transform catch-clauses)
            :else
            (~throw-sym)))))))
+
+(defn transform-finally
+  "Creates a finally clause from the original finally and else clauses."
+  [finally-clause else-clause threw?-sym]
+  (list `(finally
+           (try
+             ~(when else-clause
+                `(when-not @~threw?-sym
+                   ~(cons 'do (rest else-clause))))
+             ~finally-clause))))
 
 ;; throw+ support
 
