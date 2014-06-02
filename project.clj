@@ -1,5 +1,6 @@
 (defproject slingshot "0.10.4-SNAPSHOT"
   :description "Enhanced throw, try, leveraging Clojure's capabilities"
+  :license {:name "Eclipse Public License 1.0"}
   :dev-dependencies [[org.clojure/clojure "1.6.0-beta2"]]
   :java-source-path "java/src"
   :java-source-paths ["java/src"]
