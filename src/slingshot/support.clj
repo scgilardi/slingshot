@@ -118,10 +118,11 @@
           [c & groups] (match-or-defer groups :catch-clause)
           [l & groups] (match-or-defer groups :else-clause)
           [f & groups] (match-or-defer groups :finally-clause)]
-      (if (and (nil? groups) (<= (count f) 1) (<= (count l) 1))
-        [e c l f]
-        (throw-arg "try+ form must match: %s"
-                   "(try+ expression* catch-clause* else-clause? finally-clause?)")))))
+      (if (every? nil? [groups (next l) (next f)])
+        [e c (first l) (first f)]
+        (throw-arg "try+ form must match: (%s %s)"
+                   "try+ expression* catch-clause*"
+                   "else-clause? finally-clause?")))))
 
 (def ^{:dynamic true
        :doc "Hook to allow overriding the behavior of catch. Must be
@@ -140,13 +141,14 @@
   Defaults to identity."}
   *catch-hook* identity)
 
-(defn transform-catch
-  "Transforms a seq of catch clauses for try+ into a seq of one catch
-  clause for try that implements the specified behavior. throw-sym
-  names a macro or function (usually throw+) that can accept zero or
-  one arguments. It is called with one argument for :catch-hook-throw
-  requests, or zero arguments for :catch-hook-rethrow requests or when
-  no try+ catch clause matches."
+(defn gen-catch
+  "Transforms a seq of catch clauses for try+ into a list containing
+  one catch clause for try that implements the specified behavior.
+  throw-sym names a macro or function (usually throw+) that can accept
+  zero or one arguments. It is called with one argument
+  for :catch-hook-throw requests, or zero arguments
+  for :catch-hook-rethrow requests or when no try+ catch clause
+  matches."
   [catch-clauses throw-sym threw?-sym]
   (letfn
       [(cond-test [selector]
@@ -191,15 +193,21 @@
            :else
            (~throw-sym)))))))
 
-(defn transform-finally
-  "Creates a finally clause from the original finally and else clauses."
-  [finally-clause else-clause threw?-sym]
-  (list `(finally
-           (try
-             ~(when else-clause
-                `(when-not @~threw?-sym
-                   ~(cons 'do (rest else-clause))))
-             ~finally-clause))))
+(defn gen-finally
+  "Returns either nil or a list containing a finally clause for a try
+  form based on the parsed else and/or finally clause from a try+
+  form"
+  [else-clause finally-clause threw?-sym]
+  (cond else-clause
+        (list
+         `(finally
+            (try
+              (when-not @~threw?-sym
+                ~@(rest else-clause))
+              ~(when finally-clause
+                 finally-clause))))
+        finally-clause
+        (list finally-clause)))
 
 ;; throw+ support
 
