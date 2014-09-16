@@ -5,8 +5,8 @@
   :dev-dependencies [[org.clojure/clojure "1.6.0-beta2"]]
   :java-source-path "java/src"
   :java-source-paths ["java/src"]
-  :warn-on-reflection true
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.6.0-beta2"]]}
+  :global-vars {*warn-on-reflection* true}
              :1.4 {:dependencies [[org.clojure/clojure "1.4.0"]]}
              :1.5 {:dependencies [[org.clojure/clojure "1.5.1"]]}
              :1.6 {:dependencies [[org.clojure/clojure "1.6.0-beta2"]]}}
