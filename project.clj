@@ -6,8 +6,7 @@
   :license {:name "Eclipse Public License 1.0"
             :url "https://www.eclipse.org/legal/epl-v10.html"
             :distribution :repo}
-  :deploy-repositories [["clojars" {:creds :gpg}]]
-  :signing {:gpg-key "51D2FEA1"}
+  :deploy-repositories [["releases" :clojars]]
   :global-vars {*warn-on-reflection* true}
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.7.0-alpha2"]]}
              :1.4 {:dependencies [[org.clojure/clojure "1.4.0"]]}
