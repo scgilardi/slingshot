@@ -151,12 +151,14 @@
   matches."
   [catch-clauses throw-sym threw?-sym]
   (letfn
-      [(cond-test [selector]
+      [(class-selector? [selector]
+         (if (symbol? selector)
+           (let [resolved (resolve selector)]
+             (if (class? resolved)
+               resolved))))
+       (cond-test [selector]
          (letfn
-             [(class-name []
-                (and (symbol? selector) (class? (resolve selector))
-                     `(instance? ~selector ~'%)))
-              (key-values []
+             [(key-values []
                 (and (vector? selector)
                      (if (even? (count selector))
                        `(and ~@(for [[key val] (partition 2 selector)]
@@ -169,12 +171,15 @@
               (predicate []
                 `(~selector ~'%))]
            `(let [~'% (:object ~'&throw-context)]
-              ~(or (class-name) (key-values) (selector-form) (predicate)))))
+              ~(or (key-values) (selector-form) (predicate)))))
        (cond-expression [binding-form expressions]
          `(let [~binding-form (:object ~'&throw-context)]
             ~@expressions))
        (transform [[_ selector binding-form & expressions]]
-         [(cond-test selector) (cond-expression binding-form expressions)])]
+         (if-let [class-selector (class-selector? selector)]
+           [`(instance? ~class-selector (:object ~'&throw-context))
+            (cond-expression (with-meta binding-form {:tag selector}) expressions)]
+           [(cond-test selector) (cond-expression binding-form expressions)]))]
     (list
      ;; the code below uses only one local name to minimize clutter
      ;; in the &env captured by throw+ forms within catch clauses
