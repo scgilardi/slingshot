@@ -1,4 +1,4 @@
-(defproject slingshot "0.10.4-SNAPSHOT"
+(defproject slingshot "0.11.0-SNAPSHOT"
   :description "Enhanced throw, try, leveraging Clojure's capabilities"
   :url "https://github.com/scgilardi/slingshot"
   :scm {:name "git"
@@ -6,8 +6,8 @@
   :license {:name "Eclipse Public License 1.0"
             :url "https://www.eclipse.org/legal/epl-v10.html"
             :distribution :repo}
-  :signing {:gpg-key "51D2FEA1"}
   :deploy-repositories [["clojars" {:creds :gpg}]]
+  :signing {:gpg-key "51D2FEA1"}
   :global-vars {*warn-on-reflection* true}
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.7.0-alpha2"]]}
              :1.4 {:dependencies [[org.clojure/clojure "1.4.0"]]}
