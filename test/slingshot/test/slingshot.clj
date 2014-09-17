@@ -1,8 +1,8 @@
 (ns slingshot.test.slingshot
-  (:use [clojure.test]
-        [slingshot.slingshot :only [try+ throw+ get-throw-context
-                                    get-thrown-object]])
-  (:require [clojure.string :as str])
+  (:require [clojure.test :refer :all]
+            [slingshot.slingshot :refer [try+ throw+ get-throw-context
+                                         get-thrown-object]]
+            [clojure.string :as str])
   (:import java.util.concurrent.ExecutionException))
 
 (set! *warn-on-reflection* true)

@@ -1,7 +1,7 @@
 (ns slingshot.test.support
-  (:use [clojure.test]
-        [slingshot.slingshot :only [throw+ try+]]
-        [slingshot.support])
+  (:require [clojure.test :refer :all]
+            [slingshot.slingshot :refer [throw+ try+]]
+            [slingshot.support :refer :all])
   (:refer-clojure :exclude [ex-data ex-info])
   (:import (java.util.concurrent ExecutionException)))
 

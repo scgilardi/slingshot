@@ -1,6 +1,6 @@
 (ns slingshot.test
-  (:use [clojure.test]
-        [slingshot.slingshot :only [try+]]))
+  (:require [clojure.test :refer :all]
+            [slingshot.slingshot :refer [try+]]))
 
 (defmethod assert-expr 'thrown+? [msg form]
   ;; (is (thrown+? selector expr))

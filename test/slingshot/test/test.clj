@@ -1,7 +1,7 @@
 (ns slingshot.test.test
-  (:use [clojure.test]
-        [slingshot.slingshot :only [throw+]])
-  (:require [slingshot.test]))
+  (:require [clojure.test :refer :all]
+            [slingshot.slingshot :refer [throw+]]
+            [slingshot.test]))
 
 (deftest test-slingshot-test-macros
   (is (thrown+? string? (throw+ "test")))
