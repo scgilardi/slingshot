@@ -1,4 +1,4 @@
-(defproject slingshot "0.11.0-SNAPSHOT"
+(defproject slingshot "0.11.0"
   :description "Enhanced throw, try, leveraging Clojure's capabilities"
   :url "https://github.com/scgilardi/slingshot"
   :scm {:name "git"
