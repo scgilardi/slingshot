@@ -7,7 +7,7 @@
 
 (deftest test-parse-try+
   (let [f parse-try+]
-    (is (= [nil nil nil nil]) (f ()))
+    (is (= [nil nil nil nil] (f ())))
 
     (is (= ['(1) nil nil nil] (f '(1))))
     (is (= [nil '((catch 1)) nil nil] (f '((catch 1)))))
