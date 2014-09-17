@@ -98,7 +98,7 @@
     (is (= 42 (try+ (throw+ "boo") (catch string? x x)))))
   (binding [*catch-hook* (catch-hook-throw (IllegalArgumentException. "bleh"))]
     (is (thrown-with-msg? IllegalArgumentException #"bleh"
-          (try+ (throw+ "boo") (catch string? x x)))))
+                          (try+ (throw+ "boo") (catch string? x x)))))
   (is (= "soup!"
          (try+
           (binding [*catch-hook* (catch-hook-throw "soup!")]

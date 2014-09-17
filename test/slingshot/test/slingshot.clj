@@ -358,7 +358,7 @@
   `(finally (swap! ~rec-sym #(conj % :finally))))
 
 (defn gen-try-else-form
-  "Generate variations of (try ... (else ...) ...) forms, which (when eval'd) 
+  "Generate variations of (try ... (else ...) ...) forms, which (when eval'd)
   will return a vector describing the sequence in which things were evaluated,
   e.g. [:body :catch :finally]"
   [throw? catch? finally? broken-else?]
@@ -369,14 +369,14 @@
         finally-clause (when finally? (gen-finally-clause rec-sym))]
     `(let [~rec-sym (atom [])]
        (try+
-         ~(remove nil? `(try+
-                          ~body
-                          ~catch-clause
-                          ~else-clause
-                          ~finally-clause))
-         (catch Object e#
-           ; if the inner try+ threw, report it as a :bang! in the return vec
-           (swap! ~rec-sym #(conj % :bang!))))
+        ~(remove nil? `(try+
+                        ~body
+                        ~catch-clause
+                        ~else-clause
+                        ~finally-clause))
+        (catch Object e#
+          ;; if the inner try+ threw, report it as a :bang! in the return vec
+          (swap! ~rec-sym #(conj % :bang!))))
        @~rec-sym)))
 
 (deftest test-else
@@ -393,15 +393,15 @@
                                    (when (and throw? catch?) :catch)
                                    (when (not throw?) :else)
                                    (when finally? :finally)
-                                   ; expect an escaped exception when either:
-                                   ;  a) the else clause runs, and throws
-                                   ;  b) the body throws, and is not caught
+                                   ;; expect an escaped exception when either:
+                                   ;;  a) the else clause runs, and throws
+                                   ;;  b) the body throws, and is not caught
                                    (when (or (and (not throw?) broken-else?)
                                              (and throw? (not catch?))) :bang!)]))]
         (is (= actual expected))))))
 
 (deftest test-reflection
   (try+
-    nil
-    (catch Exception e
-      (.getMessage e))))
+   nil
+   (catch Exception e
+     (.getMessage e))))
