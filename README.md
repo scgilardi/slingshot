@@ -104,9 +104,7 @@ Usage
 
 project.clj
 
-```clojure
-[slingshot "0.10.3"]
-```
+[![Clojars Project](http://clojars.org/slingshot/latest-version.svg)](http://clojars.org/slingshot)
 
 tensor/parse.clj
 
