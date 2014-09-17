@@ -47,12 +47,12 @@
 (defn stack-trace-fn []
   (stack-trace))
 
-(deftest test-stack-trace []
+(deftest test-stack-trace
   (let [{:keys [methodName className]} (-> (stack-trace-fn) first bean)]
     (is (= methodName "invoke"))
     (is (re-find #"stack_trace_fn" className))))
 
-(deftest test-wrap []
+(deftest test-wrap
   (let [tmessage "test-wrap-1"
         tobject 4
         tcause (Exception.)
