@@ -1,7 +1,12 @@
 (defproject slingshot "0.10.4-SNAPSHOT"
   :description "Enhanced throw, try, leveraging Clojure's capabilities"
   :url "https://github.com/scgilardi/slingshot"
-  :license {:name "Eclipse Public License 1.0"}
+  :scm {:name "git"
+        :url "https://github.com/scgilardi/slingshot"}
+  :license {:name "Eclipse Public License 1.0"
+            :url "https://www.eclipse.org/legal/epl-v10.html"}
+  :signing {:gpg-key "51D2FEA1"}
+  :deploy-repositories [["clojars" {:creds :gpg}]]
   :dev-dependencies [[org.clojure/clojure "1.7.0-alpha2"]]
   :java-source-path "java/src"
   :java-source-paths ["java/src"]
