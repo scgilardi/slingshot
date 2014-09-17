@@ -10,6 +10,7 @@
   This allows slingshot to be compatible with previous versions of
   clojure while also fully supporting clojure.1.4.0 and whatever tools
   may be created based on clojure.lang.ExceptionInfo."
+  (:refer-clojure :exclude [ex-info ex-data])
   (:import slingshot.ExceptionInfo))
 
 (defn ex-info
