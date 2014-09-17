@@ -8,8 +8,6 @@
   :signing {:gpg-key "51D2FEA1"}
   :deploy-repositories [["clojars" {:creds :gpg}]]
   :dev-dependencies [[org.clojure/clojure "1.7.0-alpha2"]]
-  :java-source-path "java/src"
-  :java-source-paths ["java/src"]
   :global-vars {*warn-on-reflection* true}
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.7.0-alpha2"]]}
              :1.4 {:dependencies [[org.clojure/clojure "1.4.0"]]}

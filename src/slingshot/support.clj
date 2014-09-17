@@ -1,6 +1,5 @@
 (ns slingshot.support
-  (:require [clojure.walk])
-  (:refer-clojure :exclude [ex-data ex-info]))
+  (:require [clojure.walk]))
 
 (defn appears-within?
   "Returns true if x appears within coll at any nesting depth"
@@ -18,18 +17,6 @@
   for clojure.core/format"
   [fmt & args]
   (throw (IllegalArgumentException. ^String (apply format fmt args))))
-
-;; ex-info support
-
-(def ex-info-ns
-  (if (and (resolve 'clojure.core/ex-info) (resolve 'clojure.core/ex-data))
-    'clojure.core
-    (doto 'slingshot.ex-info
-      require)))
-
-(def ex-info @(ns-resolve ex-info-ns 'ex-info))
-(def ex-data @(ns-resolve ex-info-ns 'ex-data))
-(def ex-class (ns-resolve ex-info-ns 'ExceptionInfo))
 
 ;; context support
 
