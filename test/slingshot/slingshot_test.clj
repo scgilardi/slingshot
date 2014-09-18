@@ -24,12 +24,6 @@
       (* a b x y)
       (throw+ (x-failure. "x isn't 3... really??")))))
 
-(defn test-func [x y]
-  (try+
-   (mult-func x y)
-   (catch x-failure {message :message}
-     [message (select-keys (:environment &throw-context) '(a b x y))])))
-
 (defmacro mega-try [body]
   `(try+
     ~body
@@ -117,11 +111,6 @@
       (is (= [:pred-map {:error-code 4} {:severity 4}]
              (mega-try (throw+ ^{:severity 4} {:error-code 4})))))))
 
-(deftest test-locals-and-destructuring
-  (is (= 1155 (test-func 3 5)))
-  (is (= ["x isn't 3... really??"
-          {'x 4 'y 7 'a 7 'b 11}] (test-func 4 7))))
-
 (deftest test-clauses
   (let [bumps (atom 0)
         bump (fn [] (swap! bumps inc))]
@@ -167,8 +156,7 @@
         context1 (next-context context)
         context2 (next-context context1)]
 
-    (is (= #{:object :message :cause :stack-trace :environment :wrapper
-             :throwable}
+    (is (= #{:object :message :cause :stack-trace :wrapper :throwable}
            (set (keys context))
            (set (keys context1))
            (set (keys context2))))
@@ -283,7 +271,7 @@
         t3 (try
              (throw exception2)
              (catch Throwable t t))]
-    (is (= #{:object :message :cause :stack-trace :environment :wrapper
+    (is (= #{:object :message :cause :stack-trace :wrapper
              :throwable}
            (-> t1 get-throw-context keys set)))
     (is (= #{:object :message :cause :stack-trace :throwable}

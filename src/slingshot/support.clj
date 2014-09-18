@@ -32,8 +32,7 @@
      {:object object
       :message message
       :cause (:throwable (environment '&throw-context))
-      :stack-trace stack-trace
-      :environment (dissoc environment '&throw-context)}))
+      :stack-trace stack-trace}))
 
 (defn wrap
   "Returns a context wrapper given a context"
