@@ -84,11 +84,11 @@
   ([object message]
      `(throw+ ~object "%s" ~message))
   ([object fmt & args]
-     `(let [environment# (s/environment)
+     `(let [prev-context# ((s/environment) '~'&throw-context)
             ~'% ~object
             message# (format ~fmt ~@args)
             stack-trace# (s/stack-trace)]
-        (s/throw-context ~'% message# stack-trace# environment#)))
+        (s/throw-context ~'% message# stack-trace# prev-context#)))
   ([]
      `(s/rethrow)))
 

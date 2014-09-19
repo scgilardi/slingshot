@@ -22,16 +22,16 @@
 
 (defn make-context
   "Makes a throw context from arguments. Captures the cause from the
-  environment argument if present."
+  prev-context argument if present."
   ([^Throwable t]
      {:object t
       :message (.getMessage t)
       :cause (.getCause t)
       :stack-trace (.getStackTrace t)})
-  ([object message stack-trace environment]
+  ([object message stack-trace prev-context]
      {:object object
       :message message
-      :cause (:throwable (environment '&throw-context))
+      :cause (:throwable prev-context)
       :stack-trace stack-trace}))
 
 (defn wrap
@@ -226,8 +226,8 @@
 
 (defn throw-context
   "Throws a context. Allows overrides of *throw-hook* to intervene."
-  [object message stack-trace environment]
-  (*throw-hook* (make-context object message stack-trace environment)))
+  [object message stack-trace prev-context]
+  (*throw-hook* (make-context object message stack-trace prev-context)))
 
 (defmacro rethrow
   "Within a try+ catch clause, throws the outermost wrapper of the
