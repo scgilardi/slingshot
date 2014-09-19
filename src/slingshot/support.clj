@@ -208,10 +208,12 @@
   (let [trace (.getStackTrace (Thread/currentThread))]
     (java.util.Arrays/copyOfRange trace 2 (alength trace))))
 
-(defmacro environment
-  "Expands to code that generates a map of locals: names to values"
-  []
-  `(zipmap '~(keys &env) [~@(keys &env)]))
+(defmacro resolve-local
+  "Expands to sym if it names a local in the current environment or
+  nil otherwise"
+  [sym]
+  (if (contains? &env sym)
+    sym))
 
 (defn default-throw-hook
   "Default implementation of *throw-hook*"
