@@ -51,6 +51,11 @@
     (is (= methodName "invoke"))
     (is (re-find #"stack_trace_fn" className))))
 
+(deftest test-resolve-local
+  (let [a 4]
+    (is (= 4 (resolve-local a)))
+    (is (nil? (resolve-local b)))))
+
 (deftest test-wrap
   (let [tmessage "test-wrap-1"
         tobject 4
