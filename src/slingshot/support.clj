@@ -172,7 +172,7 @@
      ;; in the &env captured by throw+ forms within catch clauses
      ;; (see the special handling of &throw-context in make-context)
      `(catch Throwable ~'&throw-context
-        (reset! ~threw?-sym true)
+        (aset-boolean ~threw?-sym 0 true)
         (let [~'&throw-context (-> ~'&throw-context get-context *catch-hook*)]
           (cond
            (contains? ~'&throw-context :catch-hook-return)
@@ -194,7 +194,7 @@
         (list
          `(finally
             (try
-              (when-not @~threw?-sym
+              (when-not (aget ~threw?-sym 0)
                 ~@(rest else-clause))
               ~(when finally-clause
                  finally-clause))))
