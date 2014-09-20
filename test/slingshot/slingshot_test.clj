@@ -1,4 +1,4 @@
-(ns slingshot.test.slingshot
+(ns slingshot.slingshot-test
   (:require [clojure.test :refer :all]
             [slingshot.slingshot :refer [try+ throw+ get-throw-context
                                          get-thrown-object]]

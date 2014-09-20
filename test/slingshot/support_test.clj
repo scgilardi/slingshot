@@ -1,4 +1,4 @@
-(ns slingshot.test.support
+(ns slingshot.support-test
   (:require [clojure.test :refer :all]
             [slingshot.slingshot :refer [throw+ try+]]
             [slingshot.support :refer :all])
