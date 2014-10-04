@@ -121,9 +121,9 @@
 
     - for non-Throwable objects (including maps passed to ex-info):
       :object       the object;
-      :message      the message, see throw+;
-      :cause        the cause, see throw+;
-      :stack-trace  the stack trace, see throw+;
+      :message      the message, see throw+, ex-info;
+      :cause        the cause, see throw+, ex-info;
+      :stack-trace  the stack trace, see throw+, ex-info;
       :environment  the environment, see throw+;
       :wrapper      the Throwable wrapper that carried the object,
                     see below;
