@@ -149,6 +149,7 @@ Credits
 License
 -------
 
-  Copyright &copy; 2011 Stephen C. Gilardi, Kevin Downey, and Phil Hagelberg
+  Copyright &copy; 2011-2014 Stephen C. Gilardi, Kevin Downey, and
+  Phil Hagelberg
 
   Distributed under the Eclipse Public License, the same as Clojure.
