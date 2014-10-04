@@ -45,18 +45,23 @@ Enhanced throw and catch for Clojure
       matches any Object for which the predicate returns a truthy
       value, or
 
+    - the symbol **any**, matches any object thrown by throw or
+      throw+, or
+
     - a **selector form**: a form containing one or more instances of
       `%` to be replaced by the thrown object, matches any object for
       which the form evaluates to truthy.
 
-    - the class name, key-values, and predicate selectors are
+    - the class name, key-values, predicate, and any selectors are
       shorthand for these selector forms:
 
-          `<class name>  => (instance? <class name> %)`
+          <class name> => (instance? <class name> %)
 
-          `[<key> <val> & <kvs>] => (and (= (get % <key>) <val>) ...)`
+          [<key> <val> & <kvs>] => (and (= (get % <key>) <val>) ...)
 
-          `<predicate>   => (<predicate> %)`
+          <predicate> => (<predicate> %)
+
+          any => ((constantly true) %)
 
   - the binding to the caught exception in a catch clause is not
     required to be a simple symbol. It is subject to destructuring so
@@ -145,7 +150,7 @@ math/expression.clj
     (catch [:type :tensor.parse/bad-tree] {:keys [tree hint]}
       (log/error "failed to parse tensor" tree "with hint" hint)
       (throw+))
-    (catch Object _
+    (catch any _
       (log/error (:throwable &throw-context) "unexpected error")
       (throw+))))
 ```
