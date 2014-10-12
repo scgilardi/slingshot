@@ -169,9 +169,6 @@
             (cond-expression (with-meta binding-form {:tag selector}) expressions)]
            [(cond-test selector) (cond-expression binding-form expressions)]))]
     (list
-     ;; the code below uses only one local name to minimize clutter
-     ;; in the &env captured by throw+ forms within catch clauses
-     ;; (see the special handling of &throw-context in make-context)
      `(catch Throwable ~'&throw-context
         (aset-boolean ~threw?-sym 0 true)
         (let [~'&throw-context (-> ~'&throw-context get-context *catch-hook*)]
