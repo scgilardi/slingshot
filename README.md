@@ -80,7 +80,8 @@ Enhanced throw and catch for Clojure
 
         :object       the caught object;
         :message      the message, from throw+ or ex-info
-        :cause        the cause, captured by throw+ or ex-info, see below;
+        :cause        the cause, captured by throw+ or passed to
+                      ex-info, see below;
         :stack-trace  the stack trace, captured by throw+ or ex-info;
         :environment  a map from names to values for locals visible at
                       the throw+ site.
