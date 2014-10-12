@@ -78,8 +78,6 @@ Enhanced throw and catch for Clojure
         :message      the message, from the optional argument(s) to throw+;
         :cause        the cause, captured by throw+, see below;
         :stack-trace  the stack trace, captured by throw+;
-        :environment  a map from names to values for locals visible at
-                      the throw+ site.
         :wrapper      the Throwable wrapper that carried the object
         :throwable    the outermost Throwable whose cause chain contains
                       the wrapper, see below;
