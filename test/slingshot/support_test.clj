@@ -51,12 +51,17 @@
     (is (= methodName "invoke"))
     (is (re-find #"stack_trace_fn" className))))
 
+(deftest test-resolve-local
+  (let [a 4]
+    (is (= 4 (resolve-local a)))
+    (is (nil? (resolve-local b)))))
+
 (deftest test-wrap
   (let [tmessage "test-wrap-1"
         tobject 4
         tcause (Exception.)
         tstack-trace (stack-trace)
-        tdata {:object tobject :environment {'a 1 'b 2}}
+        tdata {:object tobject}
         tcontext (assoc tdata
                    :message tmessage
                    :cause tcause
@@ -73,7 +78,7 @@
   (binding [*throw-hook* #(reset! test-hooked %)]
     (throw+ "throw-hook-string")
     (is (= (set (keys @test-hooked))
-           (set [:object :message :cause :stack-trace :environment])))
+           (set [:object :message :cause :stack-trace])))
     (is (= "throw-hook-string" (:object @test-hooked))))
   (binding [*throw-hook* (fn [x] 42)]
     (is (= (throw+ "something") 42))))
@@ -90,8 +95,7 @@
   (binding [*catch-hook* #(reset! catch-hooked %)]
     (try+ (throw+ "catch-hook-string") (catch string? x x))
     (is (= (set (keys @catch-hooked))
-           (set [:object :message :cause :stack-trace :environment :wrapper
-                 :throwable])))
+           (set [:object :message :cause :stack-trace :wrapper :throwable])))
     (is (= "catch-hook-string" (:object @catch-hooked))))
   (binding [*catch-hook* (catch-hook-return 42)]
     (is (= 42 (try+ (throw+ "boo") (catch string? x x)))))

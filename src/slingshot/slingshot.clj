@@ -58,7 +58,7 @@
   the Throwable.
 
   For non-Throwable objects, throw+ packages the object, message,
-  cause, stack trace, and environment in a Throwable wrapper:
+  cause, and stack trace, in a Throwable wrapper:
 
     - message: optional, specified either by a string or a format
       string and args for clojure.core/format:
@@ -75,10 +75,6 @@
     - stack trace: the stack trace of the current thread at the time
       of the throw+ call, starting at the function that encloses it;
 
-    - environment: a map from names to values for locals visible at
-      the throw+ call site, including the enclosing function and its
-      arguments (unless shadowed by nested locals).
-
   Within a try+ catch clause, a throw+ call with no arguments rethrows
   the caught object within its original (possibly nested) wrappers.
 
@@ -88,11 +84,11 @@
   ([object message]
      `(throw+ ~object "%s" ~message))
   ([object fmt & args]
-     `(let [environment# (s/environment)
+     `(let [~'&throw-context (s/resolve-local ~'&throw-context)
             ~'% ~object
             message# (format ~fmt ~@args)
             stack-trace# (s/stack-trace)]
-        (s/throw-context ~'% message# stack-trace# environment#)))
+        (s/throw-context ~'% message# stack-trace# ~'&throw-context)))
   ([]
      `(s/rethrow)))
 
@@ -123,7 +119,6 @@
       :message      the message, see throw+;
       :cause        the cause, see throw+;
       :stack-trace  the stack trace, see throw+;
-      :environment  the environment, see throw+;
       :wrapper      the Throwable wrapper that carried the object,
                     see below;
       :throwable    the outermost Throwable whose cause chain contains
