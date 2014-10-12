@@ -393,3 +393,30 @@
    nil
    (catch Exception e
      (.getMessage e))))
+
+(deftest test-ex-info-compatibility
+  (let [data {:type :fail :reason :not-found}
+        message "oops"
+        wrapper (ex-info message data)
+        rte1 (RuntimeException. "one" wrapper)
+        rte2 (RuntimeException. "two" rte1)
+        direct (try+
+                (throw wrapper)
+                (catch [:type :fail] e
+                  &throw-context)
+                (catch Object _
+                  :whoops))
+        cause-chain (try+
+                     (throw rte2)
+                     (catch [:type :fail] e
+                       &throw-context)
+                     (catch Object _
+                       :whoops))]
+    (is (= (:object direct) data))
+    (is (= (:object cause-chain) data))
+    (is (= (:message direct) message))
+    (is (= (:message cause-chain) message))
+    (is (= (:wrapper direct) wrapper))
+    (is (= (:wrapper cause-chain) wrapper))
+    (is (= (:throwable direct) wrapper))
+    (is (= (:throwable cause-chain) rte2))))

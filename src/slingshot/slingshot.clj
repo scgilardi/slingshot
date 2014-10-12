@@ -5,8 +5,9 @@
   "Like the try special form, but with enhanced catch clauses and an
   optional else clause:
 
-    - catch non-Throwable objects thrown by throw+ as well as
-      Throwable objects thrown by throw or throw+;
+    - catch non-Throwable objects thrown by throw+ and maps made
+      throwable by ex-info as well as Throwable objects thrown by
+      throw or throw+;
 
     - specify objects to catch by class name, key-values,
       predicate, or arbitrary selector form;
@@ -17,9 +18,9 @@
       visible at the throw site, including the name of the enclosing
       function and its arguments (unless shadowed by nested locals).
 
-    - the contents of an optional else clause after all catch clauses
-      and before any finally clause will be executed if nothing is
-      thrown from within the try+ body.
+    - execute the contents of an optional else clause after all catch
+      clauses and before any finally clause if nothing is thrown from
+      within the try+ body.
 
   A selector form is a form containing one or more instances of % to
   be replaced by the thrown object. If it evaluates to truthy, the
@@ -114,11 +115,11 @@
       :stack-trace  the stack trace, from .getStackTrace;
       :throwable    the object;
 
-    - for non-Throwable objects:
+    - for non-Throwable objects (including maps passed to ex-info):
       :object       the object;
-      :message      the message, see throw+;
-      :cause        the cause, see throw+;
-      :stack-trace  the stack trace, see throw+;
+      :message      the message, see throw+, ex-info;
+      :cause        the cause, see throw+, ex-info;
+      :stack-trace  the stack trace, see throw+, ex-info;
       :wrapper      the Throwable wrapper that carried the object,
                     see below;
       :throwable    the outermost Throwable whose cause chain contains

@@ -49,13 +49,15 @@
   the value for :wrapper, else returns nil"
   [^Throwable t]
   (when-let [data (ex-data t)]
-    (when (::wrapper? (meta data))
-      (-> (assoc data
-            :message (.getMessage t)
-            :cause (.getCause t)
-            :stack-trace (.getStackTrace t)
-            :wrapper t)
-          (vary-meta dissoc ::wrapper?)))))
+    (let [context {:message (.getMessage t)
+                   :cause (.getCause t)
+                   :stack-trace (.getStackTrace t)
+                   :wrapper t}]
+      (if (::wrapper? (meta data))
+        (-> data
+            (merge context)
+            (vary-meta dissoc ::wrapper?))
+        (assoc context :object data)))))
 
 (defn unwrap-all
   "Searches Throwable t and its cause chain for a context wrapper. If
