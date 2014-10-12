@@ -16,11 +16,12 @@
 
     - in a catch clause, access the names and values of the locals
       visible at the throw site, including the name of the enclosing
-      function and its arguments (unless shadowed by nested locals).
+      function and its arguments (unless shadowed by nested locals);
 
-    - execute the contents of an optional else clause after all catch
-      clauses and before any finally clause if nothing is thrown from
-      within the try+ body.
+    - an optional else clause may appear after all catch clauses and
+      before any finally clause. Its contents will be executed (for
+      side effects) immediately after the code in the try+ body
+      completes only if nothing was thrown.
 
   A selector form is a form containing one or more instances of % to
   be replaced by the thrown object. If it evaluates to truthy, the
