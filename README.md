@@ -105,9 +105,9 @@ Enhanced throw and catch for Clojure
   catch clause, the outermost wrapper of the caught object being
   processed is captured as the cause of the new throw+.
 
-  - an optional else clause may appear after all catch clauses and
-    before any finally clause. Its contents will be executed (for
-    side effects) immediately after the code in the try+ body
+  - an optional `else` clause may appear after all `catch` clauses and
+    before any `finally` clause. Its contents will be executed (for
+    side effects) immediately after the code in the `try+` body
     completes only if nothing was thrown.
 
 Usage
