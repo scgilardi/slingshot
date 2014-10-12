@@ -43,7 +43,7 @@
   [& body]
   (let [threw?-sym (gensym "threw?")
         [expressions catches else finally] (s/parse-try+ body)]
-    `(let [~threw?-sym (atom false)]
+    `(let [~threw?-sym (boolean-array 1)]
        (try
          ~@expressions
          ~@(s/gen-catch catches `throw+ threw?-sym)
