@@ -89,8 +89,9 @@
      `(let [~'&throw-context (s/resolve-local ~'&throw-context)
             ~'% ~object
             message# (format ~fmt ~@args)
+            cause# (:throwable ~'&throw-context)
             stack-trace# (s/stack-trace)]
-        (s/throw-context ~'% message# stack-trace# ~'&throw-context)))
+        (s/throw-context ~'% message# cause# stack-trace#)))
   ([]
      `(s/rethrow)))
 

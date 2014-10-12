@@ -28,10 +28,10 @@
       :message (.getMessage t)
       :cause (.getCause t)
       :stack-trace (.getStackTrace t)})
-  ([object message stack-trace prev-context]
+  ([object message cause stack-trace]
      {:object object
       :message message
-      :cause (:throwable prev-context)
+      :cause cause
       :stack-trace stack-trace}))
 
 (defn wrap
@@ -227,8 +227,8 @@
 
 (defn throw-context
   "Throws a context. Allows overrides of *throw-hook* to intervene."
-  [object message stack-trace prev-context]
-  (*throw-hook* (make-context object message stack-trace prev-context)))
+  [object message cause stack-trace]
+  (*throw-hook* (make-context object message cause stack-trace)))
 
 (defmacro rethrow
   "Within a try+ catch clause, throws the outermost wrapper of the
