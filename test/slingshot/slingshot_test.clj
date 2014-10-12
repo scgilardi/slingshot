@@ -352,9 +352,9 @@
   [throw? catch? finally? broken-else?]
   (let [rec-sym (gensym "rec")
         body (gen-body rec-sym throw?)
-        catch-clause (when catch? (gen-catch-clause rec-sym))
+        catch-clause (if catch? (gen-catch-clause rec-sym))
         else-clause (gen-else-clause rec-sym broken-else?)
-        finally-clause (when finally? (gen-finally-clause rec-sym))]
+        finally-clause (if finally? (gen-finally-clause rec-sym))]
     `(let [~rec-sym (atom [])]
        (try+
         ~(remove nil? `(try+
@@ -378,14 +378,14 @@
             actual (eval try-else-form)
             expected (vec (remove nil?
                                   [:body
-                                   (when (and throw? catch?) :catch)
-                                   (when (not throw?) :else)
-                                   (when finally? :finally)
+                                   (if (and throw? catch?) :catch)
+                                   (if (not throw?) :else)
+                                   (if finally? :finally)
                                    ;; expect an escaped exception when either:
                                    ;;  a) the else clause runs, and throws
                                    ;;  b) the body throws, and is not caught
-                                   (when (or (and (not throw?) broken-else?)
-                                             (and throw? (not catch?))) :bang!)]))]
+                                   (if (or (and (not throw?) broken-else?)
+                                           (and throw? (not catch?))) :bang!)]))]
         (is (= actual expected))))))
 
 (deftest test-reflection

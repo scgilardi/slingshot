@@ -48,7 +48,7 @@
   "If t is a context wrapper, returns the context with t assoc'd as
   the value for :wrapper, else returns nil"
   [^Throwable t]
-  (when-let [data (ex-data t)]
+  (if-let [data (ex-data t)]
     (let [context {:message (.getMessage t)
                    :cause (.getCause t)
                    :stack-trace (.getStackTrace t)
@@ -65,7 +65,7 @@
   value for :wrapper, else returns nil."
   [^Throwable t]
   (or (unwrap t)
-      (when-let [cause (.getCause t)]
+      (if-let [cause (.getCause t)]
         (recur cause))))
 
 (defn get-throwable
@@ -194,7 +194,7 @@
             (try
               (when-not (aget ~threw?-sym 0)
                 ~@(rest else-clause))
-              ~(when finally-clause
+              ~(if finally-clause
                  finally-clause))))
         finally-clause
         (list finally-clause)))
