@@ -103,7 +103,9 @@ Enhanced throw and catch for Clojure
 
   When `throw+` throws a non-`Throwable` object from within a `try+`
   catch clause, the outermost wrapper of the caught object being
-  processed is captured as the cause of the new throw+.
+  processed is captured as the cause of the new `throw+`. For cases
+  where that is inappropriate, the cause can be explicitly specified
+  by wrapping the `throw+` call in a `with-cause` form.
 
   - an optional `else` clause may appear after all `catch` clauses and
     before any `finally` clause. Its contents will be executed (for

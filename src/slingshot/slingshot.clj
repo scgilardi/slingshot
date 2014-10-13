@@ -70,9 +70,11 @@
 
       - the default is: \"throw+: %s\" (pr-str %)
 
-    - cause: for a throw+ call within a try+ catch clause, the cause
-      is the outermost wrapper of the caught object being processed.
-      In any other case, the cause is nil;
+    - cause: for a throw+ call:
+      - within a with-cause form, the specified cause, (see with-cause)
+      - within a try+ catch clause, the the outermost wrapper of
+        the caught object being processed,
+      - elsewhere, nil.
 
     - stack trace: the stack trace of the current thread at the time
       of the throw+ call, starting at the function that encloses it;
@@ -149,3 +151,11 @@
   See also get-throw-context"
   [t]
   (-> t get-throw-context :object))
+
+(defmacro with-cause
+  "Overrides the cause captured by throw+ calls within body. Usable
+  within or outside of a try+ catch clause."
+  [^Throwable cause & body]
+  `(let [~'&throw-context (assoc (s/resolve-local ~'&throw-context)
+                            :throwable ~cause)]
+     ~@body))

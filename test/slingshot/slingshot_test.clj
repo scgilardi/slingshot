@@ -1,7 +1,6 @@
 (ns slingshot.slingshot-test
   (:require [clojure.test :refer :all]
-            [slingshot.slingshot :refer [try+ throw+ get-throw-context
-                                         get-thrown-object]]
+            [slingshot.slingshot :refer :all]
             [clojure.string :as str])
   (:import java.util.concurrent.ExecutionException))
 
@@ -420,3 +419,35 @@
     (is (= (:wrapper cause-chain) wrapper))
     (is (= (:throwable direct) wrapper))
     (is (= (:throwable cause-chain) rte2))))
+
+(deftest test-with-cause
+  (let [culprit (Exception. "I did it.")
+        cause1 (try+ (with-cause culprit (throw+ 1))
+                     (catch Object o
+                       (:cause &throw-context)))
+        cause2 (try+
+                (try+ (throw (Exception.))
+                      (catch Object o
+                        (with-cause culprit (throw+ 1))))
+                (catch Object o
+                  (:cause &throw-context)))
+        cause3 (try+
+                (try+ (throw (Exception.))
+                      (catch Object o
+                        (with-cause culprit (throw+))))
+                (catch Object o
+                  (:cause &throw-context)))
+        cause4 (try+
+                (try+ (throw (Exception.))
+                      (catch Object o
+                        (with-cause culprit (throw+ (Exception. "foo")))))
+                (catch Object o
+                  (:cause &throw-context)))]
+    (testing "with-cause outside catch"
+      (is (= cause1 culprit)))
+    (testing "with-cause inside catch"
+      (is (= cause2 culprit)))
+    (testing "with-cause doesn't affect rethrow"
+      (is (nil? cause3)))
+    (testing "with-cause doesn't affect Throwables"
+      (is (nil? cause4)))))
