@@ -32,13 +32,10 @@
 
 (defn wrap
   "Returns a context wrapper given a context"
-  [context]
-  (let [{:keys [message cause stack-trace]} context
-        data (-> (dissoc context :message :cause :stack-trace)
-                 (vary-meta assoc ::wrapper? true))
-        ^Throwable wrapper (ex-info message data cause)]
-    (doto wrapper
-      (.setStackTrace stack-trace))))
+  [{:keys [object message cause stack-trace]}]
+  (let [data ^::wrapper? {:object object}]
+    (doto ^Throwable (ex-info message data cause)
+          (.setStackTrace stack-trace))))
 
 (defn unwrap
   "If t is a context wrapper or other IExceptionInfo, returns the
