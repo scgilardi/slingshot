@@ -59,10 +59,21 @@
   objects. The message, cause, and stack trace are those carried by
   the Throwable.
 
-  For non-Throwable objects, throw+ packages the object, message,
-  cause, and stack trace, in a Throwable wrapper:
+  For non-Throwable objects, the message and cause may be specified
+  via additional arguments:
 
-    - message: optional, specified either by a string or a format
+    (throw+ object cause? message-or-fmt? & fmt-args)?)
+
+    - object: required, the object to throw
+
+    - cause: optional, a Throwable, if not specified:
+
+      - within a try+ catch clause, the the outermost wrapper of
+        the caught object being processed,
+
+      - elsewhere, nil.
+
+    - message: optional, specified either as a string or a format
       string and args for clojure.core/format:
 
       - % symbols (at any nesting depth) within args represent the
@@ -70,14 +81,8 @@
 
       - the default is: \"throw+: %s\" (pr-str %)
 
-    - cause: for a throw+ call:
-      - within a with-cause form, the specified cause, (see with-cause)
-      - within a try+ catch clause, the the outermost wrapper of
-        the caught object being processed,
-      - elsewhere, nil.
-
-    - stack trace: the stack trace of the current thread at the time
-      of the throw+ call, starting at the function that encloses it;
+  The stack trace is that of the current thread at the time of the
+  throw+ call, starting at the function that encloses it;
 
   Within a try+ catch clause, a throw+ call with no arguments rethrows
   the caught object within its original (possibly nested) wrappers.
