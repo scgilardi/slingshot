@@ -62,7 +62,7 @@
   For non-Throwable objects, the message and cause may be specified
   via additional arguments:
 
-    (throw+ object cause? message-or-fmt? & fmt-args)?)
+    (throw+ object cause? message-or-fmt? & fmt-args)
 
     - object: required, the object to throw
 
