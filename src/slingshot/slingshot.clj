@@ -83,15 +83,20 @@
   the caught object within its original (possibly nested) wrappers.
 
   See also try+, get-throw-context"
-  ([object]
-     `(throw+ ~object "throw+: %s" (pr-str ~'%)))
-  ([object message]
-     `(throw+ ~object "%s" ~message))
-  ([object fmt & args]
+  {:arglists '([] [object cause? message-or-fmt? & fmt-args])}
+  ([object & args]
      `(let [~'&throw-context (s/resolve-local ~'&throw-context)
             ~'% ~object
-            message# (format ~fmt ~@args)
-            cause# (:throwable ~'&throw-context)
+            args# ~(vec args)
+            [cause# & args#] (if (instance? Throwable (first args#))
+                               args#
+                               (cons (:throwable ~'&throw-context) args#))
+            [message-or-fmt# & args#] (if (string? (first args#))
+                                        args#
+                                        ["throw+: %s" (pr-str ~'%)])
+            message# (if (seq args#)
+                       (apply format message-or-fmt# args#)
+                       message-or-fmt#)
             stack-trace# (s/stack-trace)]
         (s/throw-context ~'% message# cause# stack-trace#)))
   ([]
@@ -151,11 +156,3 @@
   See also get-throw-context"
   [t]
   (-> t get-throw-context :object))
-
-(defmacro with-cause
-  "Overrides the cause captured by throw+ calls within body. Usable
-  within or outside of a try+ catch clause."
-  [^Throwable cause & body]
-  `(let [~'&throw-context (assoc (s/resolve-local ~'&throw-context)
-                            :throwable ~cause)]
-     ~@body))

@@ -420,34 +420,45 @@
     (is (= (:throwable direct) wrapper))
     (is (= (:throwable cause-chain) rte2))))
 
-(deftest test-with-cause
+(deftest test-optional-cause
   (let [culprit (Exception. "I did it.")
-        cause1 (try+ (with-cause culprit (throw+ 1))
-                     (catch Object o
-                       (:cause &throw-context)))
-        cause2 (try+
-                (try+ (throw (Exception.))
+        message2 "message two"
+        result1 (try+ (throw+ 1 culprit)
                       (catch Object o
-                        (with-cause culprit (throw+ 1))))
-                (catch Object o
-                  (:cause &throw-context)))
-        cause3 (try+
-                (try+ (throw (Exception.))
+                        [(:cause &throw-context)
+                         (:message &throw-context)]))
+        result2 (try+ (throw+ 1 culprit message2)
                       (catch Object o
-                        (with-cause culprit (throw+))))
-                (catch Object o
-                  (:cause &throw-context)))
-        cause4 (try+
-                (try+ (throw (Exception.))
-                      (catch Object o
-                        (with-cause culprit (throw+ (Exception. "foo")))))
-                (catch Object o
-                  (:cause &throw-context)))]
-    (testing "with-cause outside catch"
-      (is (= cause1 culprit)))
-    (testing "with-cause inside catch"
-      (is (= cause2 culprit)))
-    (testing "with-cause doesn't affect rethrow"
-      (is (nil? cause3)))
-    (testing "with-cause doesn't affect Throwables"
-      (is (nil? cause4)))))
+                        [(:cause &throw-context)
+                         (:message &throw-context)]))
+        result3 (try+
+                 (try+ (throw (Exception.))
+                       (catch Object o
+                         (throw+ 1 culprit "message %d" 3)))
+                 (catch Object o
+                   [(:cause &throw-context)
+                    (:message &throw-context)]))
+        result4 (try+
+                 (try+ (throw (Exception. "apple"))
+                       (catch Object o
+                         (throw+)))
+                 (catch Object o
+                   [(:cause &throw-context)
+                    (:message &throw-context)]))
+        result5 (try+
+                 (try+ (throw (Exception.))
+                       (catch Object o
+                         (throw+ (Exception. "foo") culprit "juicy %d" 3)))
+                 (catch Object o
+                   [(:cause &throw-context)
+                    (:message &throw-context)]))]
+    (testing "cause outside catch, default message"
+      (is (= result1 [culprit "throw+: 1"])))
+    (testing "cause outside catch, specified message"
+      (is (= result2 [culprit message2])))
+    (testing "cause inside catch, specified fmt & args"
+      (is (= result3 [culprit "message 3"])))
+    (testing "cause doesn't affect rethrow, rethrown message"
+      (is (= result4 [nil "apple"])))
+    (testing "specifying cause and message doesn't affect Throwables"
+      (is (= result5 [nil "foo"])))))
