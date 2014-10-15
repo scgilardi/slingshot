@@ -170,7 +170,7 @@
            [(cond-test selector) (cond-expression binding-form expressions)]))]
     (list
      `(catch Throwable ~'&throw-context
-        (aset-boolean ~threw?-sym 0 true)
+        (reset! ~threw?-sym true)
         (let [~'&throw-context (-> ~'&throw-context get-context *catch-hook*)]
           (cond
            (contains? ~'&throw-context :catch-hook-return)
@@ -192,7 +192,7 @@
         (list
          `(finally
             (try
-              (when-not (aget ~threw?-sym 0)
+              (when-not @~threw?-sym
                 ~@(rest else-clause))
               ~(if finally-clause
                  finally-clause))))
