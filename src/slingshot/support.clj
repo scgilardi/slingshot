@@ -21,8 +21,7 @@
 ;; context support
 
 (defn make-context
-  "Makes a throw context from arguments. Captures the cause from the
-  prev-context argument if present."
+  "Makes a throw context from a throwable or explicit arguments"
   ([^Throwable t]
      {:object t
       :message (.getMessage t)
@@ -45,8 +44,9 @@
       (.setStackTrace stack-trace))))
 
 (defn unwrap
-  "If t is a context wrapper, returns the context with t assoc'd as
-  the value for :wrapper, else returns nil"
+  "If t is a context wrapper or other IExceptionInfo, returns the
+  corresponding context with t assoc'd as the value for :wrapper, else
+  returns nil"
   [^Throwable t]
   (if-let [data (ex-data t)]
     (let [context {:message (.getMessage t)
@@ -60,9 +60,10 @@
         (assoc context :object data)))))
 
 (defn unwrap-all
-  "Searches Throwable t and its cause chain for a context wrapper. If
-  one is found, returns the context with the wrapper assoc'd as the
-  value for :wrapper, else returns nil."
+  "Searches Throwable t and its cause chain for a context wrapper or
+  other IExceptionInfo. If one is found, returns the corresponding
+  context with the wrapper assoc'd as the value for :wrapper, else
+  returns nil."
   [^Throwable t]
   (or (unwrap t)
       (if-let [cause (.getCause t)]
@@ -78,10 +79,11 @@
 
 (defn get-context
   "Returns a context given a Throwable t. If t or any Throwable in its
-  cause chain is a context wrapper, returns the context with the
-  wrapper assoc'd as the value for :wrapper and t assoc'd as the value
-  for :throwable. Otherwise creates a new context based on t with t
-  assoc'd as the value for :throwable."
+  cause chain is a context wrapper or other IExceptionInfo, returns
+  the corresponding context with the wrapper assoc'd as the value
+  for :wrapper and t assoc'd as the value for :throwable. Otherwise
+  creates a new context based on t with t assoc'd as the value
+  for :throwable."
   [^Throwable t]
   (-> (or (unwrap-all t)
           (make-context t))
