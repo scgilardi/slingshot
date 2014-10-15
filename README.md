@@ -79,13 +79,12 @@ Enhanced throw and catch for Clojure
     for non-Throwable caught objects (including maps passed to ex-info)
 
         :object       the caught object;
-        :message      the message, from throw+ or ex-info
-        :cause        the cause, captured by throw+ or passed to
-                      ex-info, see below;
+        :message      the message, from throw+ or ex-info;
+        :cause        the cause, from throw+ or ex-info, see below;
         :stack-trace  the stack trace, captured by throw+ or ex-info;
-        :wrapper      the Throwable wrapper that carried the object
+        :wrapper      the Throwable wrapper that carried the object;
         :throwable    the outermost Throwable whose cause chain contains
-                      the wrapper, see below;
+                      the wrapper, see below.
 
   To throw a non-`Throwable` object, `throw+` wraps it in a
   `Throwable` wrapper by calling `ex-info`. Every instance of
@@ -103,9 +102,8 @@ Enhanced throw and catch for Clojure
 
   When `throw+` throws a non-`Throwable` object from within a `try+`
   catch clause, the outermost wrapper of the caught object being
-  processed is captured as the cause of the new `throw+`. For cases
-  where that is inappropriate, the cause can be explicitly specified
-  by wrapping the `throw+` call in a `with-cause` form.
+  processed is captured as the cause of the new `throw+`. This can be
+  overridden by providing an explicit `cause` argument to `throw+`.
 
   - an optional `else` clause may appear after all `catch` clauses and
     before any `finally` clause. Its contents will be executed (for
