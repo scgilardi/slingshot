@@ -23,10 +23,7 @@
 (defn make-context
   "Makes a throw context from a throwable or explicit arguments"
   ([^Throwable t]
-     {:object t
-      :message (.getMessage t)
-      :cause (.getCause t)
-      :stack-trace (.getStackTrace t)})
+     (make-context t (.getMessage t) (.getCause t) (.getStackTrace t)))
   ([object message cause stack-trace]
      {:object object
       :message message
@@ -49,15 +46,9 @@
   returns nil"
   [^Throwable t]
   (if-let [data (ex-data t)]
-    (let [context {:message (.getMessage t)
-                   :cause (.getCause t)
-                   :stack-trace (.getStackTrace t)
-                   :wrapper t}]
-      (if (::wrapper? (meta data))
-        (-> data
-            (merge context)
-            (vary-meta dissoc ::wrapper?))
-        (assoc context :object data)))))
+    (assoc (make-context t)
+      :object (if (::wrapper? (meta data)) (:object data) data)
+      :wrapper t)))
 
 (defn unwrap-all
   "Searches Throwable t and its cause chain for a context wrapper or
