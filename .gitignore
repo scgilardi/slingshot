@@ -1,9 +1,9 @@
+/target
+/classes
+/checkouts
 pom.xml
-*jar
-/lib/
-/classes/
-/target/
-.lein-failures
-.lein-deps-sum
-.lein-repl-history
-.nrepl-port
+pom.xml.asc
+*.jar
+*.class
+/.lein-*
+/.nrepl-port
