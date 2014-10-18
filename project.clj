@@ -1,4 +1,4 @@
-(defproject slingshot "0.11.1"
+(defproject slingshot "0.12.0-SNAPSHOT"
   :description "Enhanced throw, try, leveraging Clojure's capabilities"
   :url "https://github.com/scgilardi/slingshot"
   :license {:name "Eclipse Public License 1.0"
