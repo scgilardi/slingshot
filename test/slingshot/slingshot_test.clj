@@ -1,7 +1,6 @@
 (ns slingshot.slingshot-test
   (:require [clojure.test :refer :all]
-            [slingshot.slingshot :refer [try+ throw+ get-throw-context
-                                         get-thrown-object]]
+            [slingshot.slingshot :refer :all]
             [clojure.string :as str])
   (:import java.util.concurrent.ExecutionException))
 
@@ -420,3 +419,46 @@
     (is (= (:wrapper cause-chain) wrapper))
     (is (= (:throwable direct) wrapper))
     (is (= (:throwable cause-chain) rte2))))
+
+(deftest test-optional-cause
+  (let [culprit (Exception. "I did it.")
+        message2 "message two"
+        result1 (try+ (throw+ 1 culprit)
+                      (catch Object o
+                        [(:cause &throw-context)
+                         (:message &throw-context)]))
+        result2 (try+ (throw+ 1 culprit message2)
+                      (catch Object o
+                        [(:cause &throw-context)
+                         (:message &throw-context)]))
+        result3 (try+
+                 (try+ (throw (Exception.))
+                       (catch Object o
+                         (throw+ 1 culprit "message %d" 3)))
+                 (catch Object o
+                   [(:cause &throw-context)
+                    (:message &throw-context)]))
+        result4 (try+
+                 (try+ (throw (Exception. "apple"))
+                       (catch Object o
+                         (throw+)))
+                 (catch Object o
+                   [(:cause &throw-context)
+                    (:message &throw-context)]))
+        result5 (try+
+                 (try+ (throw (Exception.))
+                       (catch Object o
+                         (throw+ (Exception. "foo") culprit "juicy %d" 3)))
+                 (catch Object o
+                   [(:cause &throw-context)
+                    (:message &throw-context)]))]
+    (testing "cause outside catch, default message"
+      (is (= result1 [culprit "throw+: 1"])))
+    (testing "cause outside catch, specified message"
+      (is (= result2 [culprit message2])))
+    (testing "cause inside catch, specified fmt & args"
+      (is (= result3 [culprit "message 3"])))
+    (testing "cause doesn't affect rethrow, rethrown message"
+      (is (= result4 [nil "apple"])))
+    (testing "specifying cause and message doesn't affect Throwables"
+      (is (= result5 [nil "foo"])))))
