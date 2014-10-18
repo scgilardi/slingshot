@@ -4,8 +4,6 @@
             [clojure.string :as str])
   (:import java.util.concurrent.ExecutionException))
 
-(set! *warn-on-reflection* true)
-
 (defrecord exception-record [error-code duration-ms message])
 (defrecord x-failure [message])
 
