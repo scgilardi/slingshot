@@ -66,4 +66,14 @@
     Clojure 1.3.0
   - modernized project.clj
   - signed artifacts for clojars
-* version next
+* version 0.12.0
+  - new optional argument to throw+ allows specifying a Throwable as
+    the cause explicitly
+    - explicit cause overrides the captured cause in a catch
+    - issue 29
+  - now treats all IExceptionInfo objects as data wrappers
+    - catch selectors refer to the map passed in to `ex-info`
+    - issue 35
+  - no longer provides :environment in &throw-context
+    - now compatible with locals clearing
+    - issue 36
