@@ -90,20 +90,10 @@
   See also try+, get-throw-context"
   {:arglists '([] [object cause? message-or-fmt? & fmt-args])}
   ([object & args]
-     `(let [~'&throw-context (s/resolve-local ~'&throw-context)
+     `(let [cause# (:throwable (s/resolve-local ~'&throw-context))
             ~'% ~object
-            args# ~(vec args)
-            [cause# & args#] (if (instance? Throwable (first args#))
-                               args#
-                               (cons (:throwable ~'&throw-context) args#))
-            [message-or-fmt# & args#] (if (string? (first args#))
-                                        args#
-                                        ["throw+: %s" (pr-str ~'%)])
-            message# (if (seq args#)
-                       (apply format message-or-fmt# args#)
-                       message-or-fmt#)
-            stack-trace# (s/stack-trace)]
-        (s/throw-context ~'% message# cause# stack-trace#)))
+            [message# cause#] (s/parse-throw+ ~'% cause# ~@args)]
+        (s/throw-context ~'% message# cause# (s/stack-trace))))
   ([]
      `(s/rethrow)))
 

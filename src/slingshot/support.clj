@@ -191,6 +191,22 @@
 
 ;; throw+ support
 
+(defn parse-throw+
+  "Returns a vector containing the message and cause that result from
+  processing the arguments to throw+"
+  [object cause & args]
+  (let [[cause & args] (if (instance? Throwable (first args))
+                         args
+                         (cons cause args))
+        [fmt & args] (cond (second args)
+                           args
+                           (first args)
+                           ["%s" (first args)]
+                           :else
+                           ["throw+: %s" (pr-str object)])
+        message (apply format fmt args)]
+    [message cause]))
+
 (defn stack-trace
   "Returns the current stack trace beginning at the caller's frame"
   []
