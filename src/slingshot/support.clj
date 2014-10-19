@@ -191,6 +191,13 @@
 
 ;; throw+ support
 
+(defmacro resolve-local
+  "Expands to sym if it names a local in the current environment or
+  nil otherwise"
+  [sym]
+  (if (contains? &env sym)
+    sym))
+
 (defn parse-throw+
   "Returns a vector containing the message and cause that result from
   processing the arguments to throw+"
@@ -212,13 +219,6 @@
   []
   (let [trace (.getStackTrace (Thread/currentThread))]
     (java.util.Arrays/copyOfRange trace 2 (alength trace))))
-
-(defmacro resolve-local
-  "Expands to sym if it names a local in the current environment or
-  nil otherwise"
-  [sym]
-  (if (contains? &env sym)
-    sym))
 
 (defn default-throw-hook
   "Default implementation of *throw-hook*"
