@@ -39,13 +39,13 @@
 
   See also: throw+, get-throw-context"
   [& body]
-  (let [threw?-sym (gensym "threw?")
-        [expressions catches else finally] (s/parse-try+ body)]
-    `(let [~threw?-sym (atom false)]
+  (let [[expressions catches else finally] (s/parse-try+ body)
+        threw? (gensym "threw?")]
+    `(let [~threw? (atom false)]
        (try
          ~@expressions
-         ~@(s/gen-catch catches `throw+ threw?-sym)
-         ~@(s/gen-finally else finally threw?-sym)))))
+         ~@(s/gen-catch catches `throw+ threw?)
+         ~@(s/gen-finally else finally threw?)))))
 
 (defmacro throw+
   "Like the throw special form, but can throw any object by wrapping
@@ -85,8 +85,8 @@
   See also try+, get-throw-context"
   {:arglists '([] [object cause? message-or-fmt? & fmt-args])}
   ([object & args]
-     `(let [cause# (:throwable (s/resolve-local ~'&throw-context))
-            ~'% ~object
+     `(let [~'% ~object
+            cause# (:throwable (s/resolve-local ~'&throw-context))
             [message# cause#] (s/parse-throw+ ~'% cause# ~@args)]
         (s/throw-context ~'% message# cause# (s/stack-trace))))
   ([]
