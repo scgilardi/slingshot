@@ -77,3 +77,6 @@
   - no longer provides :environment in &throw-context
     - now compatible with locals clearing
     - issue 36
+* version 0.12.1
+  - internal improvements
+  - documentation updates for correctness, clarity
