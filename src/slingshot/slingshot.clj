@@ -5,18 +5,14 @@
   "Like the try special form, but with enhanced catch clauses and an
   optional else clause:
 
-    - catch non-Throwable objects thrown by throw+ and maps made
+    - catch non-Throwable objects thrown by throw+ or data made
       throwable by ex-info as well as Throwable objects thrown by
       throw or throw+;
 
-    - specify objects to catch by class name, key-values,
-      predicate, or arbitrary selector form;
+    - specify objects to catch by class name, key-values, predicate,
+      or arbitrary selector form;
 
     - destructure the caught object;
-
-    - in a catch clause, access the names and values of the locals
-      visible at the throw site, including the name of the enclosing
-      function and its arguments (unless shadowed by nested locals);
 
     - an optional else clause may appear after all catch clauses and
       before any finally clause. Its contents will be executed (for
@@ -59,14 +55,14 @@
   objects. The message, cause, and stack trace are those carried by
   the Throwable.
 
-  For non-Throwable objects, the message and cause may be specified
-  via additional arguments:
+  For non-Throwable objects, the message and cause have default values
+  which can be overridden by optional arguments:
 
     (throw+ object cause? message-or-fmt? & fmt-args)
 
     - object: required, the object to throw
 
-    - cause: optional, a Throwable, if not specified:
+    - cause: optional, a Throwable, the default is:
 
       - within a try+ catch clause, the the outermost wrapper of
         the caught object being processed,
@@ -76,8 +72,7 @@
     - message: optional, specified either as a string or a format
       string and args for clojure.core/format:
 
-      - % symbols (at any nesting depth) within args represent the
-        thrown object
+      - % symbols anywhere within args name the thrown object
 
       - the default is: \"throw+: %s\" (pr-str %)
 
@@ -103,9 +98,10 @@
   thrown object as a Clojure map.
 
   If t or any Throwable in its cause chain wraps a non-Throwable
-  object thrown by throw+, returns the associated context with t
-  assoc'd as the value for :throwable, and the wrapper assoc'd as the
-  value for :wrapper, else returns a new context based on t.
+  object thrown by throw+ or data made throwable by ex-info, returns
+  the associated context with t assoc'd as the value for :throwable,
+  and the wrapper assoc'd as the value for :wrapper, else returns a
+  new context based on t.
 
   Within a try+ catch clause, prefer using the &throw-context local to
   calling get-throw-context explicitly.
@@ -119,7 +115,7 @@
       :stack-trace  the stack trace, from .getStackTrace;
       :throwable    the object;
 
-    - for non-Throwable objects (including maps passed to ex-info):
+    - for non-Throwable objects (including data made throwable by ex-info):
       :object       the object;
       :message      the message, see throw+, ex-info;
       :cause        the cause, see throw+, ex-info;
@@ -129,9 +125,9 @@
       :throwable    the outermost Throwable whose cause chain contains
                     the wrapper, see below;
 
-  To throw a non-Throwable object, throw+ wraps it in a Throwable
-  wrapper. The wrapper is available via the :wrapper key in the throw
-  context.
+  To throw a non-Throwable object, throw+ or ex-info wraps it in a
+  Throwable wrapper. The wrapper is available via the :wrapper key in
+  the throw context.
 
   Between being thrown and caught, the wrapper may be wrapped by other
   exceptions (e.g., instances of RuntimeException or
@@ -146,7 +142,7 @@
 (defn get-thrown-object
   "Returns the object thrown by throw or throw+ given a Throwable.
   Useful for processing a Throwable outside of a try+ form when the
-  source of the Throwable may or may not have been throw+.
+  source of the Throwable may or may not have been throw+ or ex-info.
 
   See also get-throw-context"
   [t]
