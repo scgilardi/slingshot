@@ -198,9 +198,9 @@
   (let [[cause & args] (if (instance? Throwable (first args))
                          args
                          (cons cause args))
-        [fmt & args] (cond (second args)
+        [fmt & args] (cond (next args)
                            args
-                           (first args)
+                           (seq args)
                            ["%s" (first args)]
                            :else
                            ["throw+: %s" (pr-str object)])
