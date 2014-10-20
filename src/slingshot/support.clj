@@ -240,4 +240,6 @@
   "Within a try+ catch clause, throws the outermost wrapper of the
   caught object"
   []
+  (when-not (contains? &env '&throw-context)
+    (throw-arg "rethrow is only available within a try+ catch clause"))
   `(throw (:throwable ~'&throw-context)))
