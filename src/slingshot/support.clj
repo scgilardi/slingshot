@@ -33,7 +33,7 @@
 (defn wrap
   "Returns a context wrapper given a context"
   [{:keys [object message cause stack-trace]}]
-  (let [data ^::wrapper? {:object object}]
+  (let [data (if (map? object) object ^::wrapper? {:object object})]
     (doto ^Throwable (ex-info message data cause)
           (.setStackTrace stack-trace))))
 
