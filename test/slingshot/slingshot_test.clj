@@ -418,45 +418,99 @@
     (is (= (:throwable direct) wrapper))
     (is (= (:throwable cause-chain) rte2))))
 
+;; helpers for test-optional-cause
+
+(defmacro caught-result [& body]
+  `(try+
+    ~@body
+    (catch Object ~'o
+      [(:cause ~'&throw-context)
+       (:message ~'&throw-context)])))
+
+(defmacro caught-result-from-catch [cause & body]
+  `(caught-result
+    (try+
+     (throw+ ~cause)
+     (catch Object ~'o
+       ~@body))))
+
 (deftest test-optional-cause
-  (let [culprit (Exception. "I did it.")
-        message2 "message two"
-        result1 (try+ (throw+ 1 culprit)
-                      (catch Object o
-                        [(:cause &throw-context)
-                         (:message &throw-context)]))
-        result2 (try+ (throw+ 1 culprit message2)
-                      (catch Object o
-                        [(:cause &throw-context)
-                         (:message &throw-context)]))
-        result3 (try+
-                 (try+ (throw (Exception.))
-                       (catch Object o
-                         (throw+ 1 culprit "message %d" 3)))
-                 (catch Object o
-                   [(:cause &throw-context)
-                    (:message &throw-context)]))
-        result4 (try+
-                 (try+ (throw (Exception. "apple"))
-                       (catch Object o
-                         (throw+)))
-                 (catch Object o
-                   [(:cause &throw-context)
-                    (:message &throw-context)]))
-        result5 (try+
-                 (try+ (throw (Exception.))
-                       (catch Object o
-                         (throw+ (Exception. "foo") culprit "juicy %d" 3)))
-                 (catch Object o
-                   [(:cause &throw-context)
-                    (:message &throw-context)]))]
-    (testing "cause outside catch, default message"
-      (is (= result1 [culprit "throw+: 1"])))
-    (testing "cause outside catch, specified message"
-      (is (= result2 [culprit message2])))
-    (testing "cause inside catch, specified fmt & args"
-      (is (= result3 [culprit "message 3"])))
-    (testing "cause doesn't affect rethrow, rethrown message"
-      (is (= result4 [nil "apple"])))
-    (testing "specifying cause and message doesn't affect Throwables"
-      (is (= result5 [nil "foo"])))))
+  (let [imp (Exception. "I did it implicitly.")
+        exp (Exception. "I did it explicitly.")
+        def-msg "throw+: 1"
+        msg "message two %s"
+        fmt "aha! %s"
+        fmt-msg "aha! 1"
+        fmt2 "%s leading to %s"
+        fmt2-msg "1 leading to [1 1]"
+
+        ;; throw from outside catch, no implicit cause
+
+        result1 (caught-result (throw+ 1))
+        result2 (caught-result (throw+ 1 msg))
+        result3 (caught-result (throw+ 1 fmt %))
+        result4 (caught-result (throw+ 1 fmt2 % [% %]))
+
+        result5 (caught-result (throw+ 1 nil))
+        result6 (caught-result (throw+ 1 nil msg))
+        result7 (caught-result (throw+ 1 nil fmt %))
+        result8 (caught-result (throw+ 1 nil fmt2 % [% %]))
+
+        result9 (caught-result (throw+ 1 exp))
+        result10 (caught-result (throw+ 1 exp msg))
+        result11 (caught-result (throw+ 1 exp fmt %))
+        result12 (caught-result (throw+ 1 exp fmt2 % [% %]))
+
+        ;; throw from inside catch, implicit cause available
+
+        result13 (caught-result-from-catch imp (throw+))
+
+        result14 (caught-result-from-catch imp (throw+ 1))
+        result15 (caught-result-from-catch imp (throw+ 1 msg))
+        result16 (caught-result-from-catch imp (throw+ 1 fmt %))
+        result17 (caught-result-from-catch imp (throw+ 1 fmt2 % [% %]))
+
+        result18 (caught-result-from-catch imp (throw+ 1 nil))
+        result19 (caught-result-from-catch imp (throw+ 1 nil msg))
+        result20 (caught-result-from-catch imp (throw+ 1 nil fmt %))
+        result21 (caught-result-from-catch imp (throw+ 1 nil fmt2 % [% %]))
+
+        result22 (caught-result-from-catch imp (throw+ 1 exp))
+        result23 (caught-result-from-catch imp (throw+ 1 exp msg))
+        result24 (caught-result-from-catch imp (throw+ 1 exp fmt %))
+        result25 (caught-result-from-catch imp (throw+ 1 exp fmt2 % [% %]))]
+
+    (testing "outside catch"
+      (testing "implicit cause"
+        (is (= result1 [nil def-msg]))
+        (is (= result2 [nil msg]))
+        (is (= result3 [nil fmt-msg]))
+        (is (= result4 [nil fmt2-msg])))
+      (testing "erased cause"
+        (is (= result5 [nil def-msg]))
+        (is (= result6 [nil msg]))
+        (is (= result7 [nil fmt-msg]))
+        (is (= result8 [nil fmt2-msg])))
+      (testing "explicit cause"
+        (is (= result9 [exp def-msg]))
+        (is (= result10 [exp msg]))
+        (is (= result11 [exp fmt-msg]))
+        (is (= result12 [exp fmt2-msg]))))
+    (testing "inside catch"
+      (testing "rethrow"
+        (is (= result13 [nil "I did it implicitly."])))
+      (testing "implicit cause"
+        (is (= result14 [imp def-msg]))
+        (is (= result15 [imp msg]))
+        (is (= result16 [imp fmt-msg]))
+        (is (= result17 [imp fmt2-msg])))
+      (testing "erased cause"
+        (is (= result18 [nil def-msg]))
+        (is (= result19 [nil msg]))
+        (is (= result20 [nil fmt-msg]))
+        (is (= result21 [nil fmt2-msg])))
+      (testing "explicit cause"
+        (is (= result22 [exp def-msg]))
+        (is (= result23 [exp msg]))
+        (is (= result24 [exp fmt-msg]))
+        (is (= result25 [exp fmt2-msg]))))))

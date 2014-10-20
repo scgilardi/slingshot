@@ -202,9 +202,9 @@
   "Returns a vector containing the message and cause that result from
   processing the arguments to throw+"
   [object cause & args]
-  (let [[cause & args] (if (instance? Throwable (first args))
-                         args
-                         (cons cause args))
+  (let [[cause & args] (if (or (empty? args) (string? (first args)))
+                         (cons cause args)
+                         args)
         [fmt & args] (cond (next args)
                            args
                            (seq args)
