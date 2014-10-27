@@ -198,6 +198,12 @@
   (if (contains? &env sym)
     sym))
 
+(defn stack-trace
+  "Returns the current stack trace beginning at the caller's frame"
+  []
+  (let [trace (.getStackTrace (Thread/currentThread))]
+    (java.util.Arrays/copyOfRange trace 2 (alength trace))))
+
 (defn parse-throw+
   "Returns a vector containing the message and cause that result from
   processing the arguments to throw+"
@@ -214,12 +220,6 @@
         message (apply format fmt args)]
     [message cause]))
 
-(defn stack-trace
-  "Returns the current stack trace beginning at the caller's frame"
-  []
-  (let [trace (.getStackTrace (Thread/currentThread))]
-    (java.util.Arrays/copyOfRange trace 2 (alength trace))))
-
 (defn default-throw-hook
   "Default implementation of *throw-hook*"
   [context]
@@ -231,10 +231,12 @@
   default-throw-hook."}
   *throw-hook* default-throw-hook)
 
-(defn throw-context
-  "Throws a context. Allows overrides of *throw-hook* to intervene."
-  [object message cause stack-trace]
-  (*throw-hook* (make-context object message cause stack-trace)))
+(defn throw-fn
+  "Helper to throw a context based on arguments and &env from throw+"
+  [object {cause :throwable} stack-trace & args]
+  (let [[message cause] (apply parse-throw+ object cause args)
+        context (make-context object message cause stack-trace)]
+    (*throw-hook* context)))
 
 (defmacro rethrow
   "Within a try+ catch clause, throws the outermost wrapper of the

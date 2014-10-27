@@ -85,10 +85,11 @@
   See also try+, get-throw-context"
   {:arglists '([] [object cause? message-or-fmt? & fmt-args])}
   ([object & args]
-     `(let [~'% ~object
-            cause# (:throwable (s/resolve-local ~'&throw-context))
-            [message# cause#] (s/parse-throw+ ~'% cause# ~@args)]
-        (s/throw-context ~'% message# cause# (s/stack-trace))))
+     `(let [~'% ~object]
+        (s/throw-fn ~'%
+                    (s/resolve-local ~'&throw-context)
+                    (s/stack-trace)
+                    ~@args)))
   ([]
      `(s/rethrow)))
 
