@@ -85,13 +85,13 @@
   See also try+, get-throw-context"
   {:arglists '([] [object cause? message-or-fmt? & fmt-args])}
   ([object & args]
-     `(let [~'% ~object]
-        (s/throw-fn ~'%
-                    (s/resolve-local ~'&throw-context)
-                    (s/stack-trace)
-                    ~@args)))
+   `(let [~'% ~object]
+      (s/throw-fn ~'%
+                  (s/resolve-local ~'&throw-context)
+                  (s/stack-trace)
+                  ~@args)))
   ([]
-     `(s/rethrow)))
+   `(s/rethrow)))
 
 (defn get-throw-context
   "Returns the throw context for an object thrown by throw or throw+

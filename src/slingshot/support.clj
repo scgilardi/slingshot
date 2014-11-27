@@ -23,12 +23,12 @@
 (defn make-context
   "Makes a throw context from a throwable or explicit arguments"
   ([^Throwable t]
-     (make-context t (.getMessage t) (.getCause t) (.getStackTrace t)))
+   (make-context t (.getMessage t) (.getCause t) (.getStackTrace t)))
   ([object message cause stack-trace]
-     {:object object
-      :message message
-      :cause cause
-      :stack-trace stack-trace}))
+   {:object object
+    :message message
+    :cause cause
+    :stack-trace stack-trace}))
 
 (defn wrap
   "Returns a context wrapper given a context"
