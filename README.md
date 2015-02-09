@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/scgilardi/slingshot.svg?branch=master)](https://travis-ci.org/scgilardi/slingshot)
+[![Build Status](https://travis-ci.org/scgilardi/slingshot.svg?branch=master)](https://travis-ci.org/scgilardi/slingshot) [![Dependency Status](https://www.versioneye.com/user/projects/54d57a7b3ca0840b1900063a/badge.svg?style=flat)](https://www.versioneye.com/user/projects/54d57a7b3ca0840b1900063a)
 
 slingshot
 =========
