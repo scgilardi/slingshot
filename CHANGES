@@ -80,3 +80,8 @@
 * version 0.12.1
   - internal improvements
   - documentation updates for correctness, clarity
+* version 0.12.2
+  - improved interop with ex-info/ex-data
+  - throw+ explicit cause can be nil
+  - tests for more throw+ arguments
+  - started travis-ci builds
