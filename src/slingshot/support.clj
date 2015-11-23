@@ -139,8 +139,10 @@
              [(key-values []
                 (and (vector? selector)
                      (if (even? (count selector))
-                       `(and ~@(for [[key val] (partition 2 selector)]
-                                 `(= (get ~'% ~key) ~val)))
+                       (if (= 2 (count selector))
+                         `(= (get ~'% ~(first selector)) ~(second selector))
+                         `(and ~@(for [[key val] (partition 2 selector)]
+                                   `(= (get ~'% ~key) ~val))))
                        (throw-arg "key-values selector: %s does not match: %s"
                                   (pr-str selector) "[key val & kvs]"))))
               (selector-form []
