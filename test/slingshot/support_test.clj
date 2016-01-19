@@ -48,7 +48,7 @@
 
 (deftest test-stack-trace
   (let [{:keys [methodName className]} (-> (stack-trace-fn) first bean)]
-    (is (= methodName "invoke"))
+    (is (.startsWith ^String methodName "invoke"))
     (is (re-find #"stack_trace_fn" className))))
 
 (deftest test-resolve-local

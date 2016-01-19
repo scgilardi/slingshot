@@ -201,8 +201,20 @@
 (defn stack-trace
   "Returns the current stack trace beginning at the caller's frame"
   []
-  (let [trace (.getStackTrace (Thread/currentThread))]
-    (java.util.Arrays/copyOfRange trace 2 (alength trace))))
+  (let [trace (.getStackTrace (Thread/currentThread))
+        len (alength trace)
+        limit (min (dec len) 4)
+        offset (loop [offset 0]
+                 (if (> offset limit)
+                   0
+                   (let [^StackTraceElement element (aget trace offset)
+                         class-name (.getClassName element)]
+                     (if (or (= class-name "java.lang.Thread")
+                             (= class-name "slingshot.support$stack_trace"))
+                       (recur (inc offset))
+                       offset))))]
+    (java.util.Arrays/copyOfRange ^"[Ljava.lang.StackTraceElement;" trace
+                                  ^int offset len)))
 
 (defn parse-throw+
   "Returns a vector containing the message and cause that result from
