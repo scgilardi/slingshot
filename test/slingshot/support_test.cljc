@@ -57,7 +57,7 @@
 #?(:clj ; FIXME CLJS doesn't always have stack traces. They're also very platform-specific
 (deftest test-stack-trace
   (let [{:keys [methodName className]} (-> (stack-trace) first bean)]
-    (is (= methodName "invoke"))
+    (is (re-find #"invoke" methodName))
     (is (re-find #"stack_trace" className)))))
 
 (deftest test-resolve-local
