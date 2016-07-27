@@ -1,14 +1,44 @@
 (ns slingshot.support
-  (:require [clojure.walk]))
+           (:refer-clojure :exclude [format])
+           (:require
+             [cljs.analyzer]
+             [clojure.walk :refer [postwalk]]
+             [clojure.string :as str])
+  #?(:cljs (:require-macros
+             [slingshot.support :refer [if-cljs when-cljs]]))
+  #?(:cljs (:import goog.string goog.string.format)))
+
+;; general
+
+(def format #?(:clj  clojure.core/format
+               :cljs goog.string/format))
+
+(defn cljs-env?
+  "Given an &env from a macro, tells whether it is expanding into CLJS."
+  [env]
+  (boolean (:ns env)))
+
+#?(:clj
+(defmacro if-cljs
+  "Return @then if the macro is generating CLJS code and @else for CLJ code."
+  {:from "https://groups.google.com/d/msg/clojurescript/iBY5HaQda4A/w1lAQi9_AwsJ"}
+  ([env then else]
+    `(if (cljs-env? ~env) ~then ~else))))
+
+#?(:clj
+(defmacro when-cljs
+  "Return @then if the macro is generating CLJS code."
+  ([env then]
+    `(when (cljs-env? ~env) ~then))))
 
 (defn appears-within?
   "Returns true if x appears within coll at any nesting depth"
   [x coll]
   (let [result (atom false)]
-    (clojure.walk/postwalk
-     (fn [t]
-       (when (= x t)
-         (reset! result true)))
+    (postwalk
+      (fn [t]
+        (when (= x t)
+          (reset! result true)))
      coll)
     @result))
 
@@ -16,32 +46,37 @@
   "Throws an IllegalArgumentException with a message given arguments
   for clojure.core/format"
   [fmt & args]
-  (throw (IllegalArgumentException. ^String (apply format fmt args))))
+  (throw (#?(:clj  IllegalArgumentException.
+             :cljs js/Error.) ^String (apply format fmt args))))
 
 ;; context support
 
 (defn make-context
-  "Makes a throw context from a throwable or explicit arguments"
-  ([^Throwable t]
-   (make-context t (.getMessage t) (.getCause t) (.getStackTrace t)))
+  "Makes a throw context from a Throwable or explicit arguments"
+  ([t]
+    (make-context t
+      #?(:clj (.getMessage    ^Throwable t) :cljs (.-message t))
+      #?(:clj (.getCause      ^Throwable t) :cljs (.-cause   t))
+      #?(:clj (.getStackTrace ^Throwable t) :cljs (.-stack   t))))
   ([object message cause stack-trace]
-   {:object object
-    :message message
-    :cause cause
+   {:object      object
+    :message     message
+    :cause       cause
     :stack-trace stack-trace}))
 
 (defn wrap
   "Returns a context wrapper given a context"
   [{:keys [object message cause stack-trace]}]
-  (let [data (if (map? object) object ^::wrapper? {:object object})]
-    (doto ^Throwable (ex-info message data cause)
-          (.setStackTrace stack-trace))))
+  (let [data (if (map? object) object ^::wrapper? {:object object})
+        ex   (ex-info message data cause)]
+    #?(:clj  (doto ^Throwable ex (.setStackTrace stack-trace))
+       :cljs ex)))
 
 (defn unwrap
   "If t is a context wrapper or other IExceptionInfo, returns the
   corresponding context with t assoc'd as the value for :wrapper, else
   returns nil"
-  [^Throwable t]
+  [t]
   (if-let [data (ex-data t)]
     (assoc (make-context t)
       :object (if (::wrapper? (meta data)) (:object data) data)
@@ -52,16 +87,17 @@
   other IExceptionInfo. If one is found, returns the corresponding
   context with the wrapper assoc'd as the value for :wrapper, else
   returns nil."
-  [^Throwable t]
+  [t]
   (or (unwrap t)
-      (if-let [cause (.getCause t)]
+      (when-let [cause (identity #?(:clj  (.getCause ^Throwable t)
+                                    :cljs (.-cause t)))]
         (recur cause))))
 
 (defn get-throwable
   "Returns a Throwable given a context: the object in context if it's
   a Throwable, else a Throwable context wrapper"
   [{object :object :as context}]
-  (if (instance? Throwable object)
+  (if (instance? #?(:clj Throwable :cljs js/Error) object)
     object
     (wrap context)))
 
@@ -72,7 +108,7 @@
   for :wrapper and t assoc'd as the value for :throwable. Otherwise
   creates a new context based on t with t assoc'd as the value
   for :throwable."
-  [^Throwable t]
+  [t]
   (-> (or (unwrap-all t)
           (make-context t))
       (assoc :throwable t)))
@@ -119,6 +155,22 @@
   Defaults to identity."}
   *catch-hook* identity)
 
+(defn js-println [& args] (print "\n/* ") (apply print args) (println " */"))
+
+(defn js-sym->sym
+  "Demunges a JS variable name into a Clojure symbol.
+
+   Example: my_ns.sub_ns.myvar -> my-ns.sub-ns/myvar"
+  [x]
+  (let [x-str (str x)
+        dot-i (.lastIndexOf ^String x-str ".")
+        [ns* name*]
+          (->> [(->> x-str (take dot-i      ))
+                (->> x-str (drop (inc dot-i)))]
+               (map (partial apply str))
+               (map #?(:clj clojure.main/demunge :cljs cljs.core/demunge)))]
+    (symbol ns* name*)))
+
 (defn gen-catch
   "Transforms a seq of catch clauses for try+ into a list containing
   one catch clause for try that implements the specified behavior.
@@ -127,13 +179,29 @@
   for :catch-hook-throw requests, or zero arguments
   for :catch-hook-rethrow requests or when no try+ catch clause
   matches."
-  [catch-clauses throw-sym threw?-sym]
+  [env catch-clauses throw-sym threw?-sym]
   (letfn
-      [(class-selector? [selector]
-         (if (symbol? selector)
-           (let [resolved (resolve selector)]
-             (if (class? resolved)
-               resolved))))
+      [(resolve* [sym]
+         (if-cljs env
+            (let [found (cljs.analyzer/resolve-existing-var env sym)
+                  found' (delay (cljs.analyzer/resolve-var env (js-sym->sym sym)))]
+              (cond (or (:type found) (:meta found))
+                    found
+                    (or (:type @found') (:meta @found'))
+                    @found'
+                    :else found))
+            (#?(:clj resolve) sym)))
+       (class?* [x]
+         (if-cljs env
+           (or (:type x) (:record x)
+               (and (-> x :ns (= 'js)) ; could be a JS class but can't determine at compile-time
+                    (-> x :meta not)))
+           (#?(:clj class?) x)))
+       (class-selector? [selector]
+         (when (symbol? selector)
+           (let [resolved (resolve* selector) _ (js-println "SELECTOR" selector "RESOLVED" resolved "CLASS?" (class?* resolved))]
+             (when (class?* resolved)
+               (if-cljs env selector resolved)))))
        (cond-test [selector]
          (letfn
              [(key-values []
@@ -159,7 +227,7 @@
             (cond-expression (with-meta binding-form {:tag selector}) expressions)]
            [(cond-test selector) (cond-expression binding-form expressions)]))]
     (list
-     `(catch Throwable ~'&throw-context
+     `(catch ~(if-cljs env :default `Throwable) ~'&throw-context
         (reset! ~threw?-sym true)
         (let [~'&throw-context (-> ~'&throw-context get-context *catch-hook*)]
           (cond
@@ -172,6 +240,7 @@
            ~@(mapcat transform catch-clauses)
            :else
            (~throw-sym)))))))
+
 
 (defn gen-finally
   "Returns either nil or a list containing a finally clause for a try
@@ -191,18 +260,20 @@
 
 ;; throw+ support
 
+#?(:clj
 (defmacro resolve-local
   "Expands to sym if it names a local in the current environment or
   nil otherwise"
   [sym]
-  (if (contains? &env sym)
-    sym))
+  (when (contains? (if-cljs &env (:locals &env) &env) sym)
+    sym)))
 
 (defn stack-trace
   "Returns the current stack trace beginning at the caller's frame"
   []
-  (let [trace (.getStackTrace (Thread/currentThread))]
-    (java.util.Arrays/copyOfRange trace 2 (alength trace))))
+  #?(:clj  (let [trace (.getStackTrace (Thread/currentThread))]
+             (java.util.Arrays/copyOfRange trace 2 (alength trace)))
+     :cljs (-> (js/Error.) .-stack)))
 
 (defn parse-throw+
   "Returns a vector containing the message and cause that result from

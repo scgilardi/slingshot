@@ -1,8 +1,26 @@
 (ns slingshot.slingshot-test
-  (:require [clojure.test :refer :all]
-            [slingshot.slingshot :refer :all]
-            [clojure.string :as str])
-  (:import java.util.concurrent.ExecutionException))
+           (:require
+             [#?(:clj  clojure.test
+                 :cljs cljs.test)
+               :refer        [#?@(:clj [deftest testing is])]
+               :refer-macros [deftest testing is async]]
+             [clojure.string :as str]
+             [#?(:cljs cljs.pprint :clj clojure.pprint) :refer [pprint]]
+             [cljs.analyzer #?@(:cljs [:refer [macroexpand-1]])]
+    #?(:cljs [cljs.core.async :refer [<!]])
+             [slingshot.slingshot
+               :refer        [#?@(:clj [throw+ try+])
+                              get-throw-context
+                              get-thrown-object]
+               :refer-macros [throw+ try+]]
+             [slingshot.support
+               :refer [#?@(:clj [if-cljs when-cljs])]])
+  #?(:cljs (:require-macros
+             [slingshot.slingshot-test
+               :refer [mega-try caught-result caught-result-from-catch]]
+             [cljs.core.async.macros
+               :refer [go]]))
+  #?(:clj  (:import java.util.concurrent.ExecutionException)))
 
 (defrecord exception-record [error-code duration-ms message])
 (defrecord x-failure [message])
@@ -12,7 +30,7 @@
 (def h1 (derive (make-hierarchy) ::square ::shape))
 (def a-square ^{:type ::square} {:size 4})
 
-(def exception-1 (Exception. "exceptional"))
+(def exception-1 (#?(:clj Exception. :cljs js/TypeError.) "exceptional"))
 (def exception-record-1 (exception-record. 6 1000 "pdf failure"))
 
 (defn mult-func [x y]
@@ -21,51 +39,72 @@
       (* a b x y)
       (throw+ (x-failure. "x isn't 3... really??")))))
 
+(defn meta-type [x] (-> x meta :type))
+
+(defn get-message [e]
+  #?(:clj  (.getMessage ^Throwable e)
+     :cljs (.-message e)))
+
+#?(:cljs
+(defn ->Error
+  ([x] (cond (instance? js/Error x)
+             (->Error (.-message x) x)
+             (string? x)
+             (js/Error. x)
+             :else (throw (ex-info "Invalid constructor for js/Error" {:args [x]}))))
+  ([message cause]
+    (doto (js/Error. message)
+          (-> .-cause (set! cause))))))
+
+#?(:clj
 (defmacro mega-try [body]
-  `(try+
-    ~body
+  (let [type-fn (if-cljs &env `meta-type `type)]
+    `(try+
+      ~body
 
-    ;; by class derived from Throwable
-    (catch IllegalArgumentException e#
-      [:class-iae e#])
-    (catch Exception e#
-      [:class-exception e#])
+      ;; by class derived from Throwable / js/Error
+      ~@(if-cljs &env
+          `[]
+          `[(catch IllegalArgumentException e#
+              [:class-iae e#])])
+      (catch ~(if-cljs &env `js/TypeError `Exception) e#
+        [:class-exception e#])
+      
+      ;; by java class generically
+      (catch ~(if-cljs &env `string? `String) e#
+        [:class-string e#])
+      
+      ;; by clojure record type
+      (catch exception-record e#
+        [:class-exception-record e#])
 
-    ;; by java class generically
-    (catch String e#
-      [:class-string e#])
+      ;; by key-value
+      (catch [:a-key 4] e#
+        [:key-yields-value e#])
 
-    ;; by clojure record type
-    (catch exception-record e#
-      [:class-exception-record e#])
+      ;; by multiple-key-value
+      (catch [:key1 4 :key2 5] e#
+        [:keys-yield-values e#])
 
-    ;; by key-value
-    (catch [:a-key 4] e#
-      [:key-yields-value e#])
+      ;; by key present
+      (catch (and (set? ~'%) (contains? ~'% :a-key)) e#
+        [:key-is-present e#])
 
-    ;; by multiple-key-value
-    (catch [:key1 4 :key2 5] e#
-      [:keys-yield-values e#])
+      ;; by clojure type, with optional hierarchy
+      (catch (isa? (~type-fn ~'%) ::sphere) e#
+        [:type-sphere (~type-fn e#) e#])
+      (catch (isa? h1 (~type-fn ~'%) ::shape) e#
+        [:type-shape-in-h1 (~type-fn e#) e#])
 
-    ;; by key present
-    (catch (and (set? ~'%) (contains? ~'% :a-key)) e#
-      [:key-is-present e#])
-
-    ;; by clojure type, with optional hierarchy
-    (catch (isa? (type ~'%) ::sphere) e#
-      [:type-sphere (type e#) e#])
-    (catch (isa? h1 (type ~'%) ::shape) e#
-      [:type-shape-in-h1 (type e#) e#])
-
-    ;; by predicate
-    (catch nil? e#
-      [:pred-nil e#])
-    (catch keyword? e#
-      [:pred-keyword e#])
-    (catch symbol? e#
-      [:pred-symbol e#])
-    (catch map? e#
-      [:pred-map e# (meta e#)])))
+      ;; by predicate
+      (catch nil? e#
+        [:pred-nil e#])
+      (catch keyword? e#
+        [:pred-keyword e#])
+      (catch symbol? e#
+        [:pred-symbol e#])
+      (catch map? e#
+        [:pred-map e# (meta e#)])))))
 
 (deftest test-try+
   (testing "catch by class derived from Throwable"
@@ -74,11 +113,11 @@
              (mega-try (throw+ exception-1))
              (mega-try (throw exception-1))
              (try (throw+ exception-1)
-                  (catch Exception e [:class-exception e]))
+                  (catch #?(:clj Exception :cljs js/TypeError) e [:class-exception e]))
              (try (throw exception-1)
-                  (catch Exception e [:class-exception e])))))
-    (testing "IllegalArgumentException thrown by clojure/core"
-      (is (= :class-iae (first (mega-try (str/replace "foo" 1 1)))))))
+                  (catch #?(:clj Exception :cljs js/TypeError) e [:class-exception e])))))
+    #?(:clj (testing "IllegalArgumentException thrown by clojure/core"
+              (is (= :class-iae (first (mega-try (str/replace "foo" 1 1))))))))
 
   (testing "catch by java class generically"
     (is (= [:class-string "fail"] (mega-try (throw+ "fail")))))
@@ -148,6 +187,7 @@
 (defn next-context [x]
   (-> x :cause get-throw-context))
 
+
 (deftest test-throw-context
   (let [context (ix)
         context1 (next-context context)
@@ -163,7 +203,7 @@
 
 (defn e []
   (try+
-   (throw (Exception. "uncaught"))
+   (throw (#?(:clj Exception. :cljs js/Error.) "uncaught"))
    (catch integer? i i)))
 
 (defn f []
@@ -178,9 +218,9 @@
    (catch integer? i i)))
 
 (deftest test-uncaught
-  (is (thrown-with-msg? Exception #"^uncaught$" (e)))
-  (is (thrown-with-msg? Exception #"^throw\+: .*" (f)))
-  (is (thrown-with-msg? Exception #"wasn't caught" (g))))
+  (is (thrown-with-msg? #?(:clj Exception :cljs js/Error) #"^uncaught$" (e)))
+  (is (thrown-with-msg? #?(:clj Exception :cljs js/Error) #"^throw\+: .*" (f)))
+  (is (thrown-with-msg? #?(:clj Exception :cljs js/Error) #"wasn't caught" (g))))
 
 (defn h []
   (try+
@@ -200,74 +240,80 @@
      (doall (map (fn [x] (throw+ (str x))) [1]))
      (catch string? x
        x))
-    (catch Throwable x)))
+    (catch #?(:clj Throwable :cljs js/Error) x)))
 
-(defn j []
+#?(:clj
+(defn j
+  "NOTE: Doesn't work in CLJS. Uncaught exceptions in `go` blocks
+   (the semi-equivalent of Clojure's `future`) aren't returned when
+   taken e.g. via `<!` — only nil is returned. See also
+   http://dev.clojure.org/jira/browse/ASYNC-172."
+  []
   (try+
-   (let [fut (future (throw+ "whoops"))]
-     @fut)
-   (catch string? e
-     e)))
+    (let [fut (future (throw+ "whoops"))]
+      @fut)
+     (catch string? e e))))
 
+#?(:clj
 (deftest test-issue-5
   (is (= "1" (i)))
-  (is (= "whoops" (j))))
+  (is (= "whoops" (j)))))
 
 (deftest test-unmacroed-pct
   (is (= :was-eee (try+ (throw+ "eee")
                         (catch (= % "eee") _ :was-eee)
                         (catch string? _ :no!)))))
 
-(deftest test-x-ray-vision
+(deftest test-x-ray-vision []
   (let [[val wrapper] (try+
                        (try
                          (try
                            (try
                              (throw+ "x-ray!")
-                             (catch Throwable x
-                               (throw (RuntimeException. x))))
-                           (catch Throwable x
-                             (throw (ExecutionException. x))))
-                         (catch Throwable x
-                           (throw (RuntimeException. x))))
+                             (catch #?(:clj Throwable :cljs :default) x
+                               (throw (#?(:clj RuntimeException. :cljs ->Error) x))))
+                           (catch #?(:clj Throwable :cljs :default) x
+                             (throw (#?(:clj ExecutionException. :cljs ->Error) x))))
+                         (catch #?(:clj Throwable :cljs :default) x
+                           (throw (#?(:clj RuntimeException. :cljs ->Error) x))))
                        (catch string? x
                          [x (:throwable &throw-context)]))]
     (is (= "x-ray!" val))
     (is (= "x-ray!" (get-thrown-object wrapper)))))
 
 (deftest test-catching-wrapper
-  (let [e (Exception.)]
+  (let [e (#?(:clj Exception. :cljs js/Error.))]
     (try
       (try+
        (throw e)
-       (catch Exception _
+       (catch #?(:clj Exception :cljs js/Error) _
          (throw+ :a "msg: %s" %)))
       (is false)
-      (catch Exception s
-        (is (= "msg: :a" (.getMessage s)))
-        (is (= e (.getCause s)))))))
+      (catch #?(:clj Exception :cljs js/Error) s
+        (is (= "msg: :a" (get-message s)))
+        (is (= e (#?(:clj .getCause :cljs .-cause) s)))))))
 
 (deftest test-eval-object-once
   (let [bumps (atom 0)
         bump (fn [] (swap! bumps inc))]
     (try+
      (throw+ (bump) "this is it: %s %s %s" % % %)
-     (catch Object _))
+     (catch #?(:clj Object :cljs (constantly true)) _))
     (is (= @bumps 1))))
 
 (deftest test-get-throw-context
-  (let [object (Object.)
-        exception1 (Exception.)
-        exception2 (Exception. "ex1" exception1)
+  (let [object (#?(:clj Object. :cljs js/Object.))
+        exception1 (#?(:clj Exception. :cljs js/Error.))
+        exception2 (#?(:clj Exception. :cljs ->Error) "ex1" exception1)
         t1 (try
              (throw+ object)
-             (catch Throwable t t))
+             (catch #?(:clj Throwable :cljs js/Error) t t))
         t2 (try
              (throw+ exception2)
-             (catch Throwable t t))
+             (catch #?(:clj Throwable :cljs js/Error) t t))
         t3 (try
              (throw exception2)
-             (catch Throwable t t))]
+             (catch #?(:clj Throwable :cljs js/Error) t t))]
     (is (= #{:object :message :cause :stack-trace :wrapper
              :throwable}
            (-> t1 get-throw-context keys set)))
@@ -286,17 +332,17 @@
     (is (= "ex1" (:message (get-throw-context t3))))))
 
 (deftest test-get-thrown-object
-  (let [object (Object.)
-        exception (Exception.)
+  (let [object (#?(:clj Object. :cljs js/Object.))
+        exception (#?(:clj Exception. :cljs js/Error.))
         t1 (try
              (throw+ object)
-             (catch Throwable t t))
+             (catch #?(:clj Throwable :cljs js/Error) t t))
         t2 (try
              (throw+ exception)
-             (catch Throwable t t))
+             (catch #?(:clj Throwable :cljs js/Error) t t))
         t3 (try
              (throw exception)
-             (catch Throwable t t))]
+             (catch #?(:clj Throwable :cljs js/Error) t t))]
     (is (identical? object (get-thrown-object t1)))
     (is (identical? exception (get-thrown-object t2)))
     (is (identical? exception (get-thrown-object t3)))))
@@ -305,37 +351,37 @@
   (let [context (try+
                  (try
                    (throw+ :afp "wrapper-0")
-                   (catch Exception e
-                     (throw (RuntimeException. "wrapper-1" e))))
-                 (catch Object _
+                   (catch #?(:clj Exception :cljs js/Error) e
+                     (throw (#?(:clj RuntimeException. :cljs ->Error) "wrapper-1" e))))
+                 (catch #?(:clj Object :cljs (constantly true)) _
                    &throw-context))]
-    (is (= "wrapper-0" (.getMessage ^Throwable (:wrapper context))))
-    (is (= "wrapper-1" (.getMessage ^Throwable (:throwable context))))))
+    (is (= "wrapper-0" (get-message (:wrapper context))))
+    (is (= "wrapper-1" (get-message (:throwable context))))))
 
 (deftest test-inline-predicate
   (is (= :not-caught (try+
                       (throw+ {:foo true})
                       (catch #(-> % :foo (= false)) data
                         :caught)
-                      (catch Object _
+                      (catch #?(:clj Object :cljs (constantly true)) _
                         :not-caught)))))
 
 (defn gen-body
   [rec-sym throw?]
   (let [body `(swap! ~rec-sym #(conj % :body))]
     (if throw?
-      (list 'do body `(throw+ (Exception.)))
+      (list 'do body `(throw+ (#?(:clj Exception. :cljs js/Error.))))
       body)))
 
 (defn gen-catch-clause
   [rec-sym]
-  `(catch Exception e# (swap! ~rec-sym #(conj % :catch))))
+  `(catch #?(:clj Exception :cljs js/Error) e# (swap! ~rec-sym #(conj % :catch))))
 
 (defn gen-else-clause
   [rec-sym broken?]
   (let [else-body `(swap! ~rec-sym #(conj % :else))]
     (if broken?
-      (list 'else (list 'do else-body `(throw+ (Exception.))))
+      (list 'else (list 'do else-body `(throw+ (#?(:clj Exception. :cljs js/Error.)))))
       (list 'else else-body))))
 
 (defn gen-finally-clause
@@ -359,11 +405,12 @@
                         ~catch-clause
                         ~else-clause
                         ~finally-clause))
-        (catch Object e#
+        (catch #?(:clj Object :cljs (constantly true)) e#
           ;; if the inner try+ threw, report it as a :bang! in the return vec
           (swap! ~rec-sym #(conj % :bang!))))
        @~rec-sym)))
 
+#?(:clj ; FIXME Uses `eval`, which is only in Clojure
 (deftest test-else
   (doseq [throw? [true false]
           catch? [true false]
@@ -383,31 +430,32 @@
                                    ;;  b) the body throws, and is not caught
                                    (if (or (and (not throw?) broken-else?)
                                            (and throw? (not catch?))) :bang!)]))]
-        (is (= actual expected))))))
+        (is (= actual expected)))))))
 
+#?(:clj ; FIXME Reflection is only in Clojure
 (deftest test-reflection
   (try+
    nil
    (catch Exception e
-     (.getMessage e))))
+     (.getMessage e)))))
 
 (deftest test-ex-info-compatibility
   (let [data {:type :fail :reason :not-found}
         message "oops"
         wrapper (ex-info message data)
-        rte1 (RuntimeException. "one" wrapper)
-        rte2 (RuntimeException. "two" rte1)
+        rte1 (#?(:clj RuntimeException. :cljs ->Error) "one" wrapper)
+        rte2 (#?(:clj RuntimeException. :cljs ->Error) "two" rte1)
         direct (try+
                 (throw wrapper)
                 (catch [:type :fail] e
                   &throw-context)
-                (catch Object _
+                (catch #?(:clj Object :cljs (constantly true)) _
                   :whoops))
         cause-chain (try+
                      (throw rte2)
                      (catch [:type :fail] e
                        &throw-context)
-                     (catch Object _
+                     (catch #?(:clj Object :cljs (constantly true)) _
                        :whoops))]
     (is (= (:object direct) data))
     (is (= (:object cause-chain) data))
@@ -420,23 +468,25 @@
 
 ;; helpers for test-optional-cause
 
+#?(:clj
 (defmacro caught-result [& body]
   `(try+
     ~@body
-    (catch Object ~'o
+    (catch ~(if-cljs &env `(constantly true) `Object) ~'o
       [(:cause ~'&throw-context)
-       (:message ~'&throw-context)])))
+       (:message ~'&throw-context)]))))
 
+#?(:clj
 (defmacro caught-result-from-catch [cause & body]
   `(caught-result
     (try+
      (throw+ ~cause)
-     (catch Object ~'o
-       ~@body))))
+     (catch ~(if-cljs &env `(constantly true) `Object) ~'o
+       ~@body)))))
 
 (deftest test-optional-cause
-  (let [imp (Exception. "I did it implicitly.")
-        exp (Exception. "I did it explicitly.")
+  (let [imp (#?(:clj Exception. :cljs js/Error.) "I did it implicitly.")
+        exp (#?(:clj Exception. :cljs js/Error.) "I did it explicitly.")
         def-msg "throw+: 1"
         msg "message two %s"
         fmt "aha! %s"
