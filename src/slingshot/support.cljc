@@ -155,8 +155,6 @@
   Defaults to identity."}
   *catch-hook* identity)
 
-(defn js-println [& args] (print "\n/* ") (apply print args) (println " */"))
-
 (defn js-sym->sym
   "Demunges a JS variable name into a Clojure symbol.
 
@@ -199,7 +197,7 @@
            (#?(:clj class?) x)))
        (class-selector? [selector]
          (when (symbol? selector)
-           (let [resolved (resolve* selector) _ (js-println "SELECTOR" selector "RESOLVED" resolved "CLASS?" (class?* resolved))]
+           (let [resolved (resolve* selector)]
              (when (class?* resolved)
                (if-cljs env selector resolved)))))
        (cond-test [selector]
@@ -272,7 +270,7 @@
   "Returns the current stack trace beginning at the caller's frame"
   []
   #?(:clj  (let [trace (.getStackTrace (Thread/currentThread))]
-             (java.util.Arrays/copyOfRange trace 2 (alength trace)))
+             (java.util.Arrays/copyOfRange trace 1 (alength trace)))
      :cljs (-> (js/Error.) .-stack)))
 
 (defn parse-throw+
