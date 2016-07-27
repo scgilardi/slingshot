@@ -6,6 +6,7 @@
             :distribution :repo}
   :deploy-repositories [["releases" :clojars]]
   :global-vars {*warn-on-reflection* true}
+  :dependencies [[org.clojure/clojurescript "1.9.93" ]]
   :profiles {:dev {:dependencies [[org.clojure/clojure       "1.8.0"  ]
                                   [org.clojure/clojurescript "1.9.93" ]
                                   [org.clojure/core.async    "0.2.385"] ; To be explicit
@@ -23,7 +24,7 @@
              :1.6 {:dependencies [[org.clojure/clojure "1.6.0"]]}
              :1.7 {:dependencies [[org.clojure/clojure "1.7.0"]]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}}
-  :aliases {"all" ["with-profile" "1.4:1.5:1.6:1.7:1.8"]
+  :aliases {"all" ["with-profile" #_"1.4:1.5:1.6:1.7:1.8" "1.7:1.8"] ; for CLJC
             "test:clj"      ["test"]
             "test:cljs"     ["doo" "phantom" "dev" "once"]
             "autotest:cljs" ["doo" "phantom" "dev"]
