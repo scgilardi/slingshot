@@ -2,45 +2,16 @@
            (:refer-clojure :exclude [format])
            (:require
              [cljs.analyzer]
-             [clojure.walk :refer [postwalk]]
-             [clojure.string :as str])
+             [clojure.string :as str]
+             [slingshot.util
+               :refer [appears-within?
+                       #?@(:clj [if-cljs when-cljs])]])
   #?(:cljs (:require-macros
-             [slingshot.support :refer [if-cljs when-cljs]]))
+             [slingshot.util :refer [if-cljs when-cljs]]))
   #?(:cljs (:import goog.string goog.string.format)))
-
-;; general
 
 (def format #?(:clj  clojure.core/format
                :cljs goog.string/format))
-
-(defn cljs-env?
-  "Given an &env from a macro, tells whether it is expanding into CLJS."
-  [env]
-  (boolean (:ns env)))
-
-#?(:clj
-(defmacro if-cljs
-  "Return @then if the macro is generating CLJS code and @else for CLJ code."
-  {:from "https://groups.google.com/d/msg/clojurescript/iBY5HaQda4A/w1lAQi9_AwsJ"}
-  ([env then else]
-    `(if (cljs-env? ~env) ~then ~else))))
-
-#?(:clj
-(defmacro when-cljs
-  "Return @then if the macro is generating CLJS code."
-  ([env then]
-    `(when (cljs-env? ~env) ~then))))
-
-(defn appears-within?
-  "Returns true if x appears within coll at any nesting depth"
-  [x coll]
-  (let [result (atom false)]
-    (postwalk
-      (fn [t]
-        (when (= x t)
-          (reset! result true)))
-     coll)
-    @result))
 
 (defn throw-arg
   "Throws an IllegalArgumentException with a message given arguments

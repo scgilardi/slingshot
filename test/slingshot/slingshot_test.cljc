@@ -6,14 +6,14 @@
                :refer-macros [deftest testing is async]]
              [clojure.string :as str]
              [#?(:cljs cljs.pprint :clj clojure.pprint) :refer [pprint]]
-             [cljs.analyzer #?@(:cljs [:refer [macroexpand-1]])]
+             [cljs.compiler]
     #?(:cljs [cljs.core.async :refer [<!]])
              [slingshot.slingshot
                :refer        [#?@(:clj [throw+ try+])
                               get-throw-context
                               get-thrown-object]
                :refer-macros [throw+ try+]]
-             [slingshot.support
+             [slingshot.util
                :refer [#?@(:clj [if-cljs when-cljs])]])
   #?(:cljs (:require-macros
              [slingshot.slingshot-test
