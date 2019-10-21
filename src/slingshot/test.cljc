@@ -1,7 +1,12 @@
 (ns slingshot.test
-  (:require [clojure.test :refer :all]
-            [slingshot.slingshot :refer [try+]]))
+  (:require [#?(:clj  clojure.test
+                :cljs cljs.test)
+              :refer        [do-report #?(:clj assert-expr)]]
+            [slingshot.slingshot
+              :refer [#?(:clj try+)]
+              :refer-macros [try+]]))
 
+#?(:clj
 (defmethod assert-expr 'thrown+? [msg form]
   ;; (is (thrown+? selector expr))
   ;; Asserts that evaluating expr throws an object that matches
@@ -19,8 +24,9 @@
         (do-report {:type :fail :message ~msg :expected '~form
                     :actual (format "thrown+?: %s did not match %s"
                                     (pr-str e#) '~selector)})
-        e#))))
+        e#)))))
 
+#?(:clj 
 (defmethod assert-expr 'thrown+-with-msg? [msg form]
   ;; (is (thrown+-with-msg? s re expr))
   ;; Asserts that evaluating expr throws an object that matches
@@ -45,4 +51,4 @@
         (do-report {:type :fail :message ~msg :expected '~form
                     :actual (format "thrown+-with-msg?: %s did not match %s"
                                     (pr-str e#) '~selector)})
-        e#))))
+        e#)))))
