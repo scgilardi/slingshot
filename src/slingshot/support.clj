@@ -136,7 +136,9 @@
                resolved))))
        (cond-test [selector]
          (letfn
-             [(key-values []
+             [(syntax []
+                ({'any true} selector))
+              (key-values []
                 (and (vector? selector)
                      (if (even? (count selector))
                        (if (= 2 (count selector))
@@ -151,7 +153,7 @@
               (predicate []
                 `(~selector ~'%))]
            `(let [~'% (:object ~'&throw-context)]
-              ~(or (key-values) (selector-form) (predicate)))))
+              ~(or (syntax) (key-values) (selector-form) (predicate)))))
        (cond-expression [binding-form expressions]
          `(let [~binding-form (:object ~'&throw-context)]
             ~@expressions))

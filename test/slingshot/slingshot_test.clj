@@ -252,7 +252,7 @@
         bump (fn [] (swap! bumps inc))]
     (try+
      (throw+ (bump) "this is it: %s %s %s" % % %)
-     (catch Object _))
+     (catch any _))
     (is (= @bumps 1))))
 
 (deftest test-get-throw-context
@@ -307,7 +307,7 @@
                    (throw+ :afp "wrapper-0")
                    (catch Exception e
                      (throw (RuntimeException. "wrapper-1" e))))
-                 (catch Object _
+                 (catch any _
                    &throw-context))]
     (is (= "wrapper-0" (.getMessage ^Throwable (:wrapper context))))
     (is (= "wrapper-1" (.getMessage ^Throwable (:throwable context))))))
@@ -317,7 +317,7 @@
                       (throw+ {:foo true})
                       (catch #(-> % :foo (= false)) data
                         :caught)
-                      (catch Object _
+                      (catch any _
                         :not-caught)))))
 
 (defn gen-body
@@ -359,7 +359,7 @@
                         ~catch-clause
                         ~else-clause
                         ~finally-clause))
-        (catch Object e#
+        (catch ~'any e#
           ;; if the inner try+ threw, report it as a :bang! in the return vec
           (swap! ~rec-sym #(conj % :bang!))))
        @~rec-sym)))
